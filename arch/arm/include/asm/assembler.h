@@ -248,29 +248,96 @@
  * you cannot return to the original mode.
  */
 .macro safe_svcmode_maskall reg:req
+/*! 
+  req: 반드시 필요하다는 의미 
+  reg: r0
+ */
 #if __LINUX_ARM_ARCH__ >= 6
+/*! 
+  __LINUX_ARM_ARCH__ = 7 로 셋팅되어 있다.
+ */
 	mrs	\reg , cpsr
 	eor	\reg, \reg, #HYP_MODE
+        /*!
+          HYP_MODE = 0x0000001a
+          eor : exclusive or
+         */
 	tst	\reg, #MODE_MASK
+        /*!
+          MODE_MASK = 0x0000001f
+          AND 연산하여 0이면 Z flag가 1, 아니면 0
+         */
 	bic	\reg , \reg , #MODE_MASK
+        /*!
+          bic: bit clear
+          MODE_MASK = 0x0000001f
+          아래 5bit(mode bit 부분)을 클리어한다. 
+         */
 	orr	\reg , \reg , #PSR_I_BIT | PSR_F_BIT | SVC_MODE
+        /*!
+          orr: reg값과 주어진 값을 or연산하여 reg에 저장
+          모드를 SVC로 만들고 I/F bit를 set하여 인터럽트를 disable한다.
+          PSR_I_BIT = 0x00000080
+          PSR_F_BIT = 0x00000040
+          SVC_MODE  = 0x00000013
+         */
 THUMB(	orr	\reg , \reg , #PSR_T_BIT	)
 	bne	1f
+        /*!
+          하이퍼바이저가 아니면 1: 레이블로 점프
+         */
 	orr	\reg, \reg, #PSR_A_BIT
+        /*!
+          PSR_A_BIT = 0x00000100
+          모호한 Abort를 clear시킨다.
+          책 p.622
+          */
 	adr	lr, BSYM(2f)
+        /*! 
+          ifdef CONFIG_THUMB2_KERNEL
+              thumb2면 주소에 1을 더한다. (책 pp.102~103 에 나온다.)
+          define BSYM(sym) sym + 1
+              아니면,
+          define BSYM(sym)	sym
+          */
 	msr	spsr_cxsf, \reg
+        /*!
+          spsr의 4개의 필드로 구성되어 있다. control, extention, status, flag 필드이다.
+          책 p.84부터 나온다.
+          모든 bit를 reg값으로 업데이트 하라는 의미
+          */
 	__MSR_ELR_HYP(14)
 	__ERET
+    /*!
+      하이퍼바이저 기계어 코드다.
+        #define __MSR_ELR_HYP(regnum)	__inst_arm_thumb32(			\
+        	0xE12EF300 | regnum,						\
+        	0xF3808E30 | (regnum << 16)					\
+        )
+        #define __ERET	__inst_arm_thumb32(					\
+        	0xE160006E,							\
+        	0xF3DE8F00							\
+        )
+      */
 1:	msr	cpsr_c, \reg
 2:
 #else
+/*!
+  else of #if __LINUX_ARM_ARCH__ >= 6
+*/
 /*
  * workaround for possibly broken pre-v6 hardware
  * (akita, Sharp Zaurus C-1000, PXA270-based)
  */
 	setmode	PSR_F_BIT | PSR_I_BIT | SVC_MODE, \reg
+        /*!
+          예전(6미만)버전의 setmode 매크로
+          */
 #endif
 .endm
+/*! 
+ safe_svcmode_maskall reg:req 매크로의 끝
+  */
 
 /*
  * STRT/LDRT access macros with ARM and Thumb-2 variants
