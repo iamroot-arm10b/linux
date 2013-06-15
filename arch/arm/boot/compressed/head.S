@@ -144,16 +144,14 @@
 		.align
                 /*! ARM은 기본 4byte align 하는데 코드 들어가는 위치를 4의 배수로 만들어준다.
                   4의 배수가 아니면 pedding을 해 준다. 
-                  숫가가 없으면 default 4
+                  숫자가 없으면 default 4
                  */
 		.arm				@ Always enter in ARM state
 start:
 		.type	start,#function
                 /*! 
                  * .type: start는 start 레이블 이름, #function 
-                 * start라는 symbol이 #function이라는 type이다. 
-                 * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것?
-                 */
+                 * start라는 symbol이 #function이라는 type이다.  * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것?  */
 		.rept	7
 		mov	r0, r0
 		.endr
@@ -164,18 +162,54 @@ start:
    ARM(		b	1f		)
  THUMB(		adr	r12, BSYM(1f)	)
  THUMB(		bx	r12		)
-
+        /*! CONFIG_THUMB2_KERNEL 이 정의되어 있으면 THUMB 를 사용하고 아니면 ARM 이 실행된다. 
+              include/asm/unified.h 에 있다.
+            ARM(		mov	r0, r0		)
+            ARM(		b	1f		)
+            이 실행된다. (우리가 타겟으로 하는 아키텍처인 경우)
+            뒷쪽(f:forward) 1번 레이블로 점프한다. 
+         */
 		.word	0x016f2818		@ Magic numbers to help the loader
+        /*! 
+            이 값을 ARM용 매직넘버로 사용한다.
+            아키텍처에 따라 매직넘버를 안쓸수도 있다. 
+            부트로더가 이 값을 검색해야 하므로 
+            부트로더에서 ARM용인지를 체크할 수도 있다.
+            이 매직넘버 다음에 시작레이블을 찾을 수 있다. 
+         */
 		.word	start			@ absolute load/run zImage address
 		.word	_edata			@ zImage end address
- THUMB(		.thumb			)
+        /*!
+          _edata = .; 현재라인의 주소를 _edata에 넣는 것
+          arm/kernel/vmlinux.lds.S 에 정의되어 있다. 
+         */
+ THUMB(		.thumb			) /*! thumb모드로 컴파일하라는 명령 */
 1:
 		mrs	r9, cpsr
+        /*! cpsr을 r9로 복사한다. 
+          http://infocenter.arm.com/help/topic/com.arm.doc.qrc0001l/QRC0001_UAL.pdf
+         */
 #ifdef CONFIG_ARM_VIRT_EXT
+                /*! the ARM Virtualization 이 enable인경우 실행된다.
+                   가상화 지원되는 제품인 경우에 사용한다.
+                   default config 에는 없지만 default config 로 타겟을 
+                   엑시노스4로 생성하면 enable 된다.
+                 */
 		bl	__hyp_stub_install	@ get into SVC mode, reversibly
+                /*! 
+                 * Hypervisor stub installation functions.
+                      우리는 하이퍼바이저를 보지 않는다. 
+                 */
 #endif
 		mov	r7, r1			@ save architecture ID
 		mov	r8, r2			@ save atags pointer
+                /*!
+                  r1 = machine type number discovered in (3) above.
+                  r2 = physical address of tagged list in system RAM, or
+                       physical address of device tree block (dtb) in system RAM
+                  부트로드에서 셋팅하는 부분
+                  Documentation/arm/Booting 에 있다.
+                 */
 
 #ifndef __ARM_ARCH_2__
 		/*
@@ -185,16 +219,36 @@ start:
 		 */
 		mrs	r2, cpsr		@ get current mode
 		tst	r2, #3			@ not user?
+                /*! 
+                  아래 두bit가 하나라도 1이면 EQ가 set되어 not_angel로 점프.
+                  유저모드인지 아닌지를 체크한다. user mode는 끝 두bit가 00
+                  유저모드이면 cpsr을 변경시키지 못하므로 mov r0, #0x17  로 간다.
+                 */
 		bne	not_angel
 		mov	r0, #0x17		@ angel_SWIreason_EnterSVC
+                /*! 
+                  ?? angel에서 SVC모드로 들어가게 하는 인자값 일거라고 예상
+                 */
  ARM(		swi	0x123456	)	@ angel_SWI_ARM
  THUMB(		svc	0xab		)	@ angel_SWI_THUMB
+                /*! 
+                  angel일때 SVC 로 바꾸는 루틴
+                 */
 not_angel:
 		safe_svcmode_maskall r0
+                /*!
+                 * 인터럽트를 금지시키고 SVC 모드로 들어간다.
+                 */
 		msr	spsr_cxsf, r9		@ Save the CPU boot mode in
 						@ SPSR
+                /*!
+                 * mrs	r9, cpsr 을 해 둔것에서 가져옴
+                 */
 #else
 		teqp	pc, #0x0c000003		@ turn off interrupts
+                /*!
+                 * ARM_ARCH_2__에서 인터럽트 끄는 것
+                 */
 #endif
 
 		/*
@@ -208,17 +262,39 @@ not_angel:
 		 */
 
 		.text
+                /*!
+                 * text섹션(코드영역)의 시작
+                 */
 
 #ifdef CONFIG_AUTO_ZRELADDR
+                /*!
+                 * 설정되어 있지 않음
+                 */
 		@ determine final kernel image address
 		mov	r4, pc
 		and	r4, r4, #0xf8000000
 		add	r4, r4, #TEXT_OFFSET
 #else
 		ldr	r4, =zreladdr
+                /*!
+                 * 고정된 주소값을 r4 영역으로 가져온다.
+                 압축을 풀어서 vmlinux 를 저장시킬 주소
+                 zreladdr = 0x40008000 
+                 compressed 안에 있는 Makefile이 실행되면서 만들어준다.
+                    # Supply ZRELADDR to the decompressor via a linker symbol.
+                    ifneq ($(CONFIG_AUTO_ZRELADDR),y)
+                    LDFLAGS_vmlinux += --defsym zreladdr=$(ZRELADDR)
+                    endif
+                    ifeq ($(CONFIG_CPU_ENDIAN_BE8),y)
+                    LDFLAGS_vmlinux += --be8
+                    endif
+                 */
 #endif
 
 		bl	cache_on
+                /*!
+                 * cache_on 로 점프
+                 */
 
 restart:	adr	r0, LC0
 		ldmia	r0, {r1, r2, r3, r6, r10, r11, r12}
@@ -577,6 +653,9 @@ params:		ldr	r0, =0x10000100		@ params_phys for RPC
  */
 		.align	5
 cache_on:	mov	r3, #8			@ cache_on function
+                /*! 
+                 * call_cache_fn 을 실행하기 전에 r3에 8 을 저장한다.
+                 */
 		b	call_cache_fn
 
 /*
@@ -724,6 +803,9 @@ __armv4_mmu_cache_on:
 		mov	pc, r12
 
 __armv7_mmu_cache_on:
+                /*!
+                  cache를 켜기 위해 들어왔다. 2013/06/15 스터디는 여기까지!
+                  */
 		mov	r12, lr
 #ifdef CONFIG_MMU
 		mrc	p15, 0, r11, c0, c1, 4	@ read ID_MMFR0
@@ -809,20 +891,46 @@ __common_mmu_cache_on:
  */
 
 call_cache_fn:	adr	r12, proc_types
+/*!
+ * proc_types의 pc상대주소를 r12에 넣는다.
+ */
 #ifdef CONFIG_CPU_CP15
+/*!
+ * CONFIG_CPU_CP15 가 정의되어 있으므로 이곳이 실행된다.
+ */
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
+                /*!
+                 * cp15의 c0 레지스터 값을 r9에 저장
+                 */
 #else
 		ldr	r9, =CONFIG_PROCESSOR_ID
 #endif
 1:		ldr	r1, [r12, #0]		@ get value
 		ldr	r2, [r12, #4]		@ get mask
+                /*!
+                 * proc_types: 에서
+		            .word	0x000f0000		@ new CPU Id
+		            .word	0x000f0000
+                    이므로 r1 = 0x000f0000
+                           r2 = 0x000f0000
+                 */
 		eor	r1, r1, r9		@ (real ^ match)
 		tst	r1, r2			@       & mask
+    /*!
+     * r9와 r1을 exclusive or 연산한 후 r2와 비교하는 것을 반복해서 자신의 아키텍처를 찾는 것
+     */
  ARM(		addeq	pc, r12, r3		) @ call cache function
+ /*!
+  * call_cache_fn:을 시작하기 전에 저장해둔 값. r3 = 8.
+  */
  THUMB(		addeq	r12, r3			)
  THUMB(		moveq	pc, r12			) @ call cache function
 		add	r12, r12, #PROC_ENTRY_SIZE
 		b	1b
+                /*!
+                 * 비교한 아키텍처가 현재 아키텍처와 다른 경우 PROC_ENTRY_SIZE 만큼 더한 후,
+                 * 1: 레이블로 이동하여 다음 아키텍처를 찾는다.
+                 */
 
 /*
  * Table for cache operations.  This is basically:
@@ -967,7 +1075,14 @@ proc_types:
 		W(b)	__armv6_mmu_cache_flush
 
 		.word	0x000f0000		@ new CPU Id
+                /*!
+                 * r12가 가리키는 부분
+                 * r1에 셋팅되는 값
+                 */
 		.word	0x000f0000
+                /*!
+                 * r2에 셋팅되는 값
+                 */
 		W(b)	__armv7_mmu_cache_on
 		W(b)	__armv7_mmu_cache_off
 		W(b)	__armv7_mmu_cache_flush

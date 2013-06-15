@@ -32,11 +32,14 @@
             /*! exclusive or 연산. 엑시노스 라인 판단 위한 것 */
             /*! @@ 는 gcc 어셈블러의 주석 */
             /*! A15 프로세스의 값이라고 판단함 */
-		ldreq	\rp, =EXYNOS5_PA_UART /*! EXYNOS5_PA_UART = 0x12C00000 */
+		ldreq	\rp, =EXYNOS5_PA_UART 
+            /*! EXYNOS5_PA_UART = 0x12C00000 */
             /*! tmp가 15면 윗라인 실행, 아니면 아랫라인 실행 */
-		movne	\rp, #EXYNOS4_PA_UART	@@ EXYNOS4  /*! EXYNOS4_PA_UART = 0x13800000 */
+		movne	\rp, #EXYNOS4_PA_UART	@@ EXYNOS4  
+            /*! EXYNOS4_PA_UART = 0x13800000 */
             /*! rp가 uart의 physical address 가 된다. */
-		ldr	\rv, =S3C_VA_UART     /*! S3C_VA_UART = S3C_ADDR_BASE + 0x01000000 */
+		ldr	\rv, =S3C_VA_UART     
+            /*! S3C_VA_UART = S3C_ADDR_BASE + 0x01000000 */
 
 #if CONFIG_DEBUG_S3C_UART != 0
 		add	\rp, \rp, #(0x10000 * CONFIG_DEBUG_S3C_UART)
