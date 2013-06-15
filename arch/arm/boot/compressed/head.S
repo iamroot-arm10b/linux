@@ -29,11 +29,12 @@
         /*! DCC 메시지 출력 매크로정의. ARM core의 cp14번을 통해서 uart와 유사하게 메시지 출력하는 기능 */
         /*! mcr 부분 */
 
-#if defined(CONFIG_CPU_V6) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
+#if defined(CONFIG_CPU_V5) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
 		.macro	loadsp, rb, tmp
-                /*! loadsp 라는 어셈블리 매크로를 정의한다. .endm 까지 */
-                /*! ARM 교재 p.711 */
 		.endm
+                /*! loadsp 라는 어셈블리 매크로를 정의한다. .endm 까지 */
+                /*! rb, tmp 는argument */
+                /*! ARM 교재 p.711 */
 		.macro	writeb, ch, rb
 		mcr	p14, 0, \ch, c0, c5, 0 
 		.endm
@@ -50,13 +51,24 @@
 		mcr	p14, 0, \ch, c1, c0, 0
 		.endm
 #endif
+/*! loadsp와 writeb 매크로를 config에 정해진 CPU에 따라 정의한 부분 */
+/* 엑시노스는config에서 CONFIG_CPU_V7로 정의되어 있다. */
 
 #else
+/* CONFIG_DEBUG_ICEDCC가 정의되어 있지 않는 경우 */
 
 #include CONFIG_DEBUG_LL_INCLUDE
 
 		.macro	writeb,	ch, rb
 		senduart \ch, \rb
+                /*! senduart 는 
+                   /home/arm/linux/arch/arm/include/debug/samsung.S 의 47라인에
+                   .macro  senduart,rd,rx
+                   strb    \rd, [\rx, # S3C2410_UTXH]
+                   .endm
+                   로 정의되어 있다.
+                   writeb를 사용할 때 출력이 어느쪽으로 가는지를 정의하기 위한 것
+                */
 		.endm
 
 #if defined(CONFIG_ARCH_SA1100)
@@ -73,13 +85,16 @@
 		mov	\rb, #0x50000000
 		add	\rb, \rb, #0x4000 * CONFIG_S3C_LOWLEVEL_UART_PORT
 		.endm
-#else
+
+#else           /*! CONFIG_CPU_V7 인 경우에 이 부분 실행된다. */
 		.macro	loadsp,	rb, tmp
 		addruart \rb, \tmp
+                /*! addruart는 ~/linux/arch/arm/include/debug/exynos.S 
+                    .macro addruart, rp, rv, tmp 에서 정의됨 */
 		.endm
 #endif
 #endif
-#endif      /*! end of  #ifdef DEBUG */ 
+#endif          /*! end of  #ifdef DEBUG */ 
 
 		.macro	kputc,val
 		mov	r0, \val
@@ -127,12 +142,24 @@
  * sort out different calling conventions
  */
 		.align
+                /*! ARM은 기본 4byte align 하는데 코드 들어가는 위치를 4의 배수로 만들어준다.
+                  4의 배수가 아니면 pedding을 해 준다. 
+                  숫가가 없으면 default 4
+                 */
 		.arm				@ Always enter in ARM state
 start:
 		.type	start,#function
+                /*! 
+                 * .type: start는 start 레이블 이름, #function 
+                 * start라는 symbol이 #function이라는 type이다. 
+                 * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것?
+                 */
 		.rept	7
 		mov	r0, r0
 		.endr
+                /*! mov r0, r0를 7번 반복한다.
+                 bootloader에서 기본주소를 32byte 더해줘서 실행해야하는 부분
+                 */
    ARM(		mov	r0, r0		)
    ARM(		b	1f		)
  THUMB(		adr	r12, BSYM(1f)	)
