@@ -899,11 +899,7 @@ call_cache_fn:	adr	r12, proc_types
  */
 #ifdef CONFIG_CPU_CP15
 /*!
-<<<<<<< HEAD
- * CONFIG_CPU_CP15 가 정의되어 있으므로 이곳이 실행된다.
-=======
- * CP15 = yes
->>>>>>> origin/master
+ * CONFIG_CPU_CP15 = yes 로 정의되어 있으므로 이곳이 실행된다.
  */
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
                 /*!
