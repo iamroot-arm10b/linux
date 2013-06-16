@@ -240,6 +240,7 @@ start:
 not_angel:
 		safe_svcmode_maskall r0
                 /*!
+                 * arch/arm/include/asm/assembler.h 의 .macro safe_svcmode_maskall reg:req 에서 정의됨.
                  * 인터럽트를 금지시키고 SVC 모드로 들어간다.
                  */
 		msr	spsr_cxsf, r9		@ Save the CPU boot mode in
