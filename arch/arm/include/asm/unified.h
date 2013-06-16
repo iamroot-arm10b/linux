@@ -16,6 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
+ /*
+  * UAL(Unified Assembly Language) 문법에 따라 THUMB2와 ARM모드에서 함께 쓰는
+  * 매크로를 지원하기 위한 헤더 파일이다. 
+  */
 
 #ifndef __ASM_UNIFIED_H
 #define __ASM_UNIFIED_H
@@ -25,7 +29,6 @@
 #endif
 
 #ifdef CONFIG_THUMB2_KERNEL
-
 #if __GNUC__ < 4
 #error Thumb-2 kernel requires gcc >= 4
 #endif
@@ -37,6 +40,7 @@
 #define THUMB(x...)	x
 #ifdef __ASSEMBLY__
 #define W(instr)	instr.w
+/* 명령어가 .w 로 끝나면 32 bit instruction의 Thumb-2 code를 생성한다. */
 #define BSYM(sym)	sym + 1
 #endif
 
