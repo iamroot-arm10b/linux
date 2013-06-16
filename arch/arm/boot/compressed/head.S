@@ -151,7 +151,9 @@ start:
 		.type	start,#function
                 /*! 
                  * .type: start는 start 레이블 이름, #function 
-                 * start라는 symbol이 #function이라는 type이다.  * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것?  */
+                 * start라는 symbol이 #function이라는 type이다.  
+                 * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것?
+                 */
 		.rept	7
 		mov	r0, r0
 		.endr
@@ -164,9 +166,10 @@ start:
  THUMB(		bx	r12		)
         /*! CONFIG_THUMB2_KERNEL 이 정의되어 있으면 THUMB 를 사용하고 아니면 ARM 이 실행된다. 
               include/asm/unified.h 에 있다.
+            우리가 타겟으로 하는 아키텍처인 경우,
             ARM(		mov	r0, r0		)
             ARM(		b	1f		)
-            이 실행된다. (우리가 타겟으로 하는 아키텍처인 경우)
+            이 실행된다. 
             뒷쪽(f:forward) 1번 레이블로 점프한다. 
          */
 		.word	0x016f2818		@ Magic numbers to help the loader
@@ -896,7 +899,11 @@ call_cache_fn:	adr	r12, proc_types
  */
 #ifdef CONFIG_CPU_CP15
 /*!
+<<<<<<< HEAD
  * CONFIG_CPU_CP15 가 정의되어 있으므로 이곳이 실행된다.
+=======
+ * CP15 = yes
+>>>>>>> origin/master
  */
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
                 /*!
