@@ -61,14 +61,14 @@
 
 		.macro	writeb,	ch, rb
 		senduart \ch, \rb
-                /*! senduart 는 
-                   /home/arm/linux/arch/arm/include/debug/samsung.S 의 47라인에
-                   .macro  senduart,rd,rx
-                   strb    \rd, [\rx, # S3C2410_UTXH]
-                   .endm
-                   로 정의되어 있다.
-                   writeb를 사용할 때 출력이 어느쪽으로 가는지를 정의하기 위한 것
-                */
+		/*! senduart 는
+		   arch/arm/include/debug/samsung.S 의 47라인에
+		   .macro  senduart,rd,rx
+		   strb    \rd, [\rx, # S3C2410_UTXH]
+		   .endm
+		   로 정의되어 있다.
+		   writeb를 사용할 때 출력이 어느쪽으로 가는지를 정의하기 위한 것
+		*/
 		.endm
 
 #if defined(CONFIG_ARCH_SA1100)
@@ -1088,6 +1088,10 @@ proc_types:
                  * r2에 셋팅되는 값
                  */
 		W(b)	__armv7_mmu_cache_on
+		/*!
+		 * #define W(instr)	instr.w <-- arch/arm/include/asm/unified.h 에서 정의됨.
+		 * 명령어가 .w 로 끝나면 32 bit instruction의 Thumb-2 code를 생성한다.
+		 */
 		W(b)	__armv7_mmu_cache_off
 		W(b)	__armv7_mmu_cache_flush
 
