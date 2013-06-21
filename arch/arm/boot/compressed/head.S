@@ -12,9 +12,11 @@
 #include <asm/assembler.h>
 
 	.arch	armv7-a
-        /*! 타겟 프로세스를 지정해준다 */
-	/*! .arch: select the target architecture */
-        /*! 어셈블러 컴파일 할때 타깃을 지정해야 알맞게 컴파일 할 수 있다.  */
+        /*! 
+	 * 타겟 프로세스를 지정해준다.
+	 * .arch: select the target architecture
+	 * 어셈블러 컴파일 할때 타깃을 지정해야 알맞게 컴파일 할 수 있다.
+	 */
 /*
  * Debugging stuff
  *
@@ -25,16 +27,21 @@
 #ifdef DEBUG 
 
 #if defined(CONFIG_DEBUG_ICEDCC)
-        /*! 컴파일때 옵션으로 주는 것 */
-        /*! DCC 메시지 출력 매크로정의. ARM core의 cp14번을 통해서 uart와 유사하게 메시지 출력하는 기능 */
-        /*! mcr 부분 */
+	/*!
+	 * 컴파일때 옵션으로 주는 것
+	 * DCC 메시지 출력 매크로정의.
+	 * ARM core의 cp14번을 통해서 uart와 유사하게 메시지 출력하는 기능
+	 * mcr 부분
+	 */
 
 #if defined(CONFIG_CPU_V5) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
 		.macro	loadsp, rb, tmp
 		.endm
-                /*! loadsp 라는 어셈블리 매크로를 정의한다. .endm 까지 */
-                /*! rb, tmp 는argument */
-                /*! ARM 교재 p.711 */
+		/*! 
+		 * loadsp 라는 어셈블리 매크로를 정의한다. .endm 까지
+		 * rb, tmp 는argument
+		 * ARM 교재 p.711
+		 */
 		.macro	writeb, ch, rb
 		mcr	p14, 0, \ch, c0, c5, 0 
 		.endm
