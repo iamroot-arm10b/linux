@@ -69,13 +69,13 @@
 		.macro	writeb,	ch, rb
 		senduart \ch, \rb
 		/*! senduart 는
-		   arch/arm/include/debug/samsung.S 의 47라인에
-		   .macro  senduart,rd,rx
-		   strb    \rd, [\rx, # S3C2410_UTXH]
-		   .endm
-		   로 정의되어 있다.
-		   writeb를 사용할 때 출력이 어느쪽으로 가는지를 정의하기 위한 것
-		*/
+		 * arch/arm/include/debug/samsung.S 의 47라인에
+		 * .macro  senduart,rd,rx
+		 * strb    \rd, [\rx, # S3C2410_UTXH]
+		 * .endm
+		 * 로 정의되어 있다.
+		 * writeb를 사용할 때 출력이 어느쪽으로 가는지를 정의하기 위한 것
+		 */
 		.endm
 
 #if defined(CONFIG_ARCH_SA1100)
@@ -308,15 +308,20 @@ not_angel:
                  */
 
 restart:	adr	r0, LC0
-/*!
-  * LC0 테이블의 절대주소를 읽어온다. 
-  */
+		/*!
+		  * LC0 테이블의 절대주소값을 r0로 가져온다.
+		  */
 		ldmia	r0, {r1, r2, r3, r6, r10, r11, r12}
 		/*!
-		  * r0는 실제시작위치+LC0의 주소
+                  * LC0에서 정보를 가져온다.
+		  * ldmia: 순차적으로 메모리를 액세스하여 여러개의 워드를 로드한다.
+		  * r0 = 실제시작위치주소+LC0의 주소
 		  * r1부터는 상대주소, r1~r12는 LC0에 있는 값
 		  */
 		ldr	sp, [r0, #28]
+                /*!
+                 * sp 설정 
+                 */
 
 		/*
 		 * We might be running at a different address.  We need
@@ -324,13 +329,18 @@ restart:	adr	r0, LC0
 		 */
 		sub	r0, r0, r1		@ calculate the delta offset
 		/*!
-		  * 실제의 시작위치를 r0에 셋팅한다. 
+                  * 보정하는 값을 구한다.
+		  * (실제의 시작위치주소를 r0에 셋팅한다.)
 		  */
 		add	r6, r6, r0		@ _edata
+                /*!
+                 * r6 의 현재 실행중인 위치 
+                 */
 		add	r10, r10, r0		@ inflated kernel size location
 		/*!
-		  * binary를 include하면서 binary의 끝위치를 가리키는데 
-		  * 그 현재 위치를 보정해주어서 정확한 위치를 r10에 넣는다.
+		  * 압축한 파일의 사이즈.
+		  * 커널 컴파일한 binary를 include하면서 binary의 끝위치를 가리키는데 
+		  * 그 현재 위치를 -4만큼 보정해주어서 압축파일의 사이즈가 있는 정확한 위치를 r10에 넣는다.
 		  */
 
 		/*
@@ -341,7 +351,7 @@ restart:	adr	r0, LC0
 		ldrb	r9, [r10, #0]
 		/*!
 		  * 가장 하위 8bit를 가져온다.
-		  * 압축파일의 lenth를 가지고 온다.
+		  * 이 위치에 있는 압축파일의 lenth를 가지고 온다.
 		  */
 		ldrb	lr, [r10, #1]
 		orr	r9, r9, lr, lsl #8
@@ -349,6 +359,9 @@ restart:	adr	r0, LC0
 		ldrb	r10, [r10, #3]
 		orr	r9, r9, lr, lsl #16
 		orr	r9, r9, r10, lsl #24
+                /*!
+                 * 현재 설정이 만약 빅 인이안(big-endian) 이더라도 little-endian 방식으로 읽어서 값을 제대로 읽을수 있도록 하여준다.
+                 */
 
 #ifndef CONFIG_ZBOOT_ROM
 		/* malloc space is above the relocated stack (64k max) */
@@ -361,6 +374,9 @@ restart:	adr	r0, LC0
 		 * in which case our reference is _edata.
 		 */
 		mov	r10, r6
+                /*!
+                 * r6 = edata end_of data data의 끝 
+                 */
 #endif
 
 		mov	r5, #0			@ init dtb size to 0
@@ -386,6 +402,9 @@ restart:	adr	r0, LC0
 
 		ldr	lr, [r6, #0]
 #ifndef __ARMEB__
+                /*!
+                 * ARM Endian Big??
+                 */
 		ldr	r1, =0xedfe0dd0		@ sig is 0xd00dfeed big endian
 #else
 		ldr	r1, =0xd00dfeed
@@ -461,7 +480,7 @@ restart:	adr	r0, LC0
 dtb_check_done:
 /*!
   * 퀄컴 최근 자료에 보니까 dtb를 부팅이미지 마지막에 붙인다.
-  * 최신퀄컴 디바이스 관련된 내용.
+  * dtb는 최신퀄컴 디바이스 관련된 내용으로 나중에 읽기로 함.
   */
 #endif
 
@@ -475,7 +494,8 @@ dtb_check_done:
  *   r4 + image length <= address of wont_overwrite -> OK
  */
 /*!
-  * r4 = 터널 압축을 풀 주소
+  * r4 = 커널 압축을 풀 주소
+  * 2013/06/22 여기까지  
   */
 		add	r10, r10, #16384
 		cmp	r4, r10
@@ -484,15 +504,11 @@ dtb_check_done:
 		adr	r9, wont_overwrite
 		cmp	r10, r9
 		bls	wont_overwrite
-
 		/*!
 		  * 커널 실행 중에 압축 풀 주소가 실행중인 코드와 겹치면 안되니까
 		  * 압축 풀 주소의 크기만큰 더해줘서 안겹치도록 한다.
 		  * wont_overwrite 보다 작으면 실행한 코드에 겹쳐쓰니까 괜찮지만
 		  * 실행할 코드가 남아 있는 부분에 겹쳐쓰면 재배치를 하게 된다.
-		  */
-		/*!
-		  * 오늘은 여기까지...2013/06/22
 		  */
 
 /*
@@ -702,7 +718,7 @@ params:		ldr	r0, =0x10000100		@ params_phys for RPC
  */
 		.align	5
 cache_on:	mov	r3, #8			@ cache_on function
-                /*! 
+               /*! 
                  * call_cache_fn 을 실행하기 전에 r3에 8 을 저장한다.
                  */
 		b	call_cache_fn
@@ -775,31 +791,86 @@ __armv3_mpu_cache_on:
 #define CB_BITS 0x0c
 #endif
 
+                /*!
+                 * 
+                   r4 = 커널 실제 실행할 주소 
+                     압축을 풀어서 커널이미지를 올릴 주소
+                     0x40008000
+                */
 __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		bic	r3, r3, #0xff		@ Align the pointer
 		bic	r3, r3, #0x3f00
-		/*!
-		  * bit clear. 16Kb 단위로 Align 하기 위해.
-		  */
+                /*!
+                 * 16KB단위로 Align 하기 위하여 bit clear 를 수행한다.
+                 */
+
 /*
  * Initialise the page tables, turning on the cacheable and bufferable
  * bits for the RAM area only.
  */
 		mov	r0, r3
-		mov	r9, r0, lsr #18
+		mov 	r9, r0, lsr #18
 		mov	r9, r9, lsl #18		@ start of RAM
+                /*!
+                 * r9 하위 18비트를 클리어 하여 준다.
+                 * 물리 메모리의 시작을 알려주기 위해서.
+                 * 256MB단위로 만들어준다
+                 * 정렬 단위가 256MB 일듯하다.
+                 * r9 = RAM start
+                 */
 		add	r10, r9, #0x10000000	@ a reasonable RAM size
+                /*!
+                 * r10 = end of ram 
+                 * 256MB의 RAM 
+                 */
 		mov	r1, #0x12		@ XN|U + section mapping
 		orr	r1, r1, #3 << 10	@ AP=11
-		add	r2, r3, #16384
+                
+                /*!
+                  * r1 = 0x12 or 1100 0000 0000 
+                  * r1 = 0xC12
+                  * AP = data access permission
+                  * AP = 11 -> full access
+                  * 11, 12번 비트가 AP비트를 설정하는 곳이다.
+                  */
+		/*!
+		  * sub	r3, r4, #16384		@ Page directory size
+		  */
+
+		add	r2, r3, #16384 @0x4000
+		/*!
+		  * r2 = r4 와 동일하다 
+		  */
+
 1:		cmp	r1, r9			@ if virt > start of RAM
 		cmphs	r10, r1			@   && end of RAM > virt
 		bic	r1, r1, #0x1c		@ clear XN|U + C + B
+                /*!
+                 * cache, buffer bit clear
+                 */
 		orrlo	r1, r1, #0x10		@ Set XN|U for non-RAM
+                /*!
+                 * XN bit set 
+                 * XN = 1이면은 실행 불가 
+                 */
 		orrhs	r1, r1, r6		@ set RAM section settings
+
+                /*!
+                 * r6 은 0xC 
+                 * cache , buffer bit set 
+                 */
 		str	r1, [r0], #4		@ 1:1 mapping
+                /*!
+                 * r1 값을 r0 넣고 증가 
+                 * r0 가 가르키는 메모리 주소는 page table start address
+                 * 엔트리 4byte를 계속하여 셋팅
+                 */
 		add	r1, r1, #1048576
 		teq	r0, r2
+                /*!
+                 * r0 = page table start address
+                 * r2 = kernel load address
+                 */
 		bne	1b
 /*
  * If ever we are running from Flash, then we surely want the cache
@@ -808,14 +879,42 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
  * If the execution is in RAM then we would only be duplicating the above.
  */
 		orr	r1, r6, #0x04		@ ensure B is set for this
+                /*!
+                 * r6 = 0xC, r1 = 0x08
+                 */
 		orr	r1, r1, #3 << 10
+                /*!
+                 * r1 에 ap = 11 full access
+                 * and B  bit set
+                 */
 		mov	r2, pc
 		mov	r2, r2, lsr #20
+
+                /*!
+                 * 속성 비트를 전부다 없애버린다. 
+                 * 1M 단위로 셋팅하기 위해서 .
+                 * pc의 페이지 테이블 엔트리를 구하는 것.
+                 * r2는 실제적인 물리 주소
+                 * r0 가 인덱스 값.
+                 * r1 합성된 주소 .
+                 * 속성 영역을 없애고 위에 주소 값들만을 남겨 놓는다 .
+                 * section base address만 남겨놓는다.
+                 */
 		orr	r1, r1, r2, lsl #20
+                /*!
+                 * r1 이 속성값을 지니고 있고
+                 * r2 section base address
+                 */
 		add	r0, r3, r2, lsl #2
+                /*!
+                 * 엔트리의 주소값을 구하기 위해서.
+                 */
 		str	r1, [r0], #4
 		add	r1, r1, #1048576
 		str	r1, [r0]
+                /*!
+                 * 1M를 2번하여 2M의 속성을 정하여 준다..
+                 */
 		mov	pc, lr
 ENDPROC(__setup_mmu)
 
@@ -833,7 +932,7 @@ __arm926ejs_mmu_cache_on:
 		mov	r0, #4			@ put dcache in WT mode
 		mcr	p15, 7, r0, c15, c0, 0
 #endif
-
+    
 __armv4_mmu_cache_on:
 		mov	r12, lr
 #ifdef CONFIG_MMU
@@ -858,44 +957,130 @@ __armv7_mmu_cache_on:
                 /*!
                   cache를 켜기 위해 들어왔다. 2013/06/15 스터디는 여기까지!
                   */
+                /*
+                   2013/06/22 일 스터디 시작하는 부분
+                   */
 		mov	r12, lr
-#ifdef CONFIG_MMU
+#ifdef CONFIG_MMU 
 		mrc	p15, 0, r11, c0, c1, 4	@ read ID_MMFR0
-		tst	r11, #0xf		@ VMSA
+		tst	r11, #0xf		@ VMSA 
+                /*!
+                 * VMSA 버츄얼 메모리 시스템 아키텍쳐 0번비트에서 3번비트까지.
+                r11 = 0x5 = 0101 and 1111 
+                z bit not setup 
+                 */
 		movne	r6, #CB_BITS | 0x02	@ !XN
 		/*!
 		  * CB_BITS = 0x08
 		  */
 		blne	__setup_mmu
+                /*!
+                 * 커널 압축 해제에 필요한 페이지 디렉터리 엔트리를 초기화 하여준다.
+                 * 메모리의 256MB영역에 대해서는 cacheable,bufferable로 설정해준다.
+                 */
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c10, 4	@ drain write buffer
+                /*!
+                 * c7 의 c10 , 4 = Data Synchronization Barrier operation
+                 * ??안써진 데이터를 쓰라고 하는것 같다??
+                 */
 		tst	r11, #0xf		@ VMSA
 		mcrne	p15, 0, r0, c8, c7, 0	@ flush I,D TLBs
+                /*!
+                 * c8 c7 0 = Invalidate unified TLB
+                 * TLB를 전체를 flush 하여 준다 .
+                 */
 #endif
 		mrc	p15, 0, r0, c1, c0, 0	@ read control reg
+                /*!
+                 *   c1 c0 0 =  SCTLR    0x00C50078[a]   
+                               System Control Register
+                 */
 		bic	r0, r0, #1 << 28	@ clear SCTLR.TRE
+                /*!
+                 * TEX remap enabled 하여준다 . TEX??
+                 * C비트와 B비트를 같이 쓰여서 속성을 특정 메모리 영역에 대한 access속성을 지정하는것.
+                 */
 		orr	r0, r0, #0x5000		@ I-cache enable, RR cache replacement
+
+                /*!
+                 * I비트와 RR 비트  set되고  
+                   I비트는 Instruction cache enable
+                   RR비트 1이 되면  Predictable strategy, for example, round-robin replacement
+                 */
 		orr	r0, r0, #0x003c		@ write buffer
+                /*!
+                 * C비트와 CP15BEN 을  set 
+                   C비트는 cache enable
+                   CP15BEN비트는  CP15 barrier operations enabled.
+                 */
 		bic	r0, r0, #2		@ A (no unaligned access fault)
+                 /*!
+                  * 2번 A비트를 clear 한다 
+                  * Alignment fault checking disabled
+                  */
 		orr	r0, r0, #1 << 22	@ U (v6 unaligned access model)
+                /*!
+                 *  U bit set In ARMv7 this bit is RAO/SBOP, 
+                 */
 						@ (needed for ARM1176)
 #ifdef CONFIG_MMU
 #ifdef CONFIG_CPU_ENDIAN_BE8
 		orr	r0, r0, #1 << 25	@ big-endian page tables
 #endif
 		mrcne   p15, 0, r6, c2, c0, 2   @ read ttb control reg
-		orrne	r0, r0, #1		@ MMU enabled
+                /*!
+                 * c2 , c0 , 2  Translation Table Base Control Register
+                 */
+                orrne	r0, r0, #1		@ MMU enabled
 		movne	r1, #0xfffffffd		@ domain 0 = client
 		bic     r6, r6, #1 << 31        @ 32-bit translation system
+                /*!
+                 * EAE bit clear 
+                  EAE bit 0 
+                  Use the 32-bit translation system, with the Short-descriptor translation table format. In
+                  this case, the format of the TTBCR is as described in this section.
+                 */
 		bic     r6, r6, #3 << 0         @ use only ttbr0
+                /*!
+                 * N bit 0 
+                   When N has its reset value of 0, the translation table
+                   base is compatible with ARMv5 and ARMv6
+                 */
 		mcrne	p15, 0, r3, c2, c0, 0	@ load page table pointer
+                /*!
+                 * r3 = TTBR0
+                 */
 		mcrne	p15, 0, r1, c3, c0, 0	@ load domain access control
+                /*!
+                 * r1 = Domain Access Control Register (DACR)
+                 */
 		mcrne   p15, 0, r6, c2, c0, 2   @ load ttb control
+                /*!
+                 * r6 = TTBCR
+                 page table base address 가 들어간다 .
+                 */
 #endif
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
+                /*!
+                 * C7 C5 4 = Instruction Synchronization Barrier operation
+                 Barrier가 없으면 CPU가 이아이들의 값이 써지기 전에 코프로세서로 값을 넘기게 되면은.
+                 문제가 발생?
+                 읽고나서 써야되는데 그러지 않으면은 순서가 엉켜 버릴수가 있다.
+                 */
 		mcr	p15, 0, r0, c1, c0, 0	@ load control register
+                /*!
+                 * r0 = SCR (System Control Register)
+                 */
 		mrc	p15, 0, r0, c1, c0, 0	@ and read it back
+                /*!
+                 * 일부러 의존성을 만들어서 다른 부분이 건드리지 못하게 함으로써
+                 * 배타적으로 쓰는것을 보장하여 준다.
+                 */
 		mov	r0, #0
+                /*!
+                 * R0 의 값을 0으로 
+                 */
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
 		mov	pc, r12
 
