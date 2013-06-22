@@ -308,7 +308,14 @@ not_angel:
                  */
 
 restart:	adr	r0, LC0
+/*!
+  * LC0 테이블의 절대주소를 읽어온다. 
+  */
 		ldmia	r0, {r1, r2, r3, r6, r10, r11, r12}
+		/*!
+		  * r0는 실제시작위치+LC0의 주소
+		  * r1부터는 상대주소, r1~r12는 LC0에 있는 값
+		  */
 		ldr	sp, [r0, #28]
 
 		/*
@@ -316,8 +323,15 @@ restart:	adr	r0, LC0
 		 * to fix up various pointers.
 		 */
 		sub	r0, r0, r1		@ calculate the delta offset
+		/*!
+		  * 실제의 시작위치를 r0에 셋팅한다. 
+		  */
 		add	r6, r6, r0		@ _edata
 		add	r10, r10, r0		@ inflated kernel size location
+		/*!
+		  * binary를 include하면서 binary의 끝위치를 가리키는데 
+		  * 그 현재 위치를 보정해주어서 정확한 위치를 r10에 넣는다.
+		  */
 
 		/*
 		 * The kernel build system appends the size of the
@@ -325,6 +339,10 @@ restart:	adr	r0, LC0
 		 * in little-endian form.
 		 */
 		ldrb	r9, [r10, #0]
+		/*!
+		  * 가장 하위 8bit를 가져온다.
+		  * 압축파일의 lenth를 가지고 온다.
+		  */
 		ldrb	lr, [r10, #1]
 		orr	r9, r9, lr, lsl #8
 		ldrb	lr, [r10, #2]
@@ -441,6 +459,10 @@ restart:	adr	r0, LC0
 		add	r10, r10, r5
 		add	sp, sp, r5
 dtb_check_done:
+/*!
+  * 퀄컴 최근 자료에 보니까 dtb를 부팅이미지 마지막에 붙인다.
+  * 최신퀄컴 디바이스 관련된 내용.
+  */
 #endif
 
 /*
@@ -452,6 +474,9 @@ dtb_check_done:
  *   r4 - 16k page directory >= r10 -> OK
  *   r4 + image length <= address of wont_overwrite -> OK
  */
+/*!
+  * r4 = 터널 압축을 풀 주소
+  */
 		add	r10, r10, #16384
 		cmp	r4, r10
 		bhs	wont_overwrite
@@ -459,6 +484,16 @@ dtb_check_done:
 		adr	r9, wont_overwrite
 		cmp	r10, r9
 		bls	wont_overwrite
+
+		/*!
+		  * 커널 실행 중에 압축 풀 주소가 실행중인 코드와 겹치면 안되니까
+		  * 압축 풀 주소의 크기만큰 더해줘서 안겹치도록 한다.
+		  * wont_overwrite 보다 작으면 실행한 코드에 겹쳐쓰니까 괜찮지만
+		  * 실행할 코드가 남아 있는 부분에 겹쳐쓰면 재배치를 하게 된다.
+		  */
+		/*!
+		  * 오늘은 여기까지...2013/06/22
+		  */
 
 /*
  * Relocate ourselves past the end of the decompressed kernel.
@@ -635,6 +670,9 @@ LC0:		.word	LC0			@ r1
 		.word	_got_start		@ r11
 		.word	_got_end		@ ip
 		.word	.L_user_stack_end	@ sp
+		/*!
+		  * 스택포인터가 설정된다.
+		  */
 		.size	LC0, . - LC0
 
 #ifdef CONFIG_ARCH_RPC
@@ -740,6 +778,9 @@ __armv3_mpu_cache_on:
 __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		bic	r3, r3, #0xff		@ Align the pointer
 		bic	r3, r3, #0x3f00
+		/*!
+		  * bit clear. 16Kb 단위로 Align 하기 위해.
+		  */
 /*
  * Initialise the page tables, turning on the cacheable and bufferable
  * bits for the RAM area only.
@@ -822,6 +863,9 @@ __armv7_mmu_cache_on:
 		mrc	p15, 0, r11, c0, c1, 4	@ read ID_MMFR0
 		tst	r11, #0xf		@ VMSA
 		movne	r6, #CB_BITS | 0x02	@ !XN
+		/*!
+		  * CB_BITS = 0x08
+		  */
 		blne	__setup_mmu
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c10, 4	@ drain write buffer
