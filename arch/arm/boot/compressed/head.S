@@ -720,7 +720,21 @@ __armv4_mpu_cache_on:
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c10, 4	@ drain write buffer
 		mcr	p15, 0, r0, c7, c5, 0	@ flush(inval) I-Cache
-		mcr	p15, 0, r0, c7, c6, 0	@ flush(inval) D-Cache mrc	p15, 0, r0, c1, c0, 0	@ read control reg @ ...I .... ..D. WC.M orr	r0, r0, #0x002d		@ .... .... ..1. 11.1 orr	r0, r0, #0x1000		@ ...1 .... .... ....  mcr	p15, 0, r0, c1, c0, 0	@ write control reg mov	r0, #0 mcr	p15, 0, r0, c7, c5, 0	@ flush(inval) I-Cache mcr	p15, 0, r0, c7, c6, 0	@ flush(inval) D-Cache mov	pc, lr __armv3_mpu_cache_on: mov	r0, #0x3f		@ 4G, the whole
+		mcr	p15, 0, r0, c7, c6, 0	@ flush(inval) D-Cache
+		mrc	p15, 0, r0, c1, c0, 0	@ read control reg
+						@ ...I .... ..D. WC.M
+		orr	r0, r0, #0x002d		@ .... .... ..1. 11.1
+		orr	r0, r0, #0x1000		@ ...1 .... .... ....
+
+		mcr	p15, 0, r0, c1, c0, 0	@ write control reg
+
+		mov	r0, #0
+		mcr	p15, 0, r0, c7, c5, 0	@ flush(inval) I-Cache
+		mcr	p15, 0, r0, c7, c6, 0	@ flush(inval) D-Cache
+		mov	pc, lr
+
+__armv3_mpu_cache_on:
+		mov	r0, #0x3f		@ 4G, the whole
 		mcr	p15, 0, r0, c6, c7, 0	@ PR7 Area Setting
 
 		mov	r0, #0x80		@ PR7
