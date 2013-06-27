@@ -289,15 +289,15 @@ not_angel:
 		ldr	r4, =zreladdr
                 /*!
                  * 고정된 주소값을 r4 영역으로 가져온다.
-                 압축을 풀어서 vmlinux 를 저장시킬 주소
-                 zreladdr = 0x40008000 
-                 compressed 안에 있는 Makefile이 실행되면서 만들어준다.
+                 * 압축을 풀어서 vmlinux 를 저장시킬 주소
+                 * zreladdr = 0x40008000 
+                 * compressed 안에 있는 Makefile이 실행되면서 만들어준다.
                     # Supply ZRELADDR to the decompressor via a linker symbol.
                     ifneq ($(CONFIG_AUTO_ZRELADDR),y)
-                    LDFLAGS_vmlinux += --defsym zreladdr=$(ZRELADDR)
+			    LDFLAGS_vmlinux += --defsym zreladdr=$(ZRELADDR)
                     endif
                     ifeq ($(CONFIG_CPU_ENDIAN_BE8),y)
-                    LDFLAGS_vmlinux += --be8
+			    LDFLAGS_vmlinux += --be8
                     endif
                  */
 #endif
@@ -966,8 +966,8 @@ __armv7_mmu_cache_on:
 		tst	r11, #0xf		@ VMSA 
                 /*!
                  * VMSA 버츄얼 메모리 시스템 아키텍쳐 0번비트에서 3번비트까지.
-                r11 = 0x5 = 0101 and 1111 
-                z bit not setup 
+                 * r11 = 0x5 = 0101 and 1111 
+                 * z bit not setup 
                  */
 		movne	r6, #CB_BITS | 0x02	@ !XN
 		/*!
@@ -1000,6 +1000,7 @@ __armv7_mmu_cache_on:
                 /*!
                  * TEX remap enabled 하여준다 . TEX??
                  * C비트와 B비트를 같이 쓰여서 속성을 특정 메모리 영역에 대한 access속성을 지정하는것.
+		 * TEX: Type extension. 메모리 속성 설정에 사용됩니다.
                  */
 		orr	r0, r0, #0x5000		@ I-cache enable, RR cache replacement
 
@@ -1141,6 +1142,8 @@ call_cache_fn:	adr	r12, proc_types
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
                 /*!
                  * cp15의 c0 레지스터 값을 r9에 저장
+		 * MMU ID 레지스터, c0을 읽는다.
+		 * 책 p.665 참조
                  */
 #else
 		ldr	r9, =CONFIG_PROCESSOR_ID

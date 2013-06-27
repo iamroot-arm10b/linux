@@ -284,22 +284,23 @@
 THUMB(	orr	\reg , \reg , #PSR_T_BIT	)
 	bne	1f
         /*!
-          하이퍼바이저가 아니면 1: 레이블로 점프
-         */
+	  * PSR_T_BIT	0x00000020
+	  * 하이퍼바이저가 아니면 1: 레이블로 점프
+          */
 	orr	\reg, \reg, #PSR_A_BIT
         /*!
-          PSR_A_BIT = 0x00000100
-          모호한 Abort를 clear시킨다.
-          책 p.622
+	  * PSR_A_BIT = 0x00000100
+	  * 모호한 Abort를 clear시킨다.
+	  * 책 p.622
           */
 	adr	lr, BSYM(2f)
         /*! 
-          ifdef CONFIG_THUMB2_KERNEL
-              thumb2면 주소에 1을 더한다. (책 pp.102~103 에 나온다.)
-          define BSYM(sym) sym + 1
-              아니면,
-          define BSYM(sym)	sym
-          */
+	  * ifdef CONFIG_THUMB2_KERNEL
+	  * thumb2면 주소에 1을 더한다. (책 pp.102~103)
+	  * define BSYM(sym) sym + 1
+	  * 아니면,
+	  * define BSYM(sym)	sym
+	  */
 	msr	spsr_cxsf, \reg
         /*!
           spsr의 4개의 필드로 구성되어 있다. control, extention, status, flag 필드이다.
