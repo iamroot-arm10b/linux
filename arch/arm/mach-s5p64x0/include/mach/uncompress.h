@@ -151,6 +151,9 @@ static inline void arch_enable_uart_fifo(void)
 				break;
 		}
 	}
+	/*!
+	 * uart rx/tx fifo reset : Exynos5 메뉴얼 12.6.1 참조.
+	 */
 }
 #else
 #define arch_enable_uart_fifo() do { } while(0)

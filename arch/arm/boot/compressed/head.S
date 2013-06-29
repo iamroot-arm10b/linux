@@ -309,13 +309,13 @@ not_angel:
 
 restart:	adr	r0, LC0
 		/*!
-		  * LC0 테이블의 절대주소값을 r0로 가져온다.
+		  * LC0 레이블의 주소값을 r0로 가져온다.
 		  */
 		ldmia	r0, {r1, r2, r3, r6, r10, r11, r12}
 		/*!
                   * LC0에서 정보를 가져온다.
 		  * ldmia: 순차적으로 메모리를 액세스하여 여러개의 워드를 로드한다.
-		  * r0 = 실제시작위치주소+LC0의 주소
+		  * r0 = LC0의 주소
 		  * r1부터는 상대주소, r1~r12는 LC0에 있는 값
 		  */
 		ldr	sp, [r0, #28]
@@ -360,7 +360,7 @@ restart:	adr	r0, LC0
 		orr	r9, r9, lr, lsl #16
 		orr	r9, r9, r10, lsl #24
                 /*!
-                 * 현재 설정이 만약 빅 인이안(big-endian) 이더라도 little-endian 방식으로 읽어서 값을 제대로 읽을수 있도록 하여준다.
+                 * 현재 설정이 만약 big-endian 이더라도 little-endian 방식으로 읽어서 값을 제대로 읽을수 있도록 하여준다.
                  */
 
 #ifndef CONFIG_ZBOOT_ROM
@@ -497,19 +497,33 @@ dtb_check_done:
   * r4 = 커널 압축을 풀 주소
   * 2013/06/22 여기까지  
   */
+/*!
+ * r10: this image(실행중 이미지)의 마지막 주소
+ */
 		add	r10, r10, #16384
 		cmp	r4, r10
 		bhs	wont_overwrite
+                /*!
+                 * r4 >= r10 이면 wont_overwrite로 분기
+                 * 안겹치면 wont_overwrite로 분기, 겹치면 아래부분 실행
+                 * 현재 실행중인 이미지의 끝에서 16k를 더한 위치가 압축을 풀 주소의 시작이미지보다 크다면 겹치는 것.
+                 */
 		add	r10, r4, r9
+                /*!
+                 * r10 = r9(압축을 풀 공간) + r4(16k의 끝 주소)
+                 */
 		adr	r9, wont_overwrite
 		cmp	r10, r9
+                /*!
+                 * 압축을 풀 공간이 실행중인 이미지보다 작다면 겹치지 않으므로 OK
+                 */
 		bls	wont_overwrite
 		/*!
-		  * 커널 실행 중에 압축 풀 주소가 실행중인 코드와 겹치면 안되니까
-		  * 압축 풀 주소의 크기만큰 더해줘서 안겹치도록 한다.
-		  * wont_overwrite 보다 작으면 실행한 코드에 겹쳐쓰니까 괜찮지만
-		  * 실행할 코드가 남아 있는 부분에 겹쳐쓰면 재배치를 하게 된다.
-		  */
+		 * 커널 실행 중에 압축 풀 주소가 실행중인 코드와 겹치면 안되니까
+		 * 압축 풀 주소의 크기만큰 더해줘서 안겹치도록 한다.
+		 * wont_overwrite 보다 작으면 실행한 코드에 겹쳐쓰니까 괜찮지만
+		 * 실행할 코드가 남아 있는 부분에 겹쳐쓰면 재배치를 하게 된다.
+		 */
 
 /*
  * Relocate ourselves past the end of the decompressed kernel.
@@ -524,13 +538,29 @@ dtb_check_done:
 		 * ourself when the offset is small.
 		 */
 		add	r10, r10, #((reloc_code_end - restart + 256) & ~255)
+                /*!
+                 * 현재 주소값에서 한 블럭 올려서 마지막 8bit를 align하는 것.
+                 * 256byte를 올림해서 한 블럭을 비워두는 것.
+                 * offset이 작을 때 스스로 overwrite하지 않기 위해서 buffer를 두는 것.
+                 */
 		bic	r10, r10, #255
+                /*!
+                 * 현재주소에서 올림해서 r10의 마지막 8bit를 지우는 것.
+                 */
 
 		/* Get start of code we want to copy and align it down. */
 		adr	r5, restart
 		bic	r5, r5, #31
+                /*!
+                 * restart의 주소를 r5로 옮기고 아래 5bit를 clear.
+                 * 4byte align만 해도 되는데 32byte align을 해야하는 이유는 뭔가??
+                 * 쉽게 하기 위해서인지 다른 의도가 있는건지?
+                 */
 
 /* Relocate the hyp vector base if necessary */
+/*!
+* 하이퍼바이저 부분이므로 건너뜀.
+*/
 #ifdef CONFIG_ARM_VIRT_EXT
 		mrs	r0, spsr
 		and	r0, r0, #MODE_MASK
@@ -544,30 +574,64 @@ dtb_check_done:
 1:
 #endif
 
+                /*!
+                 * r9: zImage의 크기
+                 * r10: zImage의 크기
+                 */
 		sub	r9, r6, r5		@ size to copy
+                /*!
+                 * restart부터 끝(_edata)까지의 복사할 크기
+                 */
 		add	r9, r9, #31		@ rounded up to a multiple
 		bic	r9, r9, #31		@ ... of 32 bytes
 		add	r6, r9, r5
 		add	r9, r9, r10
+                /*!
+                 * r6 = 소스포인트. r9(복사할 크기)를 32byte align 한 값 + r5를 32byte align 한 값
+                 * r9 = 목적포인트. zImage의 가장 큰 주소값.
+                 * r9(복사할 크기)를 32byte align 한 값 + r10(현재주소에서 올림하여 마지막 8bit 지운 값)
+                 */
 
 1:		ldmdb	r6!, {r0 - r3, r10 - r12, lr}
 		cmp	r6, r5
 		stmdb	r9!, {r0 - r3, r10 - r12, lr}
 		bhi	1b
+                /*!
+                 * r9에서 r10방향으로, 큰주소에서 작은주소방향으로 복사를 수행한다. 
+                 */
 
 		/* Preserve offset to relocated code. */
 		sub	r6, r9, r6
+                /*!
+                 * r6 ~ r9 가 압축을 풀 주소. offset 구해서 r6에 저장
+                 */
 
 #ifndef CONFIG_ZBOOT_ROM
 		/* cache_clean_flush may use the stack, so relocate it */
 		add	sp, sp, r6
+                /*!
+                 * stack pointer도 offset만큼 올려준다.
+                 * vmlinux가 사용되는 영역에 stack이 사용되지 않도록 위치 조정.
+                 * stack pointer는 .stack섹션의 끝을 가리키고 있었다.
+                 */
 #endif
 
 		bl	cache_clean_flush
+		/*!
+		 * cache_clean_flush -> .... -> iflush
+		 * 
+		 */
 
 		adr	r0, BSYM(restart)
+		/*!
+		 * 옮긴 위치에 restart로 가서 재실행되면 wont_overwrite: 로 갈 수 있다.
+		 * arch/arm/include/asm/unified.h에 #define BSYM(sym)	sym 로 정의되어 있다.
+		 */
 		add	r0, r0, r6
 		mov	pc, r0
+		/*!
+		 * r0에 offset만큼 더해서 다시 relocation된 restart: 로 점프.
+		 */
 
 wont_overwrite:
 /*
@@ -583,11 +647,26 @@ wont_overwrite:
  *   r12 = GOT end
  *   sp  = stack pointer
  */
+/*!
+ * GOT: Global offset table. zImage의 GOT.
+ */
 		orrs	r1, r0, r5
+		/*!
+		 * r0: 실행되는 주소와 컴파일된 주소와의 차이.
+		 * r0 = r5 = 0 이면 not_relocated로 점프
+		 * 컴파일 기준주소와 현재 실행주소가 같다면 not_relocated 실행.
+		 */
 		beq	not_relocated
+		/*!
+		 * BSS영역을 초기화하고 decompress_kernel 이 실행된다.
+		 * not_relocated는 필요한 경우에 다시 분석하기로 함.
+		 */
 
 		add	r11, r11, r0
 		add	r12, r12, r0
+		/*!
+		 * GOT의 시작/끝 주소에 offset을 더해서 relocation된 위치로 수정한다.
+		 */
 
 #ifndef CONFIG_ZBOOT_ROM
 		/*
@@ -597,6 +676,9 @@ wont_overwrite:
 		 */
 		add	r2, r2, r0
 		add	r3, r3, r0
+		/*!
+		 * BSS의 시작/끝 주소에 offset을 더해서 relocation된 위치로 수정한다.
+		 */
 
 		/*
 		 * Relocate all entries in the GOT table.
@@ -610,10 +692,21 @@ wont_overwrite:
 		str	r1, [r11], #4		@ next entry
 		cmp	r11, r12
 		blo	1b
+		/*!
+		 * delta값과 BSS 안에 있으면 DTB(Device Tree Binary, 데이터 포맷) 크기만큼 더해준다.
+		 * GOT 테이블 안에 있는 주소들 중에서 BSS 영역에 포함되는 주소에는 DTB크기만큼 더해준다.
+		 * DTB(Device Tree Blob) => http://www.iamroot.org/xe/Kernel_8_ARM/61099 의 댓글 참조.
+		 * The DTB is a database that represents the hardware components on a given board.
+		 * 기본적인 역할은 ATAG와 같습니다. 
+		 * 가장 큰 차이점은 컴파일을 통해 바이너리 이미지로 만들어 진다는거 같습니다.
+		 */
 
 		/* bump our bss pointers too */
 		add	r2, r2, r5
 		add	r3, r3, r5
+		/*!
+		 * BSS 주소도 dtb 크기만큼 더해준다.
+		 */
 
 #else
 
@@ -628,6 +721,12 @@ wont_overwrite:
 		str	r1, [r11], #4		@ C references.
 		cmp	r11, r12
 		blo	1b
+		/*!
+		 * CONFIG_ZBOOT_ROM = y인 경우,
+		 * BSS 와 DATA 영역이 떨어져 있으므로 BSS 영역은 relocation할 필요가 없다. 
+		 * delta가 있으면 BSS 이외의 영역은 모두 relocation한다.
+		 * NOR flash 또는 ROM 인 경우에 해당됨.
+		 */
 #endif
 
 not_relocated:	mov	r0, #0
@@ -637,6 +736,12 @@ not_relocated:	mov	r0, #0
 		str	r0, [r2], #4
 		cmp	r2, r3
 		blo	1b
+		/*!
+		 * BSS 영역을 초기화 한다. (BSS: 전역변수 중에서 값 할당 안된 부분)
+		 * 4개씩 쓰고 분기하면 1개씩 쓰는 것보다는 성능이 좋다.
+		 * 128bit align 으로 되어 있으므로 문제 없다.
+		 * 스택을 조금 침범해도 문제는 없다.
+		 */
 
 /*
  * The C runtime environment should now be setup sufficiently.
@@ -645,11 +750,19 @@ not_relocated:	mov	r0, #0
  *   r7  = architecture ID
  *   r8  = atags pointer
  */
+		/*!
+		 * 다른 회사에서 만든 컴파일러들이 올바로 작동할 수 있도록 ARM사에서 정한 규칙에 따라.
+		 * 각가의 함수가 콜되었을때 r0~r3은 인자로 사용하고 나머지는 스택에 저장해서 사용.
+		 * calling convention(procedure standard)
+		 */
 		mov	r0, r4
 		mov	r1, sp			@ malloc space above stack
 		add	r2, sp, #0x10000	@ 64k max
 		mov	r3, r7
 		bl	decompress_kernel
+		/*!
+		 * 2013/06/29 여기까지
+		 */
 		bl	cache_clean_flush
 		bl	cache_off
 		mov	r1, r7			@ restore architecture number
@@ -1330,6 +1443,9 @@ proc_types:
 		 */
 		W(b)	__armv7_mmu_cache_off
 		W(b)	__armv7_mmu_cache_flush
+		/*!
+		 * cache_clean_flush:에서 r3 = 16 이므로 __armv7_mmu_cache_flush 이 실행된다.
+		 */
 
 		.word	0			@ unrecognised type
 		.word	0
@@ -1424,7 +1540,14 @@ __armv7_mmu_cache_off:
 		.align	5
 cache_clean_flush:
 		mov	r3, #16
+		/*!
+		 * r3에 16을 move하는 이유는 proc_type에서 5번째 엔트리가 flush이기 때문에.
+		 * zImage가 relocation하기 전에 cache에 들어있던 데이터를 모두 지운다.
+		 */
 		b	call_cache_fn
+                /*!
+                 * ARM V7 에서는 __armv7_mmu_cache_flush 가 실행된다.
+                 */
 
 __armv4_mpu_cache_flush:
 		mov	r2, #1
@@ -1465,6 +1588,9 @@ __armv7_mmu_cache_flush:
 		beq	hierarchical
 		mcr	p15, 0, r10, c7, c14, 0	@ clean+invalidate D
 		b	iflush
+		/*!
+		 * 이렇게 사용하면 캐시가 flush된다.
+		 */
 hierarchical:
 		mcr	p15, 0, r10, c7, c10, 5	@ DMB
 		stmfd	sp!, {r0-r7, r9-r11}
@@ -1517,6 +1643,9 @@ iflush:
 		mcr	p15, 0, r10, c7, c10, 4	@ DSB
 		mcr	p15, 0, r10, c7, c5, 4	@ ISB
 		mov	pc, lr
+		/*!
+		 * 인스트럭션 캐시가 flush되고 cache_clean_flush 를 call한 위치로 돌아간다.
+		 */
 
 __armv5tej_mmu_cache_flush:
 1:		mrc	p15, 0, r15, c7, c14, 3	@ test,clean,invalidate D cache

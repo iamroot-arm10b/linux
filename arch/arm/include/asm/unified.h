@@ -42,9 +42,12 @@
 #define W(instr)	instr.w
 /*! 명령어가 .w 로 끝나면 32 bit instruction의 Thumb-2 code를 생성한다. */
 #define BSYM(sym)	sym + 1
+	/*!
+	 * 여기는 THUMB2 커널일때만 적용된다.
+	 */
 #endif
 
-#else	/* !CONFIG_THUMB2_KERNEL */
+#else	/*! CONFIG_THUMB2_KERNEL */
 
 /* The CPSR bit describing the instruction set (ARM) */
 #define PSR_ISETSTATE	0

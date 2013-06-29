@@ -9,3 +9,4 @@ History
 07. 2013.06.08 : 19 : ARM System Developer's Guide: 9장 ~ 14장까지 (p.355 ~ p.615) 끝.
 08. 2013.06.15 : 21 : arch/arm/boot/compressed/head.S, *__armv7_mmu_cache_on:*
 09. 2013.06.22 : 15 : arch/arm/boot/compressed/head.S, *dtb_check_done:*
+10. 2013.06.29 : 17 : arch/arm/boot/compressed/head.S, *decompressd_kernel*
