@@ -9,4 +9,4 @@ History
 07. 2013.06.08 : 19 : 숭실대학교 : ARM System Developer's Guide: 9장 ~ 14장까지 (p.355 ~ p.615) 끝.
 08. 2013.06.15 : 21 : 숭실대학교 : arch/arm/boot/compressed/head.S, *__armv7_mmu_cache_on:*
 09. 2013.06.22 : 15 : 토즈 아트레온점 : arch/arm/boot/compressed/head.S, *dtb_check_done:*
-10. 2013.06.29 : 19 : 토즈 신천점 : arch/arm/boot/compressed/head.S, *decompressd_kernel*
+10. 2013.06.29 : 19 : 토즈 신천점 : arch/arm/boot/compressed/head.S, *decompress_kernel*
