@@ -46,7 +46,10 @@ static void arch_detect_cpu(void)
 	 * For preventing FIFO overrun or infinite loop of UART console,
 	 * fifo_max should be the minimum fifo size of all of the UART channels
 	 */
-	fifo_mask = S5PV210_UFSTAT_TXMASK;
-	fifo_max = 15 << S5PV210_UFSTAT_TXSHIFT;
+	fifo_mask = S5PV210_UFSTAT_TXMASK; /*! S5PV210_UFSTAT_TXMASK = 255<<16 */
+	fifo_max = 15 << S5PV210_UFSTAT_TXSHIFT; /*! S5PV210_UFSTAT_TXSHIFT = 16 */
+	/*!
+	 * 12.6.1.7 UFSTATn 참조. Tx FIFO count 부분 보는 것
+	 */
 }
 #endif /* __ASM_ARCH_UNCOMPRESS_H */

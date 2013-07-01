@@ -135,6 +135,12 @@ decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p,
 		unsigned long free_mem_ptr_end_p,
 		int arch_id)
 {
+    /*!
+     * mov	r0, r4
+     * mov	r1, sp			@ malloc space above stack
+     * add	r2, sp, #0x10000	@ 64k max
+     * mov	r3, r7
+     */
 	int ret;
 
 	output_data		= (unsigned char *)output_start;
@@ -143,6 +149,9 @@ decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p,
 	__machine_arch_type	= arch_id;
 
 	arch_decomp_setup();
+	/*!
+	 * decompress_kernel 에 전달할 인자값 생성
+	 */
 
 	putstr("Uncompressing Linux...");
 	ret = do_decompress(input_data, input_data_end - input_data,

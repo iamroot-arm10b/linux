@@ -154,12 +154,20 @@ arch_decomp_setup(void)
 	 */
 
 	arch_detect_cpu();
+	/*!
+	 * uart의 베이스 주소를 가져오는 부분
+	 * 특정 주소에 device 설정하는 부분.
+	 */
 
 	/* Enable the UART FIFOs if they where not enabled and our
 	 * configuration says we should turn them on.
 	 */
 
 	arch_enable_uart_fifo();
+	/*!
+	 * uart에 메시지 출력하기 위해 UART 초기화하는 함수
+	 * 칩마다 주소, 레지스터 등이 모두 다르다. 안보기로 함.
+	 */
 }
 
 
