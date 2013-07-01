@@ -150,6 +150,8 @@ decompress_kernel(unsigned long output_start, unsigned long free_mem_ptr_p,
 
 	arch_decomp_setup();
 	/*!
+	 * uart에 메시지 출력하기 위해 UART 초기화
+	 * arch/arm/plat-samsung/include/plat/uncompress.h 파일 사용.
 	 * decompress_kernel 에 전달할 인자값 생성
 	 */
 
