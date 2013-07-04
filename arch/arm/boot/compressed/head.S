@@ -34,7 +34,7 @@
 	 * mcr 부분
 	 */
 
-#if defined(CONFIG_CPU_V5) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
+#if defined(CONFIG_CPU_V6) || defined(CONFIG_CPU_V6K) || defined(CONFIG_CPU_V7)
 		.macro	loadsp, rb, tmp
 		.endm
 		/*!
@@ -103,7 +103,8 @@
 		.endm
 #endif
 #endif
-#endif		/*! end of  #ifdef DEBUG */
+#endif
+/*! end of  #ifdef DEBUG */
 
 		.macro	kputc,val
 		mov	r0, \val
@@ -223,7 +224,6 @@ start:
 		  Documentation/arm/Booting 에 있다.
 		 */
 
-#ifndef __ARM_ARCH_2__
 		/*
 		 * Booting from Angel - need to enter SVC mode and disable
 		 * FIQs/IRQs (numeric definitions from angel arm.h source).
@@ -254,16 +254,6 @@ not_angel:
 		 */
 		msr	spsr_cxsf, r9		@ Save the CPU boot mode in
 						@ SPSR
-		/*!
-		 * mrs	r9, cpsr 을 해 둔것에서 가져옴
-		 */
-#else
-		teqp	pc, #0x0c000003		@ turn off interrupts
-		/*!
-		 * ARM_ARCH_2__에서 인터럽트 끄는 것
-		 */
-#endif
-
 		/*
 		 * Note that some cache flushing and other stuff may
 		 * be needed here - is there an Angel SWI call for this?
@@ -304,10 +294,19 @@ not_angel:
 		 */
 #endif
 
-		bl	cache_on
-		/*!
-		 * cache_on 로 점프
+		/*
+		 * Set up a page table only if it won't overwrite ourself.
+		 * That means r4 < pc && r4 - 16k page directory > &_end.
+		 * Given that r4 > &_end is most unfrequent, we add a rough
+		 * additional 1MB of room for a possible appended DTB.
 		 */
+		mov	r0, pc
+		cmp	r0, r4
+		ldrcc	r0, LC0+32
+		addcc	r0, r0, pc
+		cmpcc	r4, r0
+		orrcc	r4, r4, #1		@ remember we skipped cache_on
+		blcs	cache_on
 
 restart:	adr	r0, LC0
 		/*!
@@ -399,7 +398,7 @@ restart:	adr	r0, LC0
  *   r0  = delta
  *   r2  = BSS start
  *   r3  = BSS end
- *   r4  = final kernel address
+ *   r4  = final kernel address (possibly with LSB set)
  *   r5  = appended dtb size (still unknown)
  *   r6  = _edata
  *   r7  = architecture ID
@@ -450,6 +449,7 @@ restart:	adr	r0, LC0
 		 */
 		cmp	r0, #1
 		sub	r0, r4, #TEXT_OFFSET
+		bic	r0, r0, #1
 		add	r0, r0, #0x100
 		mov	r1, r6
 		sub	r2, sp, r6
@@ -500,12 +500,13 @@ dtb_check_done:
 
 /*
  * Check to see if we will overwrite ourselves.
- *   r4  = final kernel address
+ *   r4  = final kernel address (possibly with LSB set)
  *   r9  = size of decompressed image
  *   r10 = end of this image, including  bss/stack/malloc space if non XIP
  * We basically want:
  *   r4 - 16k page directory >= r10 -> OK
  *   r4 + image length <= address of wont_overwrite -> OK
+ * Note: the possible LSB in r4 is harmless here.
  */
 /*!
   * r4 = 커널 압축을 풀 주소
@@ -630,11 +631,8 @@ dtb_check_done:
 		 */
 #endif
 
-		bl	cache_clean_flush
-		/*!
-		 * cache_clean_flush -> call_cache_fn -> __armv7_mmu_cache_flush -> iflush
-		 * 에서 cache가 flush되어 메모리에 기록된다.
-		 */
+		tst	r4, #1
+		bleq	cache_clean_flush
 
 		adr	r0, BSYM(restart)
 		/*!
@@ -653,7 +651,7 @@ wont_overwrite:
  *   r0  = delta
  *   r2  = BSS start
  *   r3  = BSS end
- *   r4  = kernel execution address
+ *   r4  = kernel execution address (possibly with LSB set)
  *   r5  = appended dtb size (0 if not present)
  *   r7  = architecture ID
  *   r8  = atags pointer
@@ -757,6 +755,15 @@ not_relocated:	mov	r0, #0
 		 * 스택을 조금 침범해도 문제는 없다.
 		 */
 
+		/*
+		 * Did we skip the cache setup earlier?
+		 * That is indicated by the LSB in r4.
+		 * Do it now if so.
+		 */
+		tst	r4, #1
+		bic	r4, r4, #1
+		blne	cache_on
+
 /*
  * The C runtime environment should now be setup sufficiently.
  * Set up some pointers, and start decompressing.
@@ -816,6 +823,7 @@ LC0:		.word	LC0			@ r1
 		/*!
 		  * 스택포인터가 설정된다.
 		  */
+		.word	_end - restart + 16384 + 1024*1024
 		.size	LC0, . - LC0
 
 #ifdef CONFIG_ARCH_RPC
