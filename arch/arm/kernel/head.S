@@ -103,6 +103,9 @@ ENTRY(stext)
 	blo	__error_p			@ only classic page table format
 #endif
 
+	/*!
+	 * eXcute in Place : 커널을 램으로 복사하지 않고 해당 위치에서 바로 실행한다.
+	 */
 #ifndef CONFIG_XIP_KERNEL
 	adr	r3, 2f
 	ldmia	r3, {r4, r8}
@@ -482,15 +485,24 @@ __fixup_smp:
 	orr	r4, r4, #0x0000b000
 	orr	r4, r4, #0x00000020	@ val 0x4100b020
 	teq	r3, r4			@ ARM 11MPCore?
+	/*!
+	 * 칩의 종류를 파악하기 위해 비교한다.
+	 */
 	moveq	pc, lr			@ yes, assume SMP
 
 	mrc	p15, 0, r0, c0, c0, 5	@ read MPIDR
 	and	r0, r0, #0xc0000000	@ multiprocessing extensions and
 	teq	r0, #0x80000000		@ not part of a uniprocessor system?
+	/*!
+	 * 멀티프로세스가 아니면 상위비트는 둘다 0
+	 */
 	moveq	pc, lr			@ yes, assume SMP
 
 __fixup_smp_on_up:
 	adr	r0, 1f
+	/*!
+	 * 현재 실행주소를 가져온다.
+	 */
 	ldmia	r0, {r3 - r5}
 	sub	r3, r0, r3
 	add	r4, r4, r3
@@ -513,9 +525,19 @@ smp_on_up:
 
 	.text
 __do_fixup_smp_on_up:
+/*!
+ * 프로그램 내에서 사용된 ALT_SMP 매크로의 위치에 있는 명령어를 ALT_UP 명령어로 치환한다.
+ */
 	cmp	r4, r5
+	/*!
+	 * r4 : begin, r5: end
+	 */
 	movhs	pc, lr
 	ldmia	r4!, {r0, r6}
+	/*!
+	 * r0 = ?
+	 * r6 = ?
+	 */
  ARM(	str	r6, [r0, r3]	)
  THUMB(	add	r0, r0, r3	)
 #ifdef __ARMEB__
@@ -597,6 +619,9 @@ __fixup_a_pv_table:
 	str	ip, [r7, r3]
 2:	cmp	r4, r5
 	ldrcc	r7, [r4], #4	@ use branch for delay slot
+	/*!
+	 * r5가 r4보다 크다민 bit clear
+	 */
 	bcc	1b
 	mov	pc, lr
 #endif

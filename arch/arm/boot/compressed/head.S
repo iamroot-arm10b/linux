@@ -1536,6 +1536,9 @@ __armv7_mmu_cache_off:
 		mrc	p15, 0, r0, c1, c0
 #ifdef CONFIG_MMU
 		bic	r0, r0, #0x000d
+		/*!
+		 * r0 = c1 = 1101 (System Control Register) cache, mmu register의 상태코드를 clear한다.
+		 */
 #else
 		bic	r0, r0, #0x000c
 #endif

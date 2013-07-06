@@ -184,6 +184,9 @@ extern unsigned long __pv_phys_offset;
 	"	.popsection\n"				\
 	: "=r" (to)					\
 	: "r" (from), "I" (type))
+/*!
+ * 명령어에 대한 주소값을 테이블로 만들어 둔다.
+ */
 
 static inline unsigned long __virt_to_phys(unsigned long x)
 {

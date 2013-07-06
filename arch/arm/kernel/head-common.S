@@ -48,16 +48,29 @@ __vet_atags:
 	bne	1f
 
 	ldr	r5, [r2, #0]
+	/*!
+	 * ATAGS 의 header 첫 파라미터는 size
+	 */
 #ifdef CONFIG_OF_FLATTREE
 	ldr	r6, =OF_DT_MAGIC		@ is it a DTB?
+	/*!
+	 * OF_DT_MAGIC = 0xd00dfeed
+	 */
 	cmp	r5, r6
 	beq	2f
 #endif
 	cmp	r5, #ATAG_CORE_SIZE		@ is first tag ATAG_CORE?
 	cmpne	r5, #ATAG_CORE_SIZE_EMPTY
+	/*!
+	 * #define ATAG_CORE_SIZE ((2*4 + 3*4) >> 2)
+	 * #define ATAG_CORE_SIZE_EMPTY ((2*4) >> 2)
+	 */
 	bne	1f
 	ldr	r5, [r2, #4]
 	ldr	r6, =ATAG_CORE
+	/*!
+	 * #define ATAG_CORE 0x54410001
+	 */
 	cmp	r5, r6
 	bne	1f
 
@@ -151,9 +164,17 @@ __lookup_processor_type:
 	adr	r3, __lookup_processor_type_data
 	ldmia	r3, {r4 - r6}
 	sub	r3, r3, r4			@ get offset between virt&phys
+	/*!
+	 * r4 = . 이고 r3는 virture address이므로 버추어 주소와 물리 주소의 차이를 구한다.
+	 * 현재는 MMU를 껐기 때문에 phys 주소다.
+	 */
 	add	r5, r5, r3			@ convert virt addresses to
 	add	r6, r6, r3			@ physical address space
 1:	ldmia	r5, {r3, r4}			@ value, mask
+	/*!
+	 * value = .long   0x410fc070
+	 * mask =  .long   0xff0ffff0
+	 */
 	and	r4, r4, r9			@ mask wanted bits
 	teq	r3, r4
 	beq	2f
