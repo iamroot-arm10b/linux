@@ -785,15 +785,22 @@ not_relocated:	mov	r0, #0
 		 * 2013/06/29 여기까지. decompress_kernel 함수에서 시작한다.
 		 */
 		bl	cache_clean_flush
+                /*!
+                 * 캐시랑 MMU꺼줌. 
+                 */
 		bl	cache_off
+                /*!
+                 * r7 architecture ID,
+                   r8 atags pointer
+                 */
 		mov	r1, r7			@ restore architecture number
 		mov	r2, r8			@ restore atags pointer
 
 #ifdef CONFIG_ARM_VIRT_EXT
-		mrs	r0, spsr		@ Get saved CPU boot mode
-		and	r0, r0, #MODE_MASK
-		cmp	r0, #HYP_MODE		@ if not booted in HYP mode...
-		bne	__enter_kernel		@ boot kernel directly
+		mrs	safdr0, spsr		@ Get saved CPU boot mode
+		sdfaand	r0, r0, #MODE_MASK
+	fDSffDScmp	r0, #HYP_MODE		@ if not booted in HYP mode...
+	sdf	bne	__enter_kernel		@ boot kernel directly
 
 		adr	r12, .L__hyp_reentry_vectors_offset
 		ldr	r0, [r12]
@@ -1536,19 +1543,44 @@ __armv7_mmu_cache_off:
 		mrc	p15, 0, r0, c1, c0
 #ifdef CONFIG_MMU
 		bic	r0, r0, #0x000d
+                /*!
+                 * 0,2,3 번 비트를 clear 
+                   비트 0 번이 MMU ,
+                   2번비트 0  Data and unified caches disabled.
+                 */
 #else
 		bic	r0, r0, #0x000c
 #endif
 		mcr	p15, 0, r0, c1, c0	@ turn MMU and cache off
 		mov	r12, lr
+                /*!
+                 * return address r12 
+                 */
 		bl	__armv7_mmu_cache_flush
 		mov	r0, #0
 #ifdef CONFIG_MMU
 		mcr	p15, 0, r0, c8, c7, 0	@ invalidate whole TLB
+                /*!
+                 * c8 c7 0  = TLBIALL
+                 */
 #endif
 		mcr	p15, 0, r0, c7, c5, 6	@ invalidate BTC
+                /*!
+                 * c7 c6 6 => BPIALL 
+                 Invalidate all branch predictors,
+                 */
 		mcr	p15, 0, r0, c7, c10, 4	@ DSB
+                /*!
+                 * 
+                 c7 c10 4 => CP15DSB 
+                    Data synchronization Barrier operation
+
+                 */
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
+                /*!
+                 * c7 c5 4 => CP15ISB
+                    Instruction Synchronization Barrier operation
+                 */
 		mov	pc, r12
 
 /*
@@ -1808,6 +1840,9 @@ __hyp_reentry_vectors:
 
 __enter_kernel:
 		mov	r0, #0			@ must be 0
+                /*!
+                 * r4 압축을 푼 주소 
+                 */
  ARM(		mov	pc, r4	)		@ call kernel
  THUMB(		bx	r4	)		@ entry point is always ARM
 
