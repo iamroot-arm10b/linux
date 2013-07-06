@@ -463,7 +463,13 @@ __v7_cr7mp_proc_info:
 	.type	__v7_ca7mp_proc_info, #object
 __v7_ca7mp_proc_info:
 	.long	0x410fc070
+	/*!
+	 * id
+	 */
 	.long	0xff0ffff0
+	/*!
+	 * mask
+	 */
 	__v7_proc __v7_ca7mp_setup
 	.size	__v7_ca7mp_proc_info, . - __v7_ca7mp_proc_info
 

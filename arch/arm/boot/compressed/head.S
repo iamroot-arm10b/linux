@@ -1544,9 +1544,9 @@ __armv7_mmu_cache_off:
 #ifdef CONFIG_MMU
 		bic	r0, r0, #0x000d
                 /*!
-                 * 0,2,3 번 비트를 clear 
-                   비트 0 번이 MMU ,
-                   2번비트 0  Data and unified caches disabled.
+		 * r0 = c1 = 1101 (System Control Register) cache, mmu register의 상태코드를 clear한다.
+                 * 비트 0 번이 MMU , 2번이 cache
+                 * 2번비트 0 : Data and unified caches disabled.
                  */
 #else
 		bic	r0, r0, #0x000c

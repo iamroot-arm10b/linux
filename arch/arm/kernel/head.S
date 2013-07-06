@@ -85,12 +85,12 @@ ENTRY(stext)
 
     /*!
      * 그전까지의 작업을 무시하고 다시 시작하겠다는 의미로 
-     캐시를 끄고 들어왔다??????????????????????.
+     * 캐시를 끄고 들어왔다??????????????????????.
      */
 #ifdef CONFIG_ARM_VIRT_EXT
 	bl	__hyp_stub_install
         /*!
-         * 하이퍼바이져는 않본다.
+         * 하이퍼바이져는 안본다.
          */
 #endif
 	@ ensure svc mode and all interrupts masked
@@ -99,7 +99,7 @@ ENTRY(stext)
 	mrc	p15, 0, r9, c0, c0		@ get processor id
         /*!
          * c0 c0 => MIDR
-         r9 = MIDR 
+         * r9 = MIDR 
          */
 bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	movs	r10, r5				@ invalid processor (r5=0)?
@@ -114,6 +114,9 @@ bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	blo	__error_p			@ only classic page table format
 #endif
 
+	/*!
+	 * eXcute in Place : 커널을 램으로 복사하지 않고 해당 위치에서 바로 실행한다.
+	 */
 #ifndef CONFIG_XIP_KERNEL
         /*!
           XIP = eXecute in place
@@ -526,11 +529,17 @@ __fixup_smp:
            이렇게 하지 않는다면 참조하는 데이터가 생기기 떄문이다.
          */
 	teq	r3, r4			@ ARM 11MPCore?
+	/*!
+	 * 칩의 종류를 파악하기 위해 비교한다.
+	 */
 	moveq	pc, lr			@ yes, assume SMP
 
 	mrc	p15, 0, r0, c0, c0, 5	@ read MPIDR
 	and	r0, r0, #0xc0000000	@ multiprocessing extensions and
 	teq	r0, #0x80000000		@ not part of a uniprocessor system?
+	/*!
+	 * 멀티프로세스가 아니면 상위비트는 둘다 0
+	 */
 	moveq	pc, lr			@ yes, assume SMP
 
 __fixup_smp_on_up:
@@ -539,6 +548,9 @@ __fixup_smp_on_up:
    __smpalt_end 의 physical address offset계산 
  */
 	adr	r0, 1f
+	/*!
+	 * 현재 실행주소를 가져온다.
+	 */
 	ldmia	r0, {r3 - r5}
 	sub	r3, r0, r3
 	add	r4, r4, r3
@@ -562,19 +574,33 @@ smp_on_up:
 	.text
 __do_fixup_smp_on_up:
 /*!
+<<<<<<< HEAD
  * 프로그램내에 사용된 ALT_SMP 메크로의 위치에 있는 명령어를 
    UP명령어로 치환 
  */
 /*!
  * r4 = __smpalt_begin
    r5 = __smpalt_end
+=======
+ * 프로그램 내에서 사용된 ALT_SMP 매크로의 위치에 있는 명령어를 ALT_UP 명령어로 치환한다.
+>>>>>>> 025d26e... 20130706 스터디 추가 주석
  */
 	cmp	r4, r5
+	/*!
+	 * r4 : begin, r5: end
+	 */
 	movhs	pc, lr
 	ldmia	r4!, {r0, r6}
+<<<<<<< HEAD
         /*!
          * 유니 프로세서들을 위한 오프셋과 명령어들.  
          */
+=======
+	/*!
+	 * r0 = ?
+	 * r6 = ?
+	 */
+>>>>>>> 025d26e... 20130706 스터디 추가 주석
  ARM(	str	r6, [r0, r3]	)
     /*!
      * r0 가 베이스 인데 r0가 위에서 불러와진 값인데.
