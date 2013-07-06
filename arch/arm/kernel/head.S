@@ -83,14 +83,25 @@ ENTRY(stext)
  THUMB(	.thumb			)	@ switch to Thumb now.
  THUMB(1:			)
 
+    /*!
+     * 그전까지의 작업을 무시하고 다시 시작하겠다는 의미로 
+     * 캐시를 끄고 들어왔다??????????????????????.
+     */
 #ifdef CONFIG_ARM_VIRT_EXT
 	bl	__hyp_stub_install
+        /*!
+         * 하이퍼바이져는 안본다.
+         */
 #endif
 	@ ensure svc mode and all interrupts masked
 	safe_svcmode_maskall r9
 
 	mrc	p15, 0, r9, c0, c0		@ get processor id
-	bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
+        /*!
+         * c0 c0 => MIDR
+         * r9 = MIDR 
+         */
+bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	movs	r10, r5				@ invalid processor (r5=0)?
  THUMB( it	eq )		@ force fixup-able long branch encoding
 	beq	__error_p			@ yes, error 'p'
@@ -107,6 +118,20 @@ ENTRY(stext)
 	 * eXcute in Place : 커널을 램으로 복사하지 않고 해당 위치에서 바로 실행한다.
 	 */
 #ifndef CONFIG_XIP_KERNEL
+        /*!
+          XIP = eXecute in place
+          Rom type 메모리와 같이 커널을 램으로 복사하지 않고 직접 실행하는 경우
+             ex)노어 플래쉬.
+              반대의 경우는 Nand  플래쉬 .
+  
+         * offset계산하는 것인데 xIP면은 계산한 것을 사용하고 아니라면은
+           그냥 에잇는 오프셋을 사용한다는 것이다.
+         */
+        /*!
+         * 
+        2:	.long	.
+	.long	PAGE_OFFSET
+         */
 	adr	r3, 2f
 	ldmia	r3, {r4, r8}
 	sub	r4, r3, r4			@ (PHYS_OFFSET - PAGE_OFFSET)
@@ -120,6 +145,9 @@ ENTRY(stext)
 	 * r8 = phys_offset, r9 = cpuid, r10 = procinfo
 	 */
 	bl	__vet_atags
+        /*!
+         * Atag가 맞는지 확인.
+         */
 #ifdef CONFIG_SMP_ON_UP
 	bl	__fixup_smp
 #endif
@@ -475,15 +503,31 @@ ENDPROC(__turn_mmu_on)
 #ifdef CONFIG_SMP_ON_UP
 	__INIT
 __fixup_smp:
+/*!
+ * r9 MIDR  
+ */
 	and	r3, r9, #0x000f0000	@ architecture version
 	teq	r3, #0x000f0000		@ CPU ID supported?
 	bne	__fixup_smp_on_up	@ no, assume UP
+        /*!
+          * 현재 프로세서가 UP인 경우 점프 
+         */
 
 	bic	r3, r9, #0x00ff0000
 	bic	r3, r3, #0x0000000f	@ mask 0xff00fff0
+        /*!
+         * Implementer primary part number 만 남겨준다
+         */
 	mov	r4, #0x41000000
 	orr	r4, r4, #0x0000b000
 	orr	r4, r4, #0x00000020	@ val 0x4100b020
+        /*!
+         * r4 의값을 0x4100b020으로 만들어 준다 
+           여러번으로 하여 주는 이유는 명령어 제한때문이다.
+           8비트 뿐이 사용할수 없기 떄문에. 아닌다면 상수를 하나 만들고 
+           참조를 해야 한다. 레지스터에서 한 바이트 값만 변경이 가능하다.
+           이렇게 하지 않는다면 참조하는 데이터가 생기기 떄문이다.
+         */
 	teq	r3, r4			@ ARM 11MPCore?
 	/*!
 	 * 칩의 종류를 파악하기 위해 비교한다.
@@ -499,6 +543,10 @@ __fixup_smp:
 	moveq	pc, lr			@ yes, assume SMP
 
 __fixup_smp_on_up:
+/*!
+ * __smpalt_begin 의 physical address offset계산 
+   __smpalt_end 의 physical address offset계산 
+ */
 	adr	r0, 1f
 	/*!
 	 * 현재 실행주소를 가져온다.
@@ -527,6 +575,8 @@ smp_on_up:
 __do_fixup_smp_on_up:
 /*!
  * 프로그램 내에서 사용된 ALT_SMP 매크로의 위치에 있는 명령어를 ALT_UP 명령어로 치환한다.
+ * r4 = __smpalt_begin
+   r5 = __smpalt_end
  */
 	cmp	r4, r5
 	/*!
@@ -534,11 +584,13 @@ __do_fixup_smp_on_up:
 	 */
 	movhs	pc, lr
 	ldmia	r4!, {r0, r6}
-	/*!
-	 * r0 = ?
-	 * r6 = ?
-	 */
+        /*!
+         * Unit 프로세서들을 위한 오프셋과 명령어들.  
+         */
  ARM(	str	r6, [r0, r3]	)
+    /*!
+     * r0 가 베이스 인데 r0가 위에서 불러와진 값인데.
+     */
  THUMB(	add	r0, r0, r3	)
 #ifdef __ARMEB__
  THUMB(	mov	r6, r6, ror #16	)	@ Convert word order for big-endian.
@@ -612,6 +664,13 @@ __fixup_a_pv_table:
 	bcc	1b
 	bx	lr
 #else
+        /*!
+         * 
+	 * r3 =	.long	.
+	 * r4 =	.long	__pv_table_begin
+	 * r5 =	.long	__pv_table_end
+	 * r7 =	.long	__pv_phys_offset
+         */
 	b	2f
 1:	ldr	ip, [r7, r3]
 	bic	ip, ip, #0x000000ff
@@ -620,8 +679,8 @@ __fixup_a_pv_table:
 2:	cmp	r4, r5
 	ldrcc	r7, [r4], #4	@ use branch for delay slot
 	/*!
-	 * r5가 r4보다 크다민 bit clear
-	 */
+         * r4가 r5보다 크다면  carry bit 가 clear가 된다. 
+         */
 	bcc	1b
 	mov	pc, lr
 #endif

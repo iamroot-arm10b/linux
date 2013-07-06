@@ -42,13 +42,22 @@
  * Returns:
  *  r2 either valid atags pointer, valid dtb pointer, or zero
  *  r5, r6 corrupted
- */
+ /*
+  * r1 = machine no, r2 = atags or dtb,
+  * r8 = phys_offset, r9 = cpuid, r10 = procinfo
+  */
+ 
 __vet_atags:
 	tst	r2, #0x3			@ aligned?
+        /*!
+         * 하위 2비트가 0인지 확인 
+         aligned되어있는지 확인 
+         */
 	bne	1f
 
 	ldr	r5, [r2, #0]
 	/*!
+         * r2는 Atag 포인터 . 
 	 * ATAGS 의 header 첫 파라미터는 size
 	 */
 #ifdef CONFIG_OF_FLATTREE
@@ -58,13 +67,24 @@ __vet_atags:
 	 */
 	cmp	r5, r6
 	beq	2f
+        /*!
+         * DTB면은 패스 
+         */
 #endif
+        /*!
+         * 
+            #define ATAG_CORE 0x54410001
+            #define ATAG_CORE_SIZE ((2*4 + 3*4) >> 2)
+            #define ATAG_CORE_SIZE_EMPTY ((2*4) >> 2)
+         */
 	cmp	r5, #ATAG_CORE_SIZE		@ is first tag ATAG_CORE?
 	cmpne	r5, #ATAG_CORE_SIZE_EMPTY
-	/*!
+        /*!
+         * atag 가 맞는지 확인.
+         * 맨처음에 헤더에서 사이즈를 확인을 하는 것이다.
 	 * #define ATAG_CORE_SIZE ((2*4 + 3*4) >> 2)
 	 * #define ATAG_CORE_SIZE_EMPTY ((2*4) >> 2)
-	 */
+         */
 	bne	1f
 	ldr	r5, [r2, #4]
 	ldr	r6, =ATAG_CORE
@@ -162,7 +182,27 @@ ENDPROC(lookup_processor_type)
 	__CPUINIT
 __lookup_processor_type:
 	adr	r3, __lookup_processor_type_data
+        /*!
+         * lookup_processor_type_data 의 주소를 r3에 넣는다.
+         */
 	ldmia	r3, {r4 - r6}
+        /*!
+         * r4 = lookup_processor_type_data의 주소  
+           r5 = __proc_info_begin
+           r6 = __proc_info_end
+         */
+        /*!
+         * mmu를 제거하여서 physical address에서 작동하게 된다.
+           시작값을 링커가 할당할때 virtual address로 할당을 해주었을 것이다.
+           그렇기 때문에 r3 자체가 look~~~가지고 있는데 r4의 값은 현재 주소르 
+           가져오게 되며 주소값에 차이에 해당하는 offset을 찾게 되는것이다.
+
+           예)
+           c0008010 , 40008010 두개의 차이를 두면 8천만 정도의 차이를 알아낼수 있다.
+           실제 현재 접근할수 있는 proc_info_begin의 값을 얻어오기 위해서.
+
+           base주소 구해서 거기에 보정을 주는 것이다.
+         */
 	sub	r3, r3, r4			@ get offset between virt&phys
 	/*!
 	 * r4 = . 이고 r3는 virture address이므로 버추어 주소와 물리 주소의 차이를 구한다.
@@ -170,18 +210,36 @@ __lookup_processor_type:
 	 */
 	add	r5, r5, r3			@ convert virt addresses to
 	add	r6, r6, r3			@ physical address space
+ 	 /*!
+               __v7_ca7mp_proc_info:
+         r3	.long	0x410fc070
+	 r4     .long	0xff0ffff0
+         r9 = MIDR  ( CPU ID )
+         */
 1:	ldmia	r5, {r3, r4}			@ value, mask
 	/*!
 	 * value = .long   0x410fc070
 	 * mask =  .long   0xff0ffff0
 	 */
 	and	r4, r4, r9			@ mask wanted bits
+        /*!
+         * MIDR 과 mask 와 and연산 수행.
+         */
 	teq	r3, r4
+        /*!
+         * processor id와 동일한지 비교.
+         */
 	beq	2f
 	add	r5, r5, #PROC_INFO_SZ		@ sizeof(proc_info_list)
 	cmp	r5, r6
 	blo	1b
+        /*!
+         * loop하면서 찾아내는 것.PROC_INFO_SZ만큼 더하면서.
+         */
 	mov	r5, #0				@ unknown processor
+        /*!
+         * processor id 를 찾지 못하면은 0값을 return 
+         */
 2:	mov	pc, lr
 ENDPROC(__lookup_processor_type)
 

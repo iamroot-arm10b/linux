@@ -182,8 +182,35 @@
  * CONFIG_THUMB2_KERNEL, you almost certainly need to use
  * ALT_SMP( W(instr) ... )
  */
+        /*!
+         * SMP라면 그냥 그대로 수행이 되
+         고
+         9998 은 SMP의 명령어로 되어있는 것인데.'
+         RUN Time 에서 SMP를 지원않하는 프로세서는 명령어를 대체한다.
+         
+         실제로 어떤상황에서 일어날수 있는가?
+         컴파일 타임과 런타임에서 달라질 경우에 될수 있다.
+
+         ALT_SMP , ALT_UP를 다써주는데 
+         UP이면은 아래쪽을 타고 돌라고 해준다.
+         
+         SMP이면은 SMP 명령어를 타고 돌게.
+         UP이면은 UP명령어를 타고 돌게.'
+
+
+
+
+         */
 #define ALT_UP(instr...)					\
 	.pushsection ".alt.smp.init", "a"			;\
+        /*!
+         * 디렉티브이고 . 아래 2가지가 실제로 가져올 데이터가 된다
+         ldr r4 , { r0, r6}
+         r0 = .long 9998b
+         r 6 = instr
+
+         alt.smp.init 대체 명령어들의 집합. 
+         */
 	.long	9998b						;\
 9997:	instr							;\
 	.if . - 9997b != 4					;\
