@@ -191,11 +191,27 @@ __v7_ca15mp_setup:
 1:
 #ifdef CONFIG_SMP
 	ALT_SMP(mrc	p15, 0, r0, c1, c0, 1)
+	/*!
+	 * p15의 c1: System control registers
+	 */
 	ALT_UP(mov	r0, #(1 << 6))		@ fake it for UP
 	tst	r0, #(1 << 6)			@ SMP/nAMP mode enabled?
 	orreq	r0, r0, #(1 << 6)		@ Enable SMP/nAMP mode
 	orreq	r0, r0, r10			@ Enable CPU-specific SMP bits
 	mcreq	p15, 0, r0, c1, c0, 1
+	/*!
+	 * 4.3.28 Auxiliary Control Register 에 있다.
+	 * Enables the processor to receive instruction cache, BTB, and TLB maintenance
+	 * operations from other processors. You must set this bit before enabling the
+	 * caches and MMU, or performing any cache and TLB maintenance operations.
+	 * You must clear this bit to 0 during a processor powerdown sequence. See Power
+	 * management on page 2-21:
+	 * 0 Disables receiving of instruction cache, BTB, and TLB
+	 * maintenance operations. This is the reset value.
+	 * 1 Enables receiving of instruction cache, BTB, and TLB
+	 * maintenance operations.
+	 * 캐쉬와 MMU를 사용하기 전에 설정해야 하는 것.
+	 */
 #endif
 	b	__v7_setup
 
@@ -257,6 +273,10 @@ __v7_pj4b_setup:
 
 __v7_setup:
 	adr	r12, __v7_setup_stack		@ the local stack
+	/*!
+	 * register 11개 만듦
+	 * 2013/07/13 여기까지
+	 */
 	stmia	r12, {r0-r5, r7, r9, r11, lr}
 	bl      v7_flush_dcache_louis
 	ldmia	r12, {r0-r5, r7, r9, r11, lr}
@@ -478,6 +498,10 @@ __v7_ca7mp_proc_info:
 	 */
 	.type	__v7_ca15mp_proc_info, #object
 __v7_ca15mp_proc_info:
+/*!
+ * proc_info 가 이 구조체의 주소를 가리킨다.
+ * arch/arm/include/asm/procinfo.h 의proc_info_list 구조체와 동일하다. 
+ */
 	.long	0x410fc0f0
 	.long	0xff0ffff0
 	__v7_proc __v7_ca15mp_setup

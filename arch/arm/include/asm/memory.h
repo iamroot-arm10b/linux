@@ -184,14 +184,20 @@ extern unsigned long __pv_phys_offset;
 	"	.popsection\n"				\
 	: "=r" (to)					\
 	: "r" (from), "I" (type))
-/*!
- * 명령어에 대한 주소값을 테이블로 만들어 둔다.
- */
+	/*!
+	 * 명령어에 대한 주소값을 테이블로 만들어 둔다.
+	 */
 
 static inline unsigned long __virt_to_phys(unsigned long x)
 {
 	unsigned long t;
 	__pv_stub(x, t, "add", __PV_BITS_31_24);
+	/*!
+	 * __PV_BITS_31_24 = 0x81000000 : 배럴쉬프트를 고정하기 위한 값
+	 * V + Delta = P
+	 * __pv_stub는 여기서 Delta 를 바꾸기 위한 것.
+	 * add t, x, #delta
+	 */
 	return t;
 }
 
@@ -199,6 +205,12 @@ static inline unsigned long __phys_to_virt(unsigned long x)
 {
 	unsigned long t;
 	__pv_stub(x, t, "sub", __PV_BITS_31_24);
+	/*!
+	 * __PV_BITS_31_24 = 0x81000000 : 배럴쉬프트를 고정하기 위한 값
+	 *                     immed값의 최상위, 최하위 값을 1로 고정하기 위한 값
+	 * P - Delta = V
+	 * __pv_stub는 여기서 Delta 를 바꾸기 위한 것.
+	 */
 	return t;
 }
 #else

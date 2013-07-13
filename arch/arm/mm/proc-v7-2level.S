@@ -26,6 +26,15 @@
 /* PTWs cacheable, inner WBWA shareable, outer WBWA not shareable */
 #define TTB_FLAGS_SMP	TTB_IRGN_WBWA|TTB_S|TTB_NOS|TTB_RGN_OC_WBWA
 #define PMD_FLAGS_SMP	PMD_SECT_WBWA|PMD_SECT_S
+/*!
+ * WBWA(write back write allocate), section sharable 
+ * Write-allocate cache
+ * : A cache in which a cache miss on storing data causes a cache line to be allocated into the cache.
+ * : 캐쉬가 쓰기 miss 발생할때 그 내용을 캐쉬에 올릴지 안올릴지를 결정하는 정책 차이
+ *   기존에는 쓰기할때 캐쉬에 없으면 메모리에 쓰는데,
+ *   이 옵션은 캐쉬에 없는 내용을 다시 캐쉬에 올려서 캐쉬에만 쓰고 넘어간다는 것.
+ * SMP 일 경우에는 두 상수 모두 켜져있다.
+ */
 
 /*
  *	cpu_v7_switch_mm(pgd_phys, tsk)

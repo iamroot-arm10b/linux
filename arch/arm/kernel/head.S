@@ -118,19 +118,15 @@ bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	 * eXcute in Place : 커널을 램으로 복사하지 않고 해당 위치에서 바로 실행한다.
 	 */
 #ifndef CONFIG_XIP_KERNEL
-        /*!
-          XIP = eXecute in place
-          Rom type 메모리와 같이 커널을 램으로 복사하지 않고 직접 실행하는 경우
-             ex)노어 플래쉬.
-              반대의 경우는 Nand  플래쉬 .
-  
-         * offset계산하는 것인데 xIP면은 계산한 것을 사용하고 아니라면은
-           그냥 에잇는 오프셋을 사용한다는 것이다.
-         */
-        /*!
-         * 
-        2:	.long	.
-	.long	PAGE_OFFSET
+	/*!
+	 * XIP = eXecute in place
+	 * Rom type 메모리와 같이 커널을 램으로 복사하지 않고 직접 실행하는 경우
+	 *    ex)노어 플래쉬. 반대의 경우는 Nand  플래쉬 .
+	 * Nor flash 같은 경우는 데이터 변수에 대한 RAM의 offset을 계산 하는 것
+	 */
+	/*!
+         * 2:	.long	.
+	        .long	PAGE_OFFSET
          */
 	adr	r3, 2f
 	ldmia	r3, {r4, r8}
@@ -155,6 +151,9 @@ bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	bl	__fixup_pv_table
 #endif
 	bl	__create_page_tables
+	/*!
+	 * 1단계 페이지테이블 맛보기 끝.
+	 */
 
 	/*
 	 * The following calls CPU specific code in a position independent
@@ -164,10 +163,29 @@ bl	__lookup_processor_type		@ r5=procinfo r9=cpuid
 	 * turned on, and r0 will hold the CPU control register value.
 	 */
 	ldr	r13, =__mmap_switched		@ address to jump to after
+	/*!
+	 * ldr: 뒤의 주소값을 무조건 가져온다. immedia로 잡을 수 있으면 잡고, 
+	 *      안되면 CPU가 가져온다. 외부의 주소값을 가져올때도 유용하다.
+	 */
 						@ mmu has been enabled
 	adr	lr, BSYM(1f)			@ return (PIC) address
+	/*!
+	 * adr: 현재 소스 안의 주소만 가져온다. 
+	 */
 	mov	r8, r4				@ set TTBR1 to swapper_pg_dir
+	/*!
+	 * r4(페이지테이블의 시작주소)를 r8에 넣는다.
+	 * TTBR1: 
+	 * swapper: 
+	 * swapper_pg_dir: swapper를 위한 page directory
+	 */
  ARM(	add	pc, r10, #PROCINFO_INITFUNC	)
+	/*!
+	 * #PROCINFO_INITFUNC
+	 * r10: __v7_proc 구조체의 시작주소
+	 * __v7_ca15mp_setup 으로 jump (멀티프로세스 셋업)
+	 * 2013/07/13 여기 들어감.
+	 */
  THUMB(	add	r12, r10, #PROCINFO_INITFUNC	)
  THUMB(	mov	pc, r12				)
 1:	b	__enable_mmu
@@ -190,7 +208,17 @@ ENDPROC(stext)
  *  r4 = page table (see ARCH_PGD_SHIFT in asm/memory.h)
  */
 __create_page_tables:
+	/*!
+	 * __fixup_pv_table 이 끝난 후 바로 진입
+	 */
 	pgtbl	r4, r8				@ page table address
+	/*!
+	 * .macro	pgtbl, rd, phys
+	 * add	\rd, \phys, #TEXT_OFFSET - PG_DIR_SIZE
+	 * (TEXT_OFFSET = 0x8000 : makefile에서 지정)
+	 * (PG_DIR_SIZE = 0x4000)
+	 * 페이지테이블의 시작주소를 r4에 넣는다. 
+	 */
 
 	/*
 	 * Clear the swapper page table
@@ -204,8 +232,15 @@ __create_page_tables:
 	str	r3, [r0], #4
 	teq	r0, r6
 	bne	1b
+/*!
+ * r4(페이지 테이블의 시작주소)부터 페이지테이블을 초기화 하는 것.
+ */
 
-#ifdef CONFIG_ARM_LPAE
+#ifdef CONFIG_ARM_LPAE /*! LPAE는 나중에~ C팀 것으로 복습하자 */
+	/*!
+	 * LPAE는 끈 것으로 하고 본다. 32bit 아키텍처로 본다.  
+	 * 켤때는 MMU구조가 달라진다. 
+	 */
 	/*
 	 * Build the PGD table (first level) to point to the PMD table. A PGD
 	 * entry is 64-bit wide.
@@ -232,8 +267,15 @@ __create_page_tables:
 	add	r4, r4, #4			@ we only write the bottom word
 #endif
 #endif
+/*!
+ * CONFIG_ARM_LPAE 이 켜져있다면 Long descript를 지원한다. 
+ */
 
 	ldr	r7, [r10, #PROCINFO_MM_MMUFLAGS] @ mm_mmuflags
+	/*!
+	 * r10 = procinfo
+	 * #PROCINFO_MM_MMUFLAGS = 8 (컴파일 하면 linux/include/generated/asm-offsets.h 에 나온다.)
+	 */
 
 	/*
 	 * Create identity mapping to cater for __enable_mmu.
@@ -245,6 +287,10 @@ __create_page_tables:
 	add	r5, r5, r0			@ phys __turn_mmu_on
 	add	r6, r6, r0			@ phys __turn_mmu_on_end
 	mov	r5, r5, lsr #SECTION_SHIFT
+	/*!
+	 * 상위 1M 기준으로 align한 값을 r5에 넣는다.
+	 * r5 주소를 20bit left shift
+	 */
 	mov	r6, r6, lsr #SECTION_SHIFT
 
 1:	orr	r3, r7, r5, lsl #SECTION_SHIFT	@ flags + kernel base
@@ -252,6 +298,10 @@ __create_page_tables:
 	cmp	r5, r6
 	addlo	r5, r5, #1			@ next section
 	blo	1b
+	/*!
+	 * first level tt(변환테이블)에서 __turn_mmu_on 함수가 속한 섹션 속성 설정
+	 * MMU가 켜지는 순간 바뀌는 부분만 먼저 설정하는 것 같다...(추정)
+	 */
 
 	/*
 	 * Map our RAM from the start to the end of the kernel .bss section.
@@ -262,8 +312,28 @@ __create_page_tables:
 	add	r6, r4, r6, lsr #(SECTION_SHIFT - PMD_ORDER)
 1:	str	r3, [r0], #1 << PMD_ORDER
 	add	r3, r3, #1 << SECTION_SHIFT
+	/*!
+	 * PAGE_OFFSET = 0xC0000000
+	 * PMD_ORDER = 2
+	 * SECTION_SHIFT = 20
+	 * r3 = delta
+	 * r4 = 변환 page table의 시작주소
+	 * r7 = 가지고 온 mmu flag 값 (속성값)
+	 * 	(ldr	r7, [r10, #PROCINFO_MM_MMUFLAGS] @ mm_mmuflags )
+	 * r8 = physical offset
+	 */
 	cmp	r0, r6
 	bls	1b
+	/*!
+	 * 커널이 위치하는 영역에 대한 페이지테이블 초기화.
+	 * 커널의 마지막주소가 있는 섹션을 r6에 저장해놓고 물리주소로 모두 변환한다.
+	 * P.A. : 0x40008000부터 커널이 위치가
+	 * V.A. : 0xC0008000부터 커널이 위치한다.
+	 * TT: 3072번째 주소에 mmu 속성이 들어가는 것. r0가 가리키는 곳이 3072(0xC00)
+	 *     r6은 마지막 주소
+	 * r4는 베이스 주소
+	 * 커널이 들어갈 테이블에 대한 초기화만 한 것.
+	 */
 
 #ifdef CONFIG_XIP_KERNEL
 	/*
@@ -288,15 +358,28 @@ __create_page_tables:
 	 * Then map boot params address in r2 if specified.
 	 * We map 2 sections in case the ATAGs/DTB crosses a section boundary.
 	 */
+	/*!
+	 * ATAG: 메모리 크기, memory rank 정보, command line 정보 등
+	 * DTB 는 1MB 로 설정되어있다.
+	 */
 	mov	r0, r2, lsr #SECTION_SHIFT
 	movs	r0, r0, lsl #SECTION_SHIFT
+	/*!
+	 * 20bit 오른쪽 쉬프트, 왼쪽 쉬프트하면서 값이 없으면 0이므로 실행안함.
+	 */
 	subne	r3, r0, r8
+	/*!
+	 * r3: physical offset이 되고, 
+	 */
 	addne	r3, r3, #PAGE_OFFSET
 	addne	r3, r4, r3, lsr #(SECTION_SHIFT - PMD_ORDER)
 	orrne	r6, r7, r0
 	strne	r6, [r3], #1 << PMD_ORDER
 	addne	r6, r6, #1 << SECTION_SHIFT
 	strne	r6, [r3]
+	/*!
+	 * ATAG/DTB 가 속한 주소의 페이지 테이블 엔트리 초기화.
+	 */
 
 #if defined(CONFIG_ARM_LPAE) && defined(CONFIG_CPU_ENDIAN_BE8)
 	sub	r4, r4, #4			@ Fixup page table pointer
@@ -487,6 +570,9 @@ ENDPROC(__enable_mmu)
 	.align	5
 	.pushsection	.idmap.text, "ax"
 ENTRY(__turn_mmu_on)
+/*!
+ * MMU를 켜는 기능.
+ */
 	mov	r0, r0
 	instr_sync
 	mcr	p15, 0, r0, c1, c0, 0		@ write control reg
@@ -632,6 +718,9 @@ THUMB(	it	ne		@ cross section branch )
 	bne	__error
 	str	r6, [r7, #4]	@ save to __pv_offset
 	b	__fixup_a_pv_table
+	/*!
+	 * 컴파일 타임때 정해진 offset을 실제 머신에 따른 실제 값으로 바꾼다.
+	 */
 ENDPROC(__fixup_pv_table)
 
 	.align
@@ -665,8 +754,7 @@ __fixup_a_pv_table:
 	bx	lr
 #else
         /*!
-         * 
-	 * r3 =	.long	.
+	 * r3 =	delta 값: 가상주소와 물리주소의 차이
 	 * r4 =	.long	__pv_table_begin
 	 * r5 =	.long	__pv_table_end
 	 * r7 =	.long	__pv_phys_offset
@@ -680,6 +768,7 @@ __fixup_a_pv_table:
 	ldrcc	r7, [r4], #4	@ use branch for delay slot
 	/*!
          * r4가 r5보다 크다면  carry bit 가 clear가 된다. 
+	 * 2013/07/06 여기까지.
          */
 	bcc	1b
 	mov	pc, lr
