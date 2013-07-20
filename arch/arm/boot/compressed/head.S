@@ -153,8 +153,7 @@
  */
 		.align
 		/*! ARM은 기본 4byte align 하는데 코드 들어가는 위치를 4의 배수로 만들어준다.
-		  4의 배수가 아니면 pedding을 해 준다.
-		  숫자가 없으면 default 4
+		 * 4의 배수가 아니면 pedding을 해 준다. 숫자가 없으면 default 4
 		 */
 		.arm				@ Always enter in ARM state
 start:
@@ -162,41 +161,47 @@ start:
 		/*!
 		 * .type: start는 start 레이블 이름, #function
 		 * start라는 symbol이 #function이라는 type이다.
-		 * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것?
+		 * ELF의 symbol 테이블의 이름과 주소를 설정하는 부분 같은 것.
 		 */
 		.rept	7
 		mov	r0, r0
 		.endr
-		/*! mov r0, r0를 7번 반복한다.
-		  bootloader에서 기본주소를 32byte 더해줘서 실행해야하는 부분
+		/*! mov r0, r0를 7번 반복한다. (r0 = 0)
+		 * bootloader에서 기본주소를 32byte(4byte*8) 더해줘서 실행해야하는 부분
 		 */
    ARM(		mov	r0, r0		)
    ARM(		b	1f		)
  THUMB(		adr	r12, BSYM(1f)	)
  THUMB(		bx	r12		)
-		/*! CONFIG_THUMB2_KERNEL 이 정의되어 있으면 THUMB 를 사용하고 아니면 ARM 이 실행된다.
-		  include/asm/unified.h 에 있다.
-		  우리가 타겟으로 하는 아키텍처인 경우,
-		  ARM(		mov	r0, r0		)
-		  ARM(		b	1f		)
-		  이 실행된다.
-		  뒷쪽(f:forward) 1번 레이블로 점프한다.
+		/*!
+		 * CONFIG_THUMB2_KERNEL 이 정의되어 있으면 THUMB 를 사용하고 아니면 ARM 이 실행된다.
+		 * include/asm/unified.h 에 있다.
+		 * 우리가 타겟으로 하는 아키텍처인 경우,
+		 * ARM(		mov	r0, r0		)
+		 * ARM(		b	1f		)
+		 * 이 실행된다.
+		 * 뒷쪽(f:forward) 1번 레이블로 점프한다.
 		 */
 		.word	0x016f2818		@ Magic numbers to help the loader
 		/*!
-		    이 값을 ARM용 매직넘버로 사용한다.
-		    아키텍처에 따라 매직넘버를 안쓸수도 있다.
-		    부트로더가 이 값을 검색해야 하므로
-		    부트로더에서 ARM용인지를 체크할 수도 있다.
-		    이 매직넘버 다음에 시작레이블을 찾을 수 있다.
+		 * 이 값을 ARM용 매직넘버로 사용한다.
+		 * 아키텍처에 따라 매직넘버를 안쓸수도 있다.
+		 * 부트로더가 이 값을 검색해야 하므로
+		 * 부트로더에서 ARM용인지를 체크할 수도 있다.
+		 * 이 매직넘버 다음에 시작레이블을 찾을 수 있다.
+		 * 일부 부트로더를 지원하기 위하여 8word (8번의 mov명령어)를 사용하여
+		 * 0xNNNN8024 ~ 부터 Magic Number를 할당한다.
 		 */
 		.word	start			@ absolute load/run zImage address
 		.word	_edata			@ zImage end address
 		/*!
-		  _edata = .; 현재라인의 주소를 _edata에 넣는 것
-		  arm/kernel/vmlinux.lds.S 에 정의되어 있다.
+		 * _edata = .; 현재라인의 주소를 _edata에 넣는 것
+		 * arm/kernel/vmlinux.lds.S 에 정의되어 있다.
 		 */
- THUMB(		.thumb			) /*! thumb모드로 컴파일하라는 명령 */
+ THUMB(		.thumb			)
+		/*!
+		 * thumb모드로 컴파일하라는 명령
+		 */
 1:
 		mrs	r9, cpsr
 		/*! cpsr을 r9로 복사한다.
@@ -204,24 +209,24 @@ start:
 		 */
 #ifdef CONFIG_ARM_VIRT_EXT
 		/*! the ARM Virtualization 이 enable인경우 실행된다.
-		  가상화 지원되는 제품인 경우에 사용한다.
-		  default config 에는 없지만 default config 로 타겟을
-		  엑시노스4로 생성하면 enable 된다.
+		 * 가상화 지원되는 제품인 경우에 사용한다.
+		 * default config 에는 없지만 default config 로 타겟을
+		 * 엑시노스4로 생성하면 enable 된다.
 		 */
 		bl	__hyp_stub_install	@ get into SVC mode, reversibly
 		/*!
 		 * Hypervisor stub installation functions.
-		 우리는 하이퍼바이저를 보지 않는다.
+		 * 우리는 하이퍼바이저를 보지 않는다.
 		 */
 #endif
 		mov	r7, r1			@ save architecture ID
 		mov	r8, r2			@ save atags pointer
 		/*!
-		  r1 = machine type number discovered in (3) above.
-		  r2 = physical address of tagged list in system RAM, or
-		  physical address of device tree block (dtb) in system RAM
-		  부트로드에서 셋팅하는 부분
-		  Documentation/arm/Booting 에 있다.
+		 * r7 = r1 = machine type number
+		 * r8 = r2 = physical address of tagged list in system RAM, or
+		 *           physical address of device tree block (dtb) in system RAM
+		 * 부트로드에서 셋팅하는 부분
+		 * Documentation/arm/Booting 에 있다.
 		 */
 
 		/*
@@ -232,28 +237,34 @@ start:
 		mrs	r2, cpsr		@ get current mode
 		tst	r2, #3			@ not user?
 		/*!
-		  아래 두bit가 하나라도 1이면 EQ가 set되어 not_angel로 점프.
-		  유저모드인지 아닌지를 체크한다. user mode는 끝 두bit가 00
-		  유저모드이면 cpsr을 변경시키지 못하므로 mov r0, #0x17  로 간다.
+		 * 아래 두bit가 하나라도 1이면 EQ가 set되어 not_angel로 점프.
+		 * 유저모드인지 아닌지를 체크한다. user mode는 끝 두bit가 00 (0x10000)
+		 * 유저모드이면 cpsr을 변경시키지 못하므로 mov r0, #0x17  로 간다.
 		 */
 		bne	not_angel
+		/*!
+		 * tst의 결과가 0이 아닌 경우 not_angel로 점프
+		 */
 		mov	r0, #0x17		@ angel_SWIreason_EnterSVC
 		/*!
-		  ?? angel에서 SVC모드로 들어가게 하는 인자값 일거라고 예상
+		 * angel(디버깅용 툴)에서 SVC모드로 들어가게 하는 인자값 일거라고 예상
 		 */
  ARM(		swi	0x123456	)	@ angel_SWI_ARM
  THUMB(		svc	0xab		)	@ angel_SWI_THUMB
-		 /*!
-		   angel일때 SVC 로 바꾸는 루틴
-		  */
+		/*!
+		 * angel일때 SVC 로 바꾸는 루틴
+		 */
 not_angel:
 		safe_svcmode_maskall r0
 		/*!
 		 * arch/arm/include/asm/assembler.h 의 .macro safe_svcmode_maskall reg:req 에서 정의됨.
-		 * 인터럽트를 금지시키고 SVC 모드로 들어간다.
+		 * FIQ 와 IRQ 를 금지시키고 SVC 모드로 전환
 		 */
 		msr	spsr_cxsf, r9		@ Save the CPU boot mode in
 						@ SPSR
+		/*!
+		 * r9의 내용을 spsr에 저장한다.
+		 */
 		/*
 		 * Note that some cache flushing and other stuff may
 		 * be needed here - is there an Angel SWI call for this?
@@ -271,7 +282,8 @@ not_angel:
 
 #ifdef CONFIG_AUTO_ZRELADDR
 		/*!
-		 * 설정되어 있지 않음
+		 * 설정되어 있지 않음.
+		 * 이 옵션이 설정되어 있다면 압축해제한 커널 이미지 주소를 자동계산한다.
 		 */
 		@ determine final kernel image address
 		mov	r4, pc
@@ -282,15 +294,16 @@ not_angel:
 		/*!
 		 * 고정된 주소값을 r4 영역으로 가져온다.
 		 * 압축을 풀어서 vmlinux 를 저장시킬 주소
+		 * ZRELADDR: 압축해제한 커널 이미지가 위치할 물리주소(Zip Release Address)
 		 * zreladdr = 0x40008000
 		 * compressed 안에 있는 Makefile이 실행되면서 만들어준다.
-		 *    # Supply ZRELADDR to the decompressor via a linker symbol.
-		 *    ifneq ($(CONFIG_AUTO_ZRELADDR),y)
+		 * # Supply ZRELADDR to the decompressor via a linker symbol.
+		 *   ifneq ($(CONFIG_AUTO_ZRELADDR),y)
 		 *	    LDFLAGS_vmlinux += --defsym zreladdr=$(ZRELADDR)
-		 *    endif
-		 *    ifeq ($(CONFIG_CPU_ENDIAN_BE8),y)
+		 *   endif
+		 *   ifeq ($(CONFIG_CPU_ENDIAN_BE8),y)
 		 *	    LDFLAGS_vmlinux += --be8
-		 *    endif
+		 *   endif
 		 */
 #endif
 
@@ -307,6 +320,11 @@ not_angel:
 		cmpcc	r4, r0
 		orrcc	r4, r4, #1		@ remember we skipped cache_on
 		blcs	cache_on
+		/*!
+		 * 2013/06/17 위 부분은 아래와 같이 추가/변경됨.
+		 * 분석하는 시점 =>  bl cache_on
+		 * 분석이후 변경 =>  mov r0, pc ~ blcs cache_on
+		 */
 
 restart:	adr	r0, LC0
 		/*!
@@ -785,14 +803,14 @@ not_relocated:	mov	r0, #0
 		 * 2013/06/29 여기까지. decompress_kernel 함수에서 시작한다.
 		 */
 		bl	cache_clean_flush
-                /*!
-                 * 캐시랑 MMU꺼줌. 
-                 */
+		/*!
+		 * 캐시랑 MMU꺼줌.
+		 */
 		bl	cache_off
-                /*!
-                 * r7 architecture ID,
-                   r8 atags pointer
-                 */
+		/*!
+		 * r7 architecture ID,
+		 * r8 atags pointer
+		 */
 		mov	r1, r7			@ restore architecture number
 		mov	r2, r8			@ restore atags pointer
 
@@ -872,7 +890,7 @@ cache_on:	mov	r3, #8			@ cache_on function
 __armv4_mpu_cache_on:
 		mov	r0, #0x3f		@ 4G, the whole
 		mcr	p15, 0, r0, c6, c7, 0	@ PR7 Area Setting
-		mcr 	p15, 0, r0, c6, c7, 1
+		mcr	p15, 0, r0, c6, c7, 1
 
 		mov	r0, #0x80		@ PR7
 		mcr	p15, 0, r0, c2, c0, 0	@ D-cache on
@@ -943,6 +961,7 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		bic	r3, r3, #0x3f00
 		/*!
 		 * 16KB단위로 Align 하기 위하여 bit clear 를 수행한다.
+		 * r3 = r3 & 0x3fff = 16kb align 된 Page direcory의 시작주소
 		 */
 
 /*
@@ -950,19 +969,20 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
  * bits for the RAM area only.
  */
 		mov	r0, r3
-		mov 	r9, r0, lsr #18
+		/*!
+		 * r0 = r3 = aligned page directory start
+		 */
+		mov	r9, r0, lsr #18
 		mov	r9, r9, lsl #18		@ start of RAM
 		/*!
-		 * r9 하위 18비트를 클리어 하여 준다.
-		 * 물리 메모리의 시작을 알려주기 위해서.
-		 * 256MB단위로 만들어준다
-		 * 정렬 단위가 256MB 일듯하다.
-		 * r9 = RAM start
+		 * r0의 하위 18bit를 클리어하여 ram의 시작 위치를 구함
+		 * r9 = 물리메모리의 시작 위치
+		 * 256MB단위로 만들어준다. 정렬 단위가 256MB일 듯하다.
 		 */
 		add	r10, r9, #0x10000000	@ a reasonable RAM size
 		/*!
-		 * r10 = end of ram
-		 * 256MB의 RAM
+		 * r9 = ram의 시작위치
+		 * r10 = ram의 끝 위치를 나타냄 (RAM Size 256MB)
 		 */
 		mov	r1, #0x12		@ XN|U + section mapping
 		orr	r1, r1, #3 << 10	@ AP=11
@@ -1102,10 +1122,13 @@ __armv7_mmu_cache_on:
 		mov	r12, lr
 #ifdef CONFIG_MMU
 		mrc	p15, 0, r11, c0, c1, 4	@ read ID_MMFR0
+		/*!
+		 * r11에 c0 레지스터, c1의 4번값 읽음. 
+		 */
 		tst	r11, #0xf		@ VMSA
 		/*!
 		 * VMSA 버츄얼 메모리 시스템 아키텍쳐 0번비트에서 3번비트까지.
-		 * r11 = 0x5 = 0101 and 1111
+		 * r11 = 0x5 = 0101 && 1111 (0xf)
 		 * z bit not setup
 		 */
 		movne	r6, #CB_BITS | 0x02	@ !XN
@@ -1120,14 +1143,14 @@ __armv7_mmu_cache_on:
 		mov	r0, #0
 		mcr	p15, 0, r0, c7, c10, 4	@ drain write buffer
 		/*!
-		 * c7 의 c10 , 4 = Data Synchronization Barrier operation
-		 * ??안써진 데이터를 쓰라고 하는것 같다??
+		 * c7, c10의 4 = Data Synchronization Barrier Operation 수행
+		 * load/store 가 완료될 때까지 프로세서 중지
 		 */
 		tst	r11, #0xf		@ VMSA
 		mcrne	p15, 0, r0, c8, c7, 0	@ flush I,D TLBs
 		/*!
-		 * c8 c7 0 = Invalidate unified TLB
-		 * TLB를 전체를 flush 하여 준다 .
+		 * c8, c7의 0 = Invalidate unified TLB
+		 * TLB를 전체를 flush 하여 준다.
 		 */
 #endif
 		mrc	p15, 0, r0, c1, c0, 0	@ read control reg
@@ -1137,16 +1160,17 @@ __armv7_mmu_cache_on:
 		 */
 		bic	r0, r0, #1 << 28	@ clear SCTLR.TRE
 		/*!
-		 * TEX remap enabled 하여준다 . TEX??
+		 * TEX remap enabled 하여준다.
 		 * C비트와 B비트를 같이 쓰여서 속성을 특정 메모리 영역에 대한 access속성을 지정하는것.
-		 * TEX: Type extension. 메모리 속성 설정에 사용됩니다.
+		 * TEX: Type EXtension. 메모리 속성 설정에 사용됩니다.
+		 *      arm_architecture_reference_manual의 B3.8.1 내용과 Table B3-10 참조
 		 */
 		orr	r0, r0, #0x5000		@ I-cache enable, RR cache replacement
 
 		/*!
-		 * I비트와 RR 비트  set되고
-		 I비트는 Instruction cache enable
-		 RR비트 1이 되면  Predictable strategy, for example, round-robin replacement
+		 * I비트와 RR 비트 set
+		 * I비트는 Instruction cache enable
+		 * RR비트 1이 되면 Predictable strategy, for example, round-robin replacement
 		 */
 		orr	r0, r0, #0x003c		@ write buffer
 		/*!
@@ -1271,18 +1295,18 @@ __common_mmu_cache_on:
  */
 
 call_cache_fn:	adr	r12, proc_types
-/*!
- * proc_types의 pc상대주소를 r12에 넣는다.
- */
+		/*!
+		 * proc_types의 pc상대주소를 r12에 넣는다.
+		 */
 #ifdef CONFIG_CPU_CP15
-/*!
- * CONFIG_CPU_CP15 = yes 로 정의되어 있으므로 이곳이 실행된다.
- */
+		/*!
+		 * CONFIG_CPU_CP15 = yes 로 정의되어 있으므로 이곳이 실행된다.
+		 */
 		mrc	p15, 0, r9, c0, c0	@ get processor ID
 		/*!
 		 * cp15의 c0 레지스터 값을 r9에 저장
 		 * MMU ID 레지스터, c0을 읽는다.
-		 * 책 p.665 참조
+		 * 책 p.665 참조(코프로세스에서 ARM 레지스터로 이동)
 		 */
 #else
 		ldr	r9, =CONFIG_PROCESSOR_ID
@@ -1298,19 +1322,20 @@ call_cache_fn:	adr	r12, proc_types
 		 */
 		eor	r1, r1, r9		@ (real ^ match)
 		tst	r1, r2			@       & mask
-    /*!
-     * r9와 r1을 exclusive or 연산한 후 r2와 비교하는 것을 반복해서 자신의 아키텍처를 찾는 것
-     */
+		/*!
+		 * r9와 r1을 exclusive or 연산한 후 r2와 비교하는 것을 반복해서 자신의 아키텍처를 찾는 것
+		 */
  ARM(		addeq	pc, r12, r3		) @ call cache function
- /*!
-  * call_cache_fn:을 시작하기 전에 저장해둔 값. r3 = 8.
-  */
+		 /*!
+		  * r3 = 8 : call_cache_fn:을 시작하기 전에 저장해둔 값.
+		  * cache on && off && flush 수행
+		  */
  THUMB(		addeq	r12, r3			)
  THUMB(		moveq	pc, r12			) @ call cache function
 		add	r12, r12, #PROC_ENTRY_SIZE
 		b	1b
 		/*!
-		 * 비교한 아키텍처가 현재 아키텍처와 다른 경우 PROC_ENTRY_SIZE 만큼 더한 후,
+		 * 비교한 아키텍처가 현재 아키텍처와 다른 경우 PROC_ENTRY_SIZE (=20) 만큼 더한 후,
 		 * 1: 레이블로 이동하여 다음 아키텍처를 찾는다.
 		 */
 
@@ -1543,44 +1568,43 @@ __armv7_mmu_cache_off:
 		mrc	p15, 0, r0, c1, c0
 #ifdef CONFIG_MMU
 		bic	r0, r0, #0x000d
-                /*!
+		/*!
 		 * r0 = c1 = 1101 (System Control Register) cache, mmu register의 상태코드를 clear한다.
-                 * 비트 0 번이 MMU , 2번이 cache
-                 * 2번비트 0 : Data and unified caches disabled.
-                 */
+		 * 비트 0 번이 MMU , 2번이 cache
+		 * 2번비트 0 : Data and unified caches disabled.
+		 */
 #else
 		bic	r0, r0, #0x000c
 #endif
 		mcr	p15, 0, r0, c1, c0	@ turn MMU and cache off
 		mov	r12, lr
-                /*!
-                 * return address r12 
-                 */
+		/*!
+		 * return address r12
+		 */
 		bl	__armv7_mmu_cache_flush
 		mov	r0, #0
 #ifdef CONFIG_MMU
 		mcr	p15, 0, r0, c8, c7, 0	@ invalidate whole TLB
-                /*!
-                 * c8 c7 0  = TLBIALL
-                 */
+		/*!
+		 * c8 c7 0  = TLBIALL
+		 */
 #endif
 		mcr	p15, 0, r0, c7, c5, 6	@ invalidate BTC
-                /*!
-                 * c7 c6 6 => BPIALL 
-                 Invalidate all branch predictors,
-                 */
+		/*!
+		 * c7 c6 6 => BPIALL
+		 * Invalidate all branch predictors,
+		 */
 		mcr	p15, 0, r0, c7, c10, 4	@ DSB
-                /*!
-                 * 
-                 c7 c10 4 => CP15DSB 
-                    Data synchronization Barrier operation
-
-                 */
+		/*!
+		 *
+		 * c7 c10 4 => CP15DSB
+		 * Data synchronization Barrier operation
+		 */
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
-                /*!
-                 * c7 c5 4 => CP15ISB
-                    Instruction Synchronization Barrier operation
-                 */
+		/*!
+		 * c7 c5 4 => CP15ISB
+		 * Instruction Synchronization Barrier operation
+		 */
 		mov	pc, r12
 
 /*
@@ -1612,7 +1636,7 @@ __armv4_mpu_cache_flush:
 2:		mcr	p15, 0, r3, c7, c14, 2	@ clean & invalidate D index
 		subs	r3, r3, #1 << 26
 		bcs	2b			@ entries 63 to 0
-		subs 	r1, r1, #1 << 5
+		subs	r1, r1, #1 << 5
 		bcs	1b			@ segments 7 to 0
 
 		teq	r2, #0
@@ -1840,9 +1864,9 @@ __hyp_reentry_vectors:
 
 __enter_kernel:
 		mov	r0, #0			@ must be 0
-                /*!
-                 * r4 압축을 푼 주소 
-                 */
+		/*!
+		 * r4 압축을 푼 주소
+		 */
  ARM(		mov	pc, r4	)		@ call kernel
  THUMB(		bx	r4	)		@ entry point is always ARM
 
