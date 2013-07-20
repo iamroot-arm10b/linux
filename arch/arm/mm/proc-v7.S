@@ -278,6 +278,9 @@ __v7_setup:
 	 * 2013/07/13 여기까지
 	 */
 	stmia	r12, {r0-r5, r7, r9, r11, lr}
+	/*!
+	 * louis data cache 를 flush 
+	 */
 	bl      v7_flush_dcache_louis
 	ldmia	r12, {r0-r5, r7, r9, r11, lr}
 
@@ -289,6 +292,9 @@ __v7_setup:
 	and	r6, r0, #0x0000000f		@ revision
 	orr	r6, r6, r5, lsr #20-4		@ combine variant and revision
 	ubfx	r0, r0, #4, #12			@ primary part number
+	/*!
+	 *r0가 지닌값의 4번비트부터 12개의 비트를 가져온다. 
+	 */
 
 	/* Cortex-A8 Errata */
 	ldr	r10, =0x00000c08		@ Cortex-A8 primary part number
@@ -355,10 +361,17 @@ __v7_setup:
 	mcr	p15, 0, r10, c7, c5, 0		@ I+BTB cache invalidate
 	dsb
 #ifdef CONFIG_MMU
+
+//.equ	PRRR,	0xff0a81a8
+//.equ	NMRR,	0x40e040e0
 	mcr	p15, 0, r10, c8, c7, 0		@ invalidate I + D TLBs
 	v7_ttb_setup r10, r4, r8, r5		@ TTBCR, TTBRx setup
 	ldr	r5, =PRRR			@ PRRR
 	ldr	r6, =NMRR			@ NMRR
+	/*!
+	 * PRRR Primary Region Remap Register
+	 * NMRR Normal Memory Remap Register
+	 */
 	mcr	p15, 0, r5, c10, c2, 0		@ write PRRR
 	mcr	p15, 0, r6, c10, c2, 1		@ write NMRR
 #endif
@@ -374,8 +387,14 @@ __v7_setup:
 	mcr	p14, 6, r0, c0, c0, 0		@ stop userspace TEEHBR access
 1:
 #endif
+
+//v7_crval:
+//	crval	clear=0x2120c302, mmuset=0x10c03c7d, ucset=0x00c01c7c
 	adr	r5, v7_crval
 	ldmia	r5, {r5, r6}
+	/*!
+	 * r5 - clear , r6 =mmuset 
+	 */
 #ifdef CONFIG_CPU_ENDIAN_BE8
 	orr	r6, r6, #1 << 25		@ big-endian page tables
 #endif

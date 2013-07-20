@@ -528,6 +528,9 @@ __secondary_data:
  *  r13 = *virtual* address to jump to upon completion
  */
 __enable_mmu:
+/*!
+ * r0 는 STCLR에서 bic , orr한 값을 가지고 온다.
+ */
 #if defined(CONFIG_ALIGNMENT_TRAP) && __LINUX_ARM_ARCH__ < 6
 	orr	r0, r0, #CR_A
 #else
@@ -548,7 +551,16 @@ __enable_mmu:
 		      domain_val(DOMAIN_TABLE, DOMAIN_MANAGER) | \
 		      domain_val(DOMAIN_IO, DOMAIN_CLIENT))
 	mcr	p15, 0, r5, c3, c0, 0		@ load domain access register
+	/*!
+	 * DACR(Domain Access Control Register)
+	 */
 	mcr	p15, 0, r4, c2, c0, 0		@ load page table pointer
+	/*!
+	 * r4 =0x40004000
+	 */
+	/*!
+	 *   TTBR0
+	 */
 #endif
 	b	__turn_mmu_on
 ENDPROC(__enable_mmu)
@@ -572,6 +584,7 @@ ENDPROC(__enable_mmu)
 ENTRY(__turn_mmu_on)
 /*!
  * MMU를 켜는 기능.
+ *  r0  = cp#15 control register
  */
 	mov	r0, r0
 	instr_sync

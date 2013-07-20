@@ -89,8 +89,18 @@ ENDPROC(v7_flush_icache_all)
 
 ENTRY(v7_flush_dcache_louis)
 	dmb					@ ensure ordering with previous memory accesses
+	/*!
+	 * data memory barrier
+	*/
 	mrc	p15, 1, r0, c0, c0, 1		@ read clidr, r0 = clidr
+	/*!
+         * Cache Level ID Register = clidr
+       */
 	ALT_SMP(ands	r3, r0, #(7 << 21))	@ extract LoUIS from clidr
+	/*!
+     * 7<<21 = LoUis[21:23] , clidr
+     LoUis =  캐시내부의 공유수준을 표시.
+     */
 	ALT_UP(ands	r3, r0, #(7 << 27))	@ extract LoUU from clidr
 #ifdef CONFIG_ARM_ERRATA_643719
 	ALT_SMP(mrceq	p15, 0, r2, c0, c0, 0)	@ read main ID register
@@ -102,6 +112,9 @@ ENTRY(v7_flush_dcache_louis)
 #endif
 	ALT_SMP(mov	r3, r3, lsr #20)	@ r3 = LoUIS * 2
 	ALT_UP(mov	r3, r3, lsr #26)	@ r3 = LoUU * 2
+	/*!
+	1276 page 확인하기 
+     */
 	moveq	pc, lr				@ return if level == 0
 	mov	r10, #0				@ r10 (starting level) = 0
 	b	flush_levels			@ start flushing cache levels
@@ -124,20 +137,47 @@ ENTRY(v7_flush_dcache_all)
 	beq	finished			@ if loc is 0, then no need to clean
 	mov	r10, #0				@ start clean at cache level 0
 flush_levels:
+/*!
+ * r10 = 0
+ * r0 = clidr
+*/
 	add	r2, r10, r10, lsr #1		@ work out 3x current cache level
 	mov	r1, r0, lsr r2			@ extract cache type bits from clidr
 	and	r1, r1, #7			@ mask of the bits for current cache only
 	cmp	r1, #2				@ see what cache we have at this level
 	blt	skip				@ skip if no cache, or just i-cache
 #ifdef CONFIG_PREEMPT
+	/*!
+	 * 예전 cpsr r9에 저장후 interrupt disable 
+	*/
 	save_and_disable_irqs_notrace r9	@ make cssr&csidr read atomic
 #endif
 	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
+	/*!
+	 *  r10 = 0
+	  0 = Data or Unified cache
+	  1 = Instruction Cache 
+	 */
 	isb					@ isb to sych the new cssr&csidr
+	/*!
+	 * Cpu 파이프 라인과 
+	 프리패치 버퍼를 비운다 
+	*/
 	mrc	p15, 1, r1, c0, c0, 0		@ read the new csidr
+	/*!
+	 *	 r1 = CCSIDR
+	*/
 #ifdef CONFIG_PREEMPT
+	/*!
+	 * r9 에저장해놓은 cpsr_c를 다시 가져온다.
+	*/
 	restore_irqs_notrace r9
 #endif
+	/*!
+	* r1 = CSIDR
+	CSIDR[2:0] = LineSize = (log2 (number of word in cache line) ) -2
+	=> 16 words per line
+	*/
 	and	r2, r1, #7			@ extract the length of the cache lines
 	add	r2, r2, #4			@ add 4 (line length offset)
 	ldr	r4, =0x3ff
@@ -147,14 +187,27 @@ flush_levels:
 	ands	r7, r7, r1, lsr #13		@ extract max number of the index size
 loop1:
 	mov	r9, r4				@ create working copy of max way size
+	/*!
+	 * r4 = CSIDR[12:3] = Associativity 
+	 way. 0x001= 2way , 0x00F = 16way
+	*/
 loop2:
  ARM(	orr	r11, r10, r9, lsl r5	)	@ factor way and cache number into r11
  THUMB(	lsl	r6, r9, r5		)
  THUMB(	orr	r11, r10, r6		)	@ factor way and cache number into r11
+ /*!
+ * r7 = numset
+ * r2 = lineSize +4 
+ * r11 =  r9 lsl r5
+ * r9 = Associativity
+ */
  ARM(	orr	r11, r11, r7, lsl r2	)	@ factor index number into r11
  THUMB(	lsl	r6, r7, r2		)
  THUMB(	orr	r11, r11, r6		)	@ factor index number into r11
 	mcr	p15, 0, r11, c7, c14, 2		@ clean & invalidate by set/way
+	/*!
+     * c7 ,c14 2 = DCCISW 
+     */
 	subs	r9, r9, #1			@ decrement the way
 	bge	loop2
 	subs	r7, r7, #1			@ decrement the index
@@ -169,6 +222,9 @@ finished:
 	dsb
 	isb
 	mov	pc, lr
+	/*!
+     * 현재 타입에 따라서 set/way 전체 clean &  invalidate
+     */
 ENDPROC(v7_flush_dcache_all)
 
 /*

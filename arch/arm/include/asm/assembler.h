@@ -83,6 +83,9 @@
 #if __LINUX_ARM_ARCH__ >= 6
 	.macro	disable_irq_notrace
 	cpsid	i
+	/*!
+	 * cpsid = change processor state interrupt disable 
+	 */
 	.endm
 
 	.macro	enable_irq_notrace
