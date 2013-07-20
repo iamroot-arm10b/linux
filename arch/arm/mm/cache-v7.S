@@ -95,14 +95,19 @@ ENTRY(v7_flush_dcache_louis)
 	mrc	p15, 1, r0, c0, c0, 1		@ read clidr, r0 = clidr
 	/*!
          * Cache Level ID Register = clidr
-       */
+	 */
 	ALT_SMP(ands	r3, r0, #(7 << 21))	@ extract LoUIS from clidr
 	/*!
-     * 7<<21 = LoUis[21:23] , clidr
-     LoUis =  캐시내부의 공유수준을 표시.
-     */
+	 * 7<<21 = LoUis[21:23] , clidr
+	 * LoUis =  캐시내부의 공유수준을 표시.
+	 * cache level id register에서 LoUIS 만 추출해서 r3에 저장
+	 * 삭제되거나 무효화되어야 하는 cache의 레벨
+	 */
 	ALT_UP(ands	r3, r0, #(7 << 27))	@ extract LoUU from clidr
 #ifdef CONFIG_ARM_ERRATA_643719
+	/*!
+	 * Set 되지 않음.
+	 */
 	ALT_SMP(mrceq	p15, 0, r2, c0, c0, 0)	@ read main ID register
 	ALT_UP(moveq	pc, lr)			@ LoUU is zero, so nothing to do
 	ldreq	r1, =0x410fc090                 @ ID of ARM Cortex A9 r0p?
@@ -111,6 +116,9 @@ ENTRY(v7_flush_dcache_louis)
 	orreqs	r3, #(1 << 21)			@   fix LoUIS value (and set flags state to 'ne')
 #endif
 	ALT_SMP(mov	r3, r3, lsr #20)	@ r3 = LoUIS * 2
+	/*!
+	 * r3 = LoUIS값(2) * 2 = 4
+	 */
 	ALT_UP(mov	r3, r3, lsr #26)	@ r3 = LoUU * 2
 	/*!
 	1276 page 확인하기 
@@ -142,15 +150,21 @@ flush_levels:
  * r0 = clidr
 */
 	add	r2, r10, r10, lsr #1		@ work out 3x current cache level
+	/*!
+	 * r2 = 0, r10 = 0
+	 */
 	mov	r1, r0, lsr r2			@ extract cache type bits from clidr
+	/*!
+	 * r0 = clidr값(2) = r1
+	 */
 	and	r1, r1, #7			@ mask of the bits for current cache only
 	cmp	r1, #2				@ see what cache we have at this level
 	blt	skip				@ skip if no cache, or just i-cache
 #ifdef CONFIG_PREEMPT
+	save_and_disable_irqs_notrace r9	@ make cssr&csidr read atomic
 	/*!
 	 * 예전 cpsr r9에 저장후 interrupt disable 
-	*/
-	save_and_disable_irqs_notrace r9	@ make cssr&csidr read atomic
+	 */
 #endif
 	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
 	/*!
@@ -160,9 +174,8 @@ flush_levels:
 	 */
 	isb					@ isb to sych the new cssr&csidr
 	/*!
-	 * Cpu 파이프 라인과 
-	 프리패치 버퍼를 비운다 
-	*/
+	 * CPU 파이프라인과 prefetch buffer를 비운다.
+	 */
 	mrc	p15, 1, r1, c0, c0, 0		@ read the new csidr
 	/*!
 	 *	 r1 = CCSIDR
@@ -172,6 +185,9 @@ flush_levels:
 	 * r9 에저장해놓은 cpsr_c를 다시 가져온다.
 	*/
 	restore_irqs_notrace r9
+	/*!
+	 * 인터럽트 복구
+	 */
 #endif
 	/*!
 	* r1 = CSIDR
@@ -206,8 +222,9 @@ loop2:
  THUMB(	orr	r11, r11, r6		)	@ factor index number into r11
 	mcr	p15, 0, r11, c7, c14, 2		@ clean & invalidate by set/way
 	/*!
-     * c7 ,c14 2 = DCCISW 
-     */
+	 * c7 ,c14 2 = DCCISW 
+	 * arm매뉴얼 B4.2.1(1741페이지)에서 가변적인, B6.1.7(1812페이지) csidr
+	 */
 	subs	r9, r9, #1			@ decrement the way
 	bge	loop2
 	subs	r7, r7, #1			@ decrement the index

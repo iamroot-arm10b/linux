@@ -148,8 +148,14 @@
 	.endm
 
 	.macro	save_and_disable_irqs_notrace, oldcpsr
+	/*!
+	 * 여기에 들어옴
+	 */
 	mrs	\oldcpsr, cpsr
 	disable_irq_notrace
+	/*!
+	 * 인터럽트 disable
+	 */
 	.endm
 
 /*

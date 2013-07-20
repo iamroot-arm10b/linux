@@ -470,6 +470,9 @@ static void __init mm_init(void)
 
 asmlinkage void __init start_kernel(void)
 {
+	/*!
+	 * 2013/07/20 여기까지.
+	 */
 	char * command_line;
 	extern const struct kernel_param __start___param[], __stop___param[];
 

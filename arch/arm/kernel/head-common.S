@@ -111,9 +111,18 @@ ENDPROC(__vet_atags)
  */
 	__INIT
 __mmap_switched:
+	/*!
+	 * arch/arm/kernel/head.S 에서 호출됨
+	 */
 	adr	r3, __mmap_switched_data
 
 	ldmia	r3!, {r4, r5, r6, r7}
+	/*!
+	 * .long	__data_loc	현재 데이터가 있는 위치		@ r4
+	 * .long	_sdata		데이터가 있어야 할 위치(링크가 부여한 주소)	@ r5
+	 * .long	__bss_start			@ r6
+	 * .long	_end				@ r7
+	 */
 	cmp	r4, r5				@ Copy data segment if needed
 1:	cmpne	r5, r6
 	ldrne	fp, [r4], #4
@@ -126,6 +135,13 @@ __mmap_switched:
 	bcc	1b
 
  ARM(	ldmia	r3, {r4, r5, r6, r7, sp})
+	/*!
+	 * .long	processor_id			@ r4
+	 * .long	__machine_arch_type		@ r5
+	 * .long	__atags_pointer			@ r6
+	 * .long	cr_alignment			@ r7
+	 * .long	init_thread_union + THREAD_START_SP @ sp
+	 */
  THUMB(	ldmia	r3, {r4, r5, r6, r7}	)
  THUMB(	ldr	sp, [r3, #16]		)
 	str	r9, [r4]			@ Save processor ID
@@ -133,7 +149,13 @@ __mmap_switched:
 	str	r2, [r6]			@ Save atags pointer
 	cmp	r7, #0
 	bicne	r4, r0, #CR_A			@ Clear 'A' bit
+	/*!
+	 * 다르면 첫번째 비트를 clear
+	 */
 	stmneia	r7, {r0, r4}			@ Save control register values
+	/*!
+	 * cr alignment 위치과 alignment  
+	 */
 	b	start_kernel
 ENDPROC(__mmap_switched)
 

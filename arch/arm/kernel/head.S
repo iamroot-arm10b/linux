@@ -528,13 +528,16 @@ __secondary_data:
  *  r13 = *virtual* address to jump to upon completion
  */
 __enable_mmu:
-/*!
- * r0 는 STCLR에서 bic , orr한 값을 가지고 온다.
- */
+	/*!
+	 * r0 는 STCLR에서 bic , orr한 값을 가지고 온다.
+	 */
 #if defined(CONFIG_ALIGNMENT_TRAP) && __LINUX_ARM_ARCH__ < 6
 	orr	r0, r0, #CR_A
 #else
 	bic	r0, r0, #CR_A
+	/*!
+	 * alignment check를 하지 않는다.
+	 */
 #endif
 #ifdef CONFIG_CPU_DCACHE_DISABLE
 	bic	r0, r0, #CR_C
@@ -550,6 +553,9 @@ __enable_mmu:
 		      domain_val(DOMAIN_KERNEL, DOMAIN_MANAGER) | \
 		      domain_val(DOMAIN_TABLE, DOMAIN_MANAGER) | \
 		      domain_val(DOMAIN_IO, DOMAIN_CLIENT))
+	/*!
+	 * reference manual 1358 페이지 Table B3-8 VMSAv7 MMU access permissions 참조
+	 */
 	mcr	p15, 0, r5, c3, c0, 0		@ load domain access register
 	/*!
 	 * DACR(Domain Access Control Register)
@@ -557,9 +563,8 @@ __enable_mmu:
 	mcr	p15, 0, r4, c2, c0, 0		@ load page table pointer
 	/*!
 	 * r4 =0x40004000
-	 */
-	/*!
-	 *   TTBR0
+	 * 도메인이 먼저 설정된 후 page table 을 찾을 수 있다.
+	 * 특정 페이지가 속한 도메인이 Manager라면 AP 권한체크를 하지 않는다.
 	 */
 #endif
 	b	__turn_mmu_on
@@ -588,6 +593,10 @@ ENTRY(__turn_mmu_on)
  */
 	mov	r0, r0
 	instr_sync
+	/*!
+	 * 파이프라인의 명령어를 모두 flush 시킴
+	 * CPU 레벨의 reordering 을 고려한 명령어
+	 */
 	mcr	p15, 0, r0, c1, c0, 0		@ write control reg
 	mrc	p15, 0, r3, c0, c0, 0		@ read id reg
 	instr_sync
