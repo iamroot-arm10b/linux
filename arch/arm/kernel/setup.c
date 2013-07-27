@@ -468,9 +468,21 @@ u32 __cpu_logical_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 void __init smp_setup_processor_id(void)
 {
 	int i;
+	/*!
+	 * MPIDR에서 하위 24비트를 가져온다.
+	 */
 	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
+	/*!
+	 * affinity level 0을 가져온다.
+	 */
 	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 
+	/*!
+	 * 얻어온 값을 0번 map에 대입
+	 * 현재 CPU값에 해당하는 map을 0으로 만든다.
+	 * ex) affinity level 0 == 2
+	 * [0] = 2, [1] = 1, [2] = 0, [3]= 3
+	 */
 	cpu_logical_map(0) = cpu;
 	for (i = 1; i < nr_cpu_ids; ++i)
 		cpu_logical_map(i) = i == cpu ? 0 : i;

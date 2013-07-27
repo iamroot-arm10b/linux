@@ -55,6 +55,9 @@
 #define MPIDR_LEVEL_BITS 8
 #define MPIDR_LEVEL_MASK ((1 << MPIDR_LEVEL_BITS) - 1)
 
+/*!
+ * 각 레벨은 8비트로 이루어져 있다.
+ */
 #define MPIDR_AFFINITY_LEVEL(mpidr, level) \
 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)
 
@@ -78,6 +81,9 @@
 
 extern unsigned int processor_id;
 
+/*!
+ * c0를 읽어온다. MPIDR
+ */
 #ifdef CONFIG_CPU_CP15
 #define read_cpuid(reg)							\
 	({								\
@@ -183,6 +189,9 @@ static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
 	return read_cpuid(CPUID_TCM);
 }
 
+/*!
+ * Multiprocessor affinity register를 읽는 함수
+ */
 static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
 {
 	return read_cpuid(CPUID_MPIDR);

@@ -21,6 +21,9 @@
  * in the TPIDRPRW. TPIDRPRW only exists on V6K and V7
  */
 #if defined(CONFIG_SMP) && !defined(CONFIG_CPU_V6)
+/*!
+ * PL1 레지스터 값을 off로 설정한다.
+ */
 static inline void set_my_cpu_offset(unsigned long off)
 {
 	/* Set TPIDRPRW */

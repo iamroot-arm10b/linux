@@ -6,6 +6,9 @@
  * converts to "bar".
  */
 
+/*!
+ * string으로 뒤에 붙는다.
+ */
 #define __stringify_1(x...)	#x
 #define __stringify(x...)	__stringify_1(x)
 

@@ -441,6 +441,9 @@ static void __init boot_cpu_init(void)
 	set_cpu_possible(cpu, true);
 }
 
+/*!
+ * weak으로 선언된 함수는 일반적인 정의가 있으면 무시된다.
+ */
 void __init __weak smp_setup_processor_id(void)
 {
 }
@@ -481,13 +484,25 @@ asmlinkage void __init start_kernel(void)
 	 * lockdep hash:
 	 */
 	lockdep_init();
+	/*!
+	 * lockdep은 사용하는 부분이 나오면 나중에 다시 보자
+	 */
 	smp_setup_processor_id();
+	/*!
+	 * 현재 부팅중인 프로세서의 식별 및 smp 지원 여부 체크
+	 */
 	debug_objects_early_init();
+	/*!
+	 * debug feature 는 추후 디테일하게 분석 예정
+	 */
 
 	/*
 	 * Set up the the initial canary ASAP:
 	 */
 	boot_init_stack_canary();
+	/*!
+	 * 까나리는 스택에 특정 값을 넣어서 오염도나 공격여부를 체크한다.
+	 */
 
 	cgroup_init_early();
 
