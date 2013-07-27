@@ -7,6 +7,10 @@
 #define BIT_MASK(nr)		(1UL << ((nr) % BITS_PER_LONG))
 #define BIT_WORD(nr)		((nr) / BITS_PER_LONG)
 #define BITS_PER_BYTE		8
+/*!
+ * nr을 올림한 long의 단위의 배열을 확보한다.
+ * ex) 1~32까지는 1, 33이면 2
+ */
 #define BITS_TO_LONGS(nr)	DIV_ROUND_UP(nr, BITS_PER_BYTE * sizeof(long))
 #endif
 

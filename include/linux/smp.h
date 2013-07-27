@@ -209,6 +209,9 @@ static inline void kick_all_cpus_sync(void) {  }
  * which use for some reason is legal). Don't use this to hack around
  * the warning message, as your code might not work under PREEMPT.
  */
+/*!
+ * DEBUG_PREEMPT가 켜져있는 상태면 debug 출력관련 내용 추가된다.
+ */
 #ifdef CONFIG_DEBUG_PREEMPT
   extern unsigned int debug_smp_processor_id(void);
 # define smp_processor_id() debug_smp_processor_id()

@@ -5,7 +5,7 @@
 #include <uapi/linux/types.h>
 
 #ifndef __ASSEMBLY__
-
+/* name으로 long 단위의 bitmap 배열을 할당한다.  */
 #define DECLARE_BITMAP(name,bits) \
 	unsigned long name[BITS_TO_LONGS(bits)]
 

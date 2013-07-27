@@ -434,6 +434,7 @@ void __init parse_early_param(void)
 static void __init boot_cpu_init(void)
 {
 	int cpu = smp_processor_id();
+	/* thread_info에서 CPU ID값을 얻는다. */
 	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
 	set_cpu_online(cpu, true);
 	set_cpu_active(cpu, true);
@@ -507,6 +508,7 @@ asmlinkage void __init start_kernel(void)
 	cgroup_init_early();
 
 	local_irq_disable();
+	/* 인터럽트 금지 */
 	early_boot_irqs_disabled = true;
 
 /*
