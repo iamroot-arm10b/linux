@@ -42,6 +42,10 @@
 #else
 /* &a[0] degrades to a pointer: a different type from an array */
 #define __must_be_array(a) BUILD_BUG_ON_ZERO(__same_type((a), &(a)[0]))
+/*!
+ * 같은 type인지를 체크한다.
+ * a가 배열이 아니면 오류
+ */
 #endif
 
 /*

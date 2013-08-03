@@ -83,6 +83,7 @@ extern unsigned int processor_id;
 
 /*!
  * c0를 읽어온다. MPIDR
+ * reg가 0이면 MIDR, 5이면 MPIDR
  */
 #ifdef CONFIG_CPU_CP15
 #define read_cpuid(reg)							\
@@ -146,6 +147,9 @@ static inline unsigned int __attribute_const__ read_cpuid_ext(unsigned offset)
 static inline unsigned int __attribute_const__ read_cpuid_id(void)
 {
 	return read_cpuid(CPUID_ID);
+	/*! 20130803
+	 * MIDR값을 얻어온다.
+	 */
 }
 
 #elif defined(CONFIG_CPU_V7M)

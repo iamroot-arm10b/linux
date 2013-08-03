@@ -669,6 +669,10 @@ const struct cpumask *const cpu_possible_mask = to_cpumask(cpu_possible_bits);
 EXPORT_SYMBOL(cpu_possible_mask);
 
 static DECLARE_BITMAP(cpu_online_bits, CONFIG_NR_CPUS) __read_mostly;
+/*!
+ * CPU를 위한 4개의 bitmap을 만든다.
+ * __read_mostly: read only 데이터를 한 섹션에 모으는 표시 
+ */
 const struct cpumask *const cpu_online_mask = to_cpumask(cpu_online_bits);
 EXPORT_SYMBOL(cpu_online_mask);
 

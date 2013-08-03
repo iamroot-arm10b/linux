@@ -269,6 +269,13 @@
 	.type	\name\()_processor_functions, #object
 	.align 2
 ENTRY(\name\()_processor_functions)
+	/*! 20130803
+	 * arch/arm/mm/proc-v7.S 에서 호출되는 값 
+	 * name: v7
+	 * dabort: v7_early_abort
+	 * pabort: v7_pabort
+	 * suspend: 1
+	 */
 	.word	\dabort
 	.word	\pabort
 	.word	cpu_\name\()_proc_init
@@ -320,6 +327,9 @@ ENTRY(\name\()_cache_fns)
 	.size	\name\()_cache_fns, . - \name\()_cache_fns
 .endm
 
+/*! 20130803
+ * ~/linux/arch/arm/mm/tlb-v7.S 파일의define_tlb_functions 참조
+ */
 .macro define_tlb_functions name:req, flags_up:req, flags_smp
 	.type	\name\()_tlb_fns, #object
 ENTRY(\name\()_tlb_fns)

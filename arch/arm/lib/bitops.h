@@ -5,18 +5,37 @@
 ENTRY(	\name		)
 UNWIND(	.fnstart	)
 	ands	ip, r1, #3
+	/*!
+	 * r0: nr 의 현재 동작중인 CPU ID
+	 * r1: p, long배열 Index
+	 */
 	strneb	r1, [ip]		@ assert word-aligned
+	/*!
+	 * ip값이 1,2,3 인 경우(4의 배수가 아닌 경우)에 종료를 할 것이라고 추측?
+	 */
 	mov	r2, #1
 	and	r3, r0, #31		@ Get bit offset
+	/*!
+	 * cpu id 의 하위 5bit를 받아서 long단위로 쪼갠다.(
+	 * bitmap % 32 = r3
+	 * bitmap / 32 = r1
+	 * r0가 100 이라면, r1은 2, r3는 1
+	 */
 	mov	r0, r0, lsr #5
 	add	r1, r1, r0, lsl #2	@ Get word offset
 	mov	r3, r2, lsl r3
+	/*!
+	 * bitmap string에서 원하는 코드를 atomic하게 구하기 위해서.
+	 */
 1:	ldrex	r2, [r1]
 	\instr	r2, r2, r3
 	strex	r0, r2, [r1]
 	cmp	r0, #0
 	bne	1b
 	bx	lr
+	/*!
+	 * lr의 0번bit가 0이면 ARM상태로, 1이면 Thumb상태로 리턴한다.
+	 */
 UNWIND(	.fnend		)
 ENDPROC(\name		)
 	.endm

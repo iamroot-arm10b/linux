@@ -50,6 +50,10 @@ extern int lock_stat;
 struct lockdep_subclass_key {
 	char __one_byte;
 } __attribute__ ((__packed__));
+/*! 20130803
+ * __packed__가 없으면 word 단위로 padding된다.
+ * __packed__가 있으면 선언된 자료형만큼 메모리 크기를 할당한다.
+ */
 
 struct lock_class_key {
 	struct lockdep_subclass_key	subkeys[MAX_LOCKDEP_SUBCLASSES];

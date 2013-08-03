@@ -255,6 +255,10 @@ int cpumask_any_but(const struct cpumask *mask, unsigned int cpu);
 static inline void cpumask_set_cpu(unsigned int cpu, struct cpumask *dstp)
 {
 	set_bit(cpumask_check(cpu), cpumask_bits(dstp));
+	/*!
+	 *  
+	 * cpumask_bits: dstp의 bits 접근 
+	 */
 }
 
 /**

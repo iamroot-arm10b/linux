@@ -279,6 +279,10 @@ do {							\
 	spinlock_check(_lock);				\
 	raw_spin_lock_init(&(_lock)->rlock);		\
 } while (0)
+/*! 20130803
+ * spinlock_check: spinlock 타입이 맞는지 체크한다.
+ * raw_spin_lock_init: 
+ */
 
 static inline void spin_lock(spinlock_t *lock)
 {

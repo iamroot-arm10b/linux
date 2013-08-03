@@ -28,6 +28,9 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;
 	list->prev = list;
+	/*! 20130803
+	 * next와 prev가 자신을 가리키게 한다.
+	 */
 }
 
 /*

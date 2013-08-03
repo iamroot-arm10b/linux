@@ -139,6 +139,10 @@ static struct nlattr *nested_attr_tb[128];
    e.g. in a structure initializer (or where-ever else comma expressions
    aren't permitted). */
 #define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
+/*!
+ * e가 0이 아닌 경우에는 int: 다음의 bit값에 negative value가 와서 오류 발생
+ * e가 0인 경우는 강제적으로 word 경계를 조정한다.
+ */
 #define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
 #endif
 

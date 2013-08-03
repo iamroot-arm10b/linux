@@ -434,12 +434,16 @@ void __init parse_early_param(void)
 static void __init boot_cpu_init(void)
 {
 	int cpu = smp_processor_id();
-	/* thread_info에서 CPU ID값을 얻는다. */
-	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
+	/*! thread_info에서 CPU ID값을 얻는다. */
+	/*! Mark the boot cpu "present", "online" etc for SMP and UP case */
 	set_cpu_online(cpu, true);
 	set_cpu_active(cpu, true);
 	set_cpu_present(cpu, true);
 	set_cpu_possible(cpu, true);
+	/*!
+	 * 현재 CPU의 online, active, present, possible bit를 set시키는 함수 실행
+	 * 각각의 함수마다 bitmap을 전부 따로 만든다.
+	 */
 }
 
 /*!
@@ -516,9 +520,21 @@ asmlinkage void __init start_kernel(void)
  * enable them
  */
 	boot_cpu_init();
+	/*!
+	 * 현재 CPU의 online, active, present, possible bit를 set
+	 */
 	page_address_init();
+	/*! 20130803
+	 * 페이지 address를 위한 배열과 spin lock 초기화
+	 */
 	pr_notice("%s", linux_banner);
+	/*! 20130803
+	 * 리눅스 버전 출력
+	 */
 	setup_arch(&command_line);
+	/*! 20130803
+	 * 여기 시작
+	 */
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);

@@ -37,6 +37,9 @@ typedef struct raw_spinlock {
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 # define SPIN_DEP_MAP_INIT(lockname)	.dep_map = { .name = #lockname }
+/*! 20130803
+ * SPIN_DEP_MAP_INIT이 정의되어 있는 경우 초기화
+ */
 #else
 # define SPIN_DEP_MAP_INIT(lockname)
 #endif
@@ -55,6 +58,10 @@ typedef struct raw_spinlock {
 	.raw_lock = __ARCH_SPIN_LOCK_UNLOCKED,	\
 	SPIN_DEBUG_INIT(lockname)		\
 	SPIN_DEP_MAP_INIT(lockname) }
+	/*! 20130803
+	 * SPIN_DEBUG_INIT(lockname) : 0으로 초기화
+	 * Lock이 제대로 되었는지 체크
+	 */
 
 #define __RAW_SPIN_LOCK_UNLOCKED(lockname)	\
 	(raw_spinlock_t) __RAW_SPIN_LOCK_INITIALIZER(lockname)
