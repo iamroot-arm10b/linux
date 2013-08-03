@@ -20,6 +20,10 @@ static inline bool is_smp(void)
 #elif defined(CONFIG_SMP_ON_UP)
 	extern unsigned int smp_on_up;
 	return !!smp_on_up;
+	/*!
+	 * unsigned int 변수인 smp_on_up > 0 값을 가지게 된다면 !!smp_on_up = 1 값을 가지게 됩니다.
+	 * is_smp() 함수의 return type이 bool이라서 위와 같이 작성한것 같습니다.
+	 */
 #else
 	return true;
 #endif
