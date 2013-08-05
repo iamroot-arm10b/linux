@@ -26,6 +26,9 @@
  * strex/ldrex monitor on some implementations. The reason we can use it for
  * atomic_set() is the clrex or dummy strex done on every exception return.
  */
+/*!
+ * atomic 연산을 위한 매크로
+ */
 #define atomic_read(v)	(*(volatile int *)&(v)->counter)
 #define atomic_set(v,i)	(((v)->counter) = (i))
 
@@ -35,6 +38,9 @@
  * ARMv6 UP and SMP safe atomic ops.  We use load exclusive and
  * store exclusive to ensure that these are atomic.  We may loop
  * to ensure that the update happens.
+ */
+/*!
+ * ldrex, strex 명령으로 원자성을 보장한다.
  */
 static inline void atomic_add(int i, atomic_t *v)
 {

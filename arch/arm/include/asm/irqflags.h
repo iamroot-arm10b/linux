@@ -39,7 +39,10 @@ static inline void arch_local_irq_enable(void)
 		:
 		: "memory", "cc");
 }
-
+/*!
+ * cps interrupt disable 명령으로 interrupt 비트를 disable 한다.
+ * 그리고 compiler 메모리 장벽를 친다
+ */
 static inline void arch_local_irq_disable(void)
 {
 	asm volatile(

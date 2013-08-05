@@ -238,7 +238,20 @@ static int __get_cpu_architecture(void)
 		if (cpu_arch)
 			cpu_arch += CPU_ARCH_ARMv3;
 	} else if ((read_cpuid_id() & 0x000f0000) == 0x000f0000) {
+		/*! 20130803
+		 * MIDR값: 0x413fc0f3 (0100,0001,0011,1111,1100,0000,1111,0011)
+		 * 41: arm
+		 * 3: major revision
+		 * f: 아키텍처
+		 * c0f: Cortex-A15
+		 * 3: minor revision
+		 * TRM에 값이 나와있다.
+		 */
 		unsigned int mmfr0;
+		/*! 20130803
+		 * mmfr0: 0x10201105
+		 * DDI0438H_cortex_a15_r3p3_trm.pdf 의 p.106 참조
+		 */
 
 		/* Revised CPUID format. Read the Memory Model Feature
 		 * Register 0 and check for VMSAv7 or PMSAv7 */
@@ -247,6 +260,9 @@ static int __get_cpu_architecture(void)
 		if ((mmfr0 & 0x0000000f) >= 0x00000003 ||
 		    (mmfr0 & 0x000000f0) >= 0x00000030)
 			cpu_arch = CPU_ARCH_ARMv7;
+			/*! 20130803
+			 * CPU_ARCH_ARMv7 = 9
+			 */
 		else if ((mmfr0 & 0x0000000f) == 0x00000002 ||
 			 (mmfr0 & 0x000000f0) == 0x00000020)
 			cpu_arch = CPU_ARCH_ARMv6;
@@ -256,6 +272,9 @@ static int __get_cpu_architecture(void)
 		cpu_arch = CPU_ARCH_UNKNOWN;
 
 	return cpu_arch;
+	/*! 20130803
+	 * cpu_arch = CPU_ARCH_ARMv7 리턴
+	 */
 }
 #endif
 
@@ -468,9 +487,21 @@ u32 __cpu_logical_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 void __init smp_setup_processor_id(void)
 {
 	int i;
+	/*!
+	 * MPIDR에서 하위 24비트를 가져온다.
+	 */
 	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
+	/*!
+	 * affinity level 0을 가져온다.
+	 */
 	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 
+	/*!
+	 * 얻어온 값을 0번 map에 대입
+	 * 현재 CPU값에 해당하는 map을 0으로 만든다.
+	 * ex) affinity level 0 == 2
+	 * [0] = 2, [1] = 1, [2] = 0, [3]= 3
+	 */
 	cpu_logical_map(0) = cpu;
 	for (i = 1; i < nr_cpu_ids; ++i)
 		cpu_logical_map(i) = i == cpu ? 0 : i;
@@ -561,31 +592,89 @@ static void __init setup_processor(void)
 	 * entries in arch/arm/mm/proc-*.S
 	 */
 	list = lookup_processor_type(read_cpuid_id());
+	/*! 20130803
+	 * 현재 CPU에 맞는 프로세스 ID를 파라미터로 넣어준다.
+	 * 아키텍처별로 셋팅한다. (어셈블리로 정의된것 재사용)
+	 */
 	if (!list) {
 		printk("CPU configuration botched (ID %08x), unable "
 		       "to continue.\n", read_cpuid_id());
 		while (1);
+		/*! 20130803
+		 * 커널이 알수 없는 CPU일 경우에 종료
+		 */
 	}
 
 	cpu_name = list->cpu_name;
+	/*! 20130803
+	 * list->cpu_name = "ARMv7 Processor"
+	 */
 	__cpu_architecture = __get_cpu_architecture();
+	/*! 20130803
+	 * CPU 아키텍처값을 가져온다.
+	 * __cpu_architecture = CPU_ARCH_ARMv7
+	 */
 
 #ifdef MULTI_CPU
 	processor = *list->proc;
+	/*! 20130803
+	 * ~/linux/arch/arm/include/asm/proc-fns.h
+	 * struct processor가 아래의 값으로 초기화된다. 
+	 * _data_abort = v7_early_abort
+	 * _prefetch_abort = v7_pabort
+	 * cpu_v7_proc_init
+	 * cpu_v7_proc_fin
+	 * cpu_v7_reset
+	 * cpu_v7_do_idle
+	 * cpu_v7_dcache_clean_area
+	 * cpu_v7_switch_mm
+	 * cpu_v7_set_pte_ext
+	 * cpu_v7_suspend_size
+	 * cpu_v7_do_suspend
+	 * cpu_v7_do_resume
+	 */
 #endif
 #ifdef MULTI_TLB
 	cpu_tlb = *list->tlb;
+	/*! 20130803
+	 * ~/linux/arch/arm/include/asm/tlbflush.h
+	 * cpu_tlb의 type: struct cpu_tlb_fns
+	 * flush_user_range = v7wbi_flush_user_tlb_range
+	 * flush_kern_range = v7wbi_flush_kern_tlb_range
+	 */
 #endif
 #ifdef MULTI_USER
 	cpu_user = *list->user;
+	/*! 20130803
+	 * .cpu_clear_user_highpage = v6_clear_user_highpage_nonaliasing,
+	 * .cpu_copy_user_highpage  = v6_copy_user_highpage_nonaliasing,
+	 */
 #endif
 #ifdef MULTI_CACHE
 	cpu_cache = *list->cache;
+	/*! 20130803
+	 * v7_flush_icache_all
+	 * v7_flush_kern_cache_all
+	 * v7_flush_kern_cache_louis
+	 * v7_flush_user_cache_all
+	 * v7_flush_user_cache_range
+	 * v7_coherent_kern_range
+	 * v7_coherent_user_range
+	 * v7_flush_kern_dcache_area
+	 * v7_dma_map_area
+	 * v7_dma_unmap_area
+	 * v7_dma_flush_range
+	 * v7_cache_fns, . - v7_cache_fns
+	 */
 #endif
 
 	printk("CPU: %s [%08x] revision %d (ARMv%s), cr=%08lx\n",
 	       cpu_name, read_cpuid_id(), read_cpuid_id() & 15,
 	       proc_arch[cpu_architecture()], cr_alignment);
+	/*! 20130803
+	 * CPU: ARMv7 Processor [MIDR값] revision 3 (ARMv7), cr= sctlr(system contol reg.값)
+	 * 2013/08/03 여기까지(setup_processor 분석 중)
+	 */
 
 	snprintf(init_utsname()->machine, __NEW_UTS_LEN + 1, "%s%c",
 		 list->arch_name, ENDIANNESS);
@@ -850,6 +939,9 @@ void __init hyp_mode_check(void)
 
 void __init setup_arch(char **cmdline_p)
 {
+	/*! 20130803
+	 * 시작
+	 */
 	struct machine_desc *mdesc;
 
 	setup_processor();

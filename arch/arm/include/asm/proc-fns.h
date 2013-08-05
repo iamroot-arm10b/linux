@@ -28,6 +28,9 @@ extern struct processor {
 	 * get data abort address/flags
 	 */
 	void (*_data_abort)(unsigned long pc);
+	/*! 20130803
+	 * arch/arm/mm/proc-macros.S 와 비교 확인
+	 */
 	/*
 	 * Retrieve prefetch fault address
 	 */

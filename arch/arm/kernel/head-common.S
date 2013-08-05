@@ -183,6 +183,9 @@ __mmap_switched_data:
 ENTRY(lookup_processor_type)
 	stmfd	sp!, {r4 - r6, r9, lr}
 	mov	r9, r0
+	/*! 20130803
+	 * r9: cpu id
+	 */
 	bl	__lookup_processor_type
 	mov	r0, r5
 	ldmfd	sp!, {r4 - r6, r9, pc}
@@ -206,7 +209,7 @@ __lookup_processor_type:
 	adr	r3, __lookup_processor_type_data
         /*!
          * lookup_processor_type_data 의 주소를 r3에 넣는다.
-         */
+	 */
 	ldmia	r3, {r4 - r6}
         /*!
          * r4 = lookup_processor_type_data의 주소  

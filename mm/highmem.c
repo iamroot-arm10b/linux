@@ -333,6 +333,10 @@ static struct page_address_slot {
 	struct list_head lh;			/* List of page_address_maps */
 	spinlock_t lock;			/* Protect this bucket's list */
 } ____cacheline_aligned_in_smp page_address_htable[1<<PA_HASH_ORDER];
+/*!
+ * ____cacheline_aligned_in_smp: L1 캐쉬단위(64byte)로 align하는 것
+ * 구조체 배열이 128개 생기는 것
+ */
 
 static struct page_address_slot *page_slot(const struct page *page)
 {
@@ -416,8 +420,17 @@ void __init page_address_init(void)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(page_address_htable); i++) {
+		/*!
+		 * 배열 갯수 구해서 linked list 생성
+		 */
 		INIT_LIST_HEAD(&page_address_htable[i].lh);
+		/*! 20130803
+		 * 리스트 생성
+		 */
 		spin_lock_init(&page_address_htable[i].lock);
+		/*! 20130803
+		 * spin lock 초기화
+		 */
 	}
 }
 

@@ -182,6 +182,9 @@ extern int _find_next_bit_be(const unsigned long *p, int size, int offset);
 	(__builtin_constant_p(nr) ? ____atomic_##name(nr, p) : _##name(nr,p))
 #else
 #define ATOMIC_BITOP(name,nr,p)		_##name(nr,p)
+/*!
+ * 여기가 실행된다.
+ */
 #endif
 
 /*

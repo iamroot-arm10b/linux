@@ -17,7 +17,10 @@
 #ifndef CONFIG_SMP
 # error "<asm/smp.h> included in non-SMP build"
 #endif
-
+/*!
+ * 스택의 아래에 thread info가 위치해 있다.
+ * thread info의 CPU 변수 값를 얻는다.
+ */
 #define raw_smp_processor_id() (current_thread_info()->cpu)
 
 struct seq_file;

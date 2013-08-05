@@ -434,13 +434,21 @@ void __init parse_early_param(void)
 static void __init boot_cpu_init(void)
 {
 	int cpu = smp_processor_id();
-	/* Mark the boot cpu "present", "online" etc for SMP and UP case */
+	/*! thread_info에서 CPU ID값을 얻는다. */
+	/*! Mark the boot cpu "present", "online" etc for SMP and UP case */
 	set_cpu_online(cpu, true);
 	set_cpu_active(cpu, true);
 	set_cpu_present(cpu, true);
 	set_cpu_possible(cpu, true);
+	/*!
+	 * 현재 CPU의 online, active, present, possible bit를 set시키는 함수 실행
+	 * 각각의 함수마다 bitmap을 전부 따로 만든다.
+	 */
 }
 
+/*!
+ * weak으로 선언된 함수는 일반적인 정의가 있으면 무시된다.
+ */
 void __init __weak smp_setup_processor_id(void)
 {
 }
@@ -481,17 +489,30 @@ asmlinkage void __init start_kernel(void)
 	 * lockdep hash:
 	 */
 	lockdep_init();
+	/*!
+	 * lockdep은 사용하는 부분이 나오면 나중에 다시 보자
+	 */
 	smp_setup_processor_id();
+	/*!
+	 * 현재 부팅중인 프로세서의 식별 및 smp 지원 여부 체크
+	 */
 	debug_objects_early_init();
+	/*!
+	 * debug feature 는 추후 디테일하게 분석 예정
+	 */
 
 	/*
 	 * Set up the the initial canary ASAP:
 	 */
 	boot_init_stack_canary();
+	/*!
+	 * 까나리는 스택에 특정 값을 넣어서 오염도나 공격여부를 체크한다.
+	 */
 
 	cgroup_init_early();
 
 	local_irq_disable();
+	/* 인터럽트 금지 */
 	early_boot_irqs_disabled = true;
 
 /*
@@ -499,9 +520,21 @@ asmlinkage void __init start_kernel(void)
  * enable them
  */
 	boot_cpu_init();
+	/*!
+	 * 현재 CPU의 online, active, present, possible bit를 set
+	 */
 	page_address_init();
+	/*! 20130803
+	 * 페이지 address를 위한 배열과 spin lock 초기화
+	 */
 	pr_notice("%s", linux_banner);
+	/*! 20130803
+	 * 리눅스 버전 출력
+	 */
 	setup_arch(&command_line);
+	/*! 20130803
+	 * 여기 시작
+	 */
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);

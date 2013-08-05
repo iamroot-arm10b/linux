@@ -18,6 +18,9 @@
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
+/*!
+ * doubly linked list 초기화
+ */
 #define LIST_HEAD(name) \
 	struct list_head name = LIST_HEAD_INIT(name)
 
@@ -25,6 +28,9 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
 {
 	list->next = list;
 	list->prev = list;
+	/*! 20130803
+	 * next와 prev가 자신을 가리키게 한다.
+	 */
 }
 
 /*
@@ -628,6 +634,10 @@ static inline void hlist_add_head(struct hlist_node *n, struct hlist_head *h)
 	n->pprev = &h->first;
 }
 
+/*!
+ * next와 next의 pprev 사이에 n 삽입
+ * next 앞에 n을 넣는다.
+ */
 /* next must be != NULL */
 static inline void hlist_add_before(struct hlist_node *n,
 					struct hlist_node *next)
@@ -638,6 +648,10 @@ static inline void hlist_add_before(struct hlist_node *n,
 	*(n->pprev) = n;
 }
 
+/*!
+ * n과 n의 next 사이에 next를 삽입
+ * n 뒤에 next를 넣는다.
+ */
 static inline void hlist_add_after(struct hlist_node *n,
 					struct hlist_node *next)
 {

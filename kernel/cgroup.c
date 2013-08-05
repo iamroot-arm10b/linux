@@ -4856,6 +4856,7 @@ EXPORT_SYMBOL_GPL(cgroup_unload_subsys);
  * Initialize cgroups at system boot, and initialize any
  * subsystems that request early init.
  */
+/* RCU를 위한 자료구조를 초기화 */
 int __init cgroup_init_early(void)
 {
 	struct cgroup_subsys *ss;

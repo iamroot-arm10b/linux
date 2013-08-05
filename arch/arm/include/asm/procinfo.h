@@ -41,6 +41,9 @@ struct proc_info_list {
 	struct cpu_user_fns	*user;
 	struct cpu_cache_fns	*cache;
 };
+/*! 20130803
+ * 현재 프로세스를 위한 정보를 가지고 있다.
+ */
 
 #else	/* __KERNEL__ */
 #include <asm/elf.h>

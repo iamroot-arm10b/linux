@@ -13,6 +13,12 @@
 /*
  * Return true if we are running on a SMP platform
  */
+/*!
+ * smp면 true, up면 false다.
+ * smp 커널이 UP상에서 동작할 때는 런타임시 판별해서 
+ * 시스템에 따라 그 값이 바뀐다.
+ * SMP라면 smp_on_up는 1이다.
+ */
 static inline bool is_smp(void)
 {
 #ifndef CONFIG_SMP
