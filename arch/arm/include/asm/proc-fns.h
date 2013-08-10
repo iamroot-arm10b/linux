@@ -29,7 +29,7 @@ extern struct processor {
 	 */
 	void (*_data_abort)(unsigned long pc);
 	/*! 20130803
-	 * arch/arm/mm/proc-macros.S 와 비교 확인
+	 * ~/linux/arch/arm/mm/proc-macros.S 와 비교 확인
 	 */
 	/*
 	 * Retrieve prefetch fault address
@@ -98,6 +98,10 @@ extern void cpu_do_suspend(void *);
 extern void cpu_do_resume(void *);
 #else
 #define cpu_proc_init			processor._proc_init
+
+/*! 20130810
+ *	cpu_v7_proc_init : 내용없는 함수.
+ */
 #define cpu_proc_fin			processor._proc_fin
 #define cpu_reset			processor.reset
 #define cpu_do_idle			processor._do_idle

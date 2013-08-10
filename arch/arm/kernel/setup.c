@@ -85,6 +85,9 @@ unsigned int cacheid __read_mostly;
 EXPORT_SYMBOL(cacheid);
 
 unsigned int __atags_pointer __initdata;
+/*! 20130810
+ * #define __initdata	__section(.init.data)
+ */
 
 unsigned int system_rev;
 EXPORT_SYMBOL(system_rev);
@@ -130,6 +133,9 @@ struct stack {
 } ____cacheline_aligned;
 
 #ifndef CONFIG_CPU_V7M
+/*! 20130810
+ * 최대 CPU 갯수만큼 stack 구조체를 할당
+ */
 static struct stack stacks[NR_CPUS];
 #endif
 
@@ -143,6 +149,9 @@ struct machine_desc *machine_desc __initdata;
 
 static union { char c[4]; unsigned long l; } endian_test __initdata = { { 'l', '?', '?', 'b' } };
 #define ENDIANNESS ((char)endian_test.l)
+/*! 20130810
+ * 빅엔디언이면 'b', 리틀엔디언이면 'l'을 가져오게 된다.
+ */
 
 DEFINE_PER_CPU(struct cpuinfo_arm, cpu_data);
 
@@ -281,6 +290,9 @@ static int __get_cpu_architecture(void)
 int __pure cpu_architecture(void)
 {
 	BUG_ON(__cpu_architecture == CPU_ARCH_UNKNOWN);
+	/*! 20130810
+	 * __cpu_architecture: 9 이므로 
+	 */
 
 	return __cpu_architecture;
 }
@@ -291,8 +303,14 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 	unsigned int id_reg, num_sets, line_size;
 
 	/* PIPT caches never alias. */
+	/*! 20130810
+	 * 아키텍처에서 지원하는 pipt를 지원하는지를 알기위한 함수
+	 */
 	if (icache_is_pipt())
 		return 0;
+	/*! 20130810
+	 * 우리는 pipt가 설정되어 있으므로 여기서 리턴됨.
+	 */
 
 	/* arch specifies the register format */
 	switch (arch) {
@@ -321,21 +339,42 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 static void __init cacheid_init(void)
 {
 	unsigned int arch = cpu_architecture();
+	/*! 20130810
+	 * arch = 9 (CPU_ARCH_ARMv7)
+	 */
 
 	if (arch == CPU_ARCH_ARMv7M) {
 		cacheid = 0;
 	} else if (arch >= CPU_ARCH_ARMv6) {
 		unsigned int cachetype = read_cpuid_cachetype();
+		/*! 20130810
+		 * cachetype에 CTR값을 가져온다. (0x8444c003 or 0x8444c004)
+		 * TRM p.99 참고
+		 */
 		if ((cachetype & (7 << 29)) == 4 << 29) {
+			/*! 20130810
+			 * cachetype 을 가져온 값의 최상위 3bit가 0b100인지 비교한다.
+			 */
 			/* ARMv7 register format */
 			arch = CPU_ARCH_ARMv7;
 			cacheid = CACHEID_VIPT_NONALIASING;
+			/*! 20130810
+			 * arch: 9
+			 * cacheid: b10
+			 * 캐시타입은 PIPT, VIVT, VIPT, PIVT: 모기향책 p.191 참조
+			 */
 			switch (cachetype & (3 << 14)) {
 			case (1 << 14):
 				cacheid |= CACHEID_ASID_TAGGED;
 				break;
 			case (3 << 14):
+				/*! 20130810
+				 * L1ip: b11 이므로 여기로 온다.
+				 */
 				cacheid |= CACHEID_PIPT;
+				/*! 20130810
+				 * cacheid = 0b100010
+				 */
 				break;
 			}
 		} else {
@@ -347,6 +386,11 @@ static void __init cacheid_init(void)
 		}
 		if (cpu_has_aliasing_icache(arch))
 			cacheid |= CACHEID_VIPT_I_ALIASING;
+			/*! 20130810
+			 * 리턴값이 0이므로 CACHEID_VIPT_I_ALIASING는 설정되지 않음
+			 * index와 tag를 비교하여 aliasing 발생여부를 체크한다.
+			 * 0이 아닌 경우에 aliasing이 발생한 것이므로 CACHEID_VIPT_I_ALIASING를 set
+			 */
 	} else {
 		cacheid = CACHEID_VIVT;
 	}
@@ -360,6 +404,9 @@ static void __init cacheid_init(void)
 		icache_is_vipt_aliasing() ? "VIPT aliasing" :
 		icache_is_pipt() ? "PIPT" :
 		cache_is_vipt_nonaliasing() ? "VIPT nonaliasing" : "unknown");
+	/*! 20130810
+	 * "CPU: PIPT / VIPT nonaliasing data cache, PIPT instruction cashe"
+	 */
 }
 
 /*
@@ -390,8 +437,16 @@ static void __init cpuid_init_hwcaps(void)
 
 	if (cpu_architecture() < CPU_ARCH_ARMv7)
 		return;
+	/*! 20130810
+	 * 여기는 지나감
+	 */
 
 	divide_instrs = (read_cpuid_ext(CPUID_EXT_ISAR0) & 0x0f000000) >> 24;
+	/*! 20130810
+	 * #define CPUID_EXT_ISAR0	"c2, 0"
+	 * 나누기 명령이 가능한지 확인하는 부분.
+	 * ARM, THUMB 둘다 지원.
+	 */
 
 	switch (divide_instrs) {
 	case 2:
@@ -399,19 +454,36 @@ static void __init cpuid_init_hwcaps(void)
 	case 1:
 		elf_hwcap |= HWCAP_IDIVT;
 	}
+	/*! 20130810
+	 * ARM, THUMB 둘다 나누기를 지원하므로 elf_hwcap에 둘다 설정한다.
+	 */
 
 	/* LPAE implies atomic ldrd/strd instructions */
 	vmsa = (read_cpuid_ext(CPUID_EXT_MMFR0) & 0xf) >> 0;
+	/*! 20130810
+	 * #define CPUID_EXT_MMFR0	"c1, 4"
+	 * vmsa = 0x05
+	 */
 	if (vmsa >= 5)
 		elf_hwcap |= HWCAP_LPAE;
+	/*! 20130810
+	 * LPAE flag도 설정한다.
+	 */
 }
 
 static void __init feat_v6_fixup(void)
 {
 	int id = read_cpuid_id();
+	/*! 20130810
+	 * MIDR값을 얻어온다.
+	 */
 
 	if ((id & 0xff0f0000) != 0x41070000)
 		return;
+	/*! 20130810
+	 * id가 0x413fc0f3 이므로 여기서 리턴
+	 * 특정 v6 cpu인 경우에만 아래부분 setting한다.
+	 */
 
 	/*
 	 * HWCAP_TLS is available only on 1136 r1p0 and later,
@@ -430,8 +502,17 @@ void notrace cpu_init(void)
 {
 #ifndef CONFIG_CPU_V7M
 	unsigned int cpu = smp_processor_id();
+	/*! 20130810
+	 * 현재 cpu id = 0
+	 */
 	struct stack *stk = &stacks[cpu];
+	/*! 20130810
+	 * 현재 cpu(0)에 해당하는 stack 주소를 가리킨다.
+	 */
 
+	/*! 20130810
+	 * 최대 CPU 갯수를 넘으면 에러 메세지 출력후 시스템 종료
+	 */
 	if (cpu >= NR_CPUS) {
 		printk(KERN_CRIT "CPU%u: bad primary CPU number\n", cpu);
 		BUG();
@@ -442,8 +523,17 @@ void notrace cpu_init(void)
 	 * boot cpu, smp_prepare_boot_cpu is called after percpu area setup.
 	 */
 	set_my_cpu_offset(per_cpu_offset(cpu));
+	/*! 20130810
+	 * 현재 per_cpu_offset[0]는 0으로 초기화 되어 있다.
+	 * 따라서 현재 부팅시에는 0으로 초기화된다.
+	 * percpu를 초기화 후에 2, 3번째 코어에서 이 루틴을 실행하면
+	 * 다른 결과가 나올것 같다.
+	 */
 
 	cpu_proc_init();
+	/*! 20130810
+	 * armv7에서는 processor init은 dummy 함수다.
+	 */
 
 	/*
 	 * Define the placement constraint for the inline asm directive below.
@@ -454,9 +544,20 @@ void notrace cpu_init(void)
 #else
 #define PLC	"I"
 #endif
+	/*! 20130810
+	 * THUMB에서는 즉치값(I) 대신 register(r)을 사용한다.
+	 * I는 arm architecture에서 1 byte를
+	 * rotate 해서 만드는 즉치값이다.
+	 */
 
 	/*
 	 * setup stacks for re-entrant exception handlers
+	 */
+	/*! 20130810
+	 * CPSR을 변경해 mode를 IRQ, ABT, UND로 바꾸면서
+	 * 각 모드별로 stack을 12bytes씩 할당한다. ( 3 * unsigned long)
+	 * 작업을 마치고 마지막에 SVC모드로 돌아온다.
+	 * 세 모드는 banked register가 3개이기 때문에 12바이트를 할당한다.
 	 */
 	__asm__ (
 	"msr	cpsr_c, %1\n\t"
@@ -678,20 +779,54 @@ static void __init setup_processor(void)
 
 	snprintf(init_utsname()->machine, __NEW_UTS_LEN + 1, "%s%c",
 		 list->arch_name, ENDIANNESS);
+	/*! 20130810
+	 * arch_name: armv7
+	 * ENDIANNESS : 리틀엔디언이면 l, 빅엔디언이면 b
+	 * init_utsname()->machine: armv7l 또는 armv7b
+	 */
 	snprintf(elf_platform, ELF_PLATFORM_SIZE, "%s%c",
 		 list->elf_name, ENDIANNESS);
+	/*! 20130810
+	 * list->elf_name: v7
+	 * ENDIANNESS : 리틀엔디언이면 l, 빅엔디언이면 b
+	 */
 	elf_hwcap = list->elf_hwcap;
+	/*! 20130810
+	 * ~/linux/arch/arm/mm/proc-v7.S 에서 설정한 flag 값
+	 * .long	HWCAP_SWP | HWCAP_HALF | HWCAP_THUMB | HWCAP_FAST_MULT | \
+	 *		HWCAP_EDSP | HWCAP_TLS | \hwcaps
+	 *	#define HWCAP_SWP	(1 << 0)
+	 *	#define HWCAP_HALF	(1 << 1)
+	 * 	#define HWCAP_THUMB	(1 << 2)
+	 * 	#define HWCAP_FAST_MULT	(1 << 4)
+	 * 	#define HWCAP_EDSP	(1 << 7)
+	 * 	#define HWCAP_TLS	(1 << 15)
+	 *	hwcaps = 0
+	 * elf_hwcap: 하드웨어 의존적인 CPU 피처들을 저장한 flag
+	 */
 
 	cpuid_init_hwcaps();
+	/*! 20130810
+	 * elf_hwcap에 대한 나누기, LPAE flag 설정
+	 */
 
 #ifndef CONFIG_ARM_THUMB
 	elf_hwcap &= ~(HWCAP_THUMB | HWCAP_IDIVT);
 #endif
 
 	feat_v6_fixup();
+	/*! 20130810
+	 * v6 중 특정 아키텍처일때 thread local storage flag를 clear한다.
+	 */
 
 	cacheid_init();
+	/*! 20130810
+	 * cacheid 초기화. PIPT, nonaliasing 설정
+	 */
 	cpu_init();
+	/*! 20130810
+	 * CPU 초기화와 abt, irq, und 모드의 스택 설정
+	 */
 }
 
 void __init dump_machine_table(void)

@@ -18,6 +18,9 @@ extern unsigned int cacheid;
 #define icache_is_vivt_asid_tagged()	cacheid_is(CACHEID_ASID_TAGGED)
 #define icache_is_vipt_aliasing()	cacheid_is(CACHEID_VIPT_I_ALIASING)
 #define icache_is_pipt()		cacheid_is(CACHEID_PIPT)
+/*! 20130810
+ * CACHEID_PIPT가 set되어 있으므로 icache_is_pipt() = 1
+ */
 
 /*
  * __LINUX_ARM_ARCH__ is the minimum supported CPU architecture
@@ -43,6 +46,9 @@ extern unsigned int cacheid;
 #define __CACHEID_ALWAYS	(CACHEID_VIVT)
 #define __CACHEID_NEVER		(~CACHEID_VIVT)
 #elif !defined(CONFIG_CPU_CACHE_VIVT) && defined(CONFIG_CPU_CACHE_VIPT)
+/*! 20130810
+ * 여기 실행된다.
+ */
 #define __CACHEID_ALWAYS	(0)
 #define __CACHEID_NEVER		(CACHEID_VIVT)
 #else
@@ -54,6 +60,15 @@ static inline unsigned int __attribute__((pure)) cacheid_is(unsigned int mask)
 {
 	return (__CACHEID_ALWAYS & mask) |
 	       (~__CACHEID_NEVER & __CACHEID_ARCH_MIN & mask & cacheid);
+	/*! 20130810
+	 * mask: 0b100000 (캐쉬ID가 PIPT인지를 검사하는 값)
+	 * __CACHEID_ALWAYS: 0
+	 * ~__CACHEID_NEVER : 0xfffffffe
+	 * #define __CACHEID_ARCH_MIN	(CACHEID_VIPT_NONALIASING | CACHEID_ASID_TAGGED |\
+	 *			 CACHEID_VIPT_I_ALIASING | CACHEID_PIPT)
+	 * 캐쉬ID에 따라 사용하는 TYPE을 Modify해서 사용하지 않을 값은 제거한다.
+	 * 아키텍처에서 지원하는 cache type을 알기위한 함수
+	 */
 }
 
 #endif

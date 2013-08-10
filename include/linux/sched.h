@@ -1916,6 +1916,10 @@ extern struct exec_domain	default_exec_domain;
 union thread_union {
 	struct thread_info thread_info;
 	unsigned long stack[THREAD_SIZE/sizeof(long)];
+	/*! 20130810
+	 * thread_info 의 영역을 stack이 공유한다.
+	 * INIT_THREAD_INFO에서 해당변수를 초기화해 준다.
+	 */
 };
 
 #ifndef __HAVE_ARCH_KSTACK_END

@@ -96,6 +96,9 @@ extern unsigned int processor_id;
 		__val;							\
 	})
 
+/*! 20130810
+ * ext_reg: c2, 0
+ */
 #define read_cpuid_ext(ext_reg)						\
 	({								\
 		unsigned int __val;					\
@@ -105,6 +108,10 @@ extern unsigned int processor_id;
 		    : "cc");						\
 		__val;							\
 	})
+/*! 20130810
+ * ISIR0: 프로세스가 특정 명령어(divide, swap 등)들을 지원하는지 여부를 가져온다.
+ * TRM 문서 p.112 참고
+ */
 
 #elif defined(CONFIG_CPU_V7M)
 
@@ -149,6 +156,13 @@ static inline unsigned int __attribute_const__ read_cpuid_id(void)
 	return read_cpuid(CPUID_ID);
 	/*! 20130803
 	 * MIDR값을 얻어온다.
+	 * MIDR값: 0x413fc0f3 (0100,0001,0011,1111,1100,0000,1111,0011)
+	 * 41: arm
+	 * 3: major revision
+	 * f: 아키텍처
+	 * c0f: Cortex-A15
+	 * 3: minor revision
+	 * TRM에 값이 나와있다.
 	 */
 }
 
@@ -186,6 +200,9 @@ static inline unsigned int __attribute_const__ xscale_cpu_arch_version(void)
 static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
 {
 	return read_cpuid(CPUID_CACHETYPE);
+	/*! 20130810
+	 * Cache Type Register 를 가져온다.
+	 */
 }
 
 static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)

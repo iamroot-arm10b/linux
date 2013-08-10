@@ -43,6 +43,7 @@ struct proc_info_list {
 };
 /*! 20130803
  * 현재 프로세스를 위한 정보를 가지고 있다.
+ * ~/linux/arch/arm/mm/proc-v7.S 와 같은 구조
  */
 
 #else	/* __KERNEL__ */

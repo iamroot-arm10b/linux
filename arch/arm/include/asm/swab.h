@@ -27,6 +27,9 @@ static inline __attribute_const__ __u32 __arch_swahb32(__u32 x)
 #define __arch_swahb32 __arch_swahb32
 #define __arch_swab16(x) ((__u16)__arch_swahb32(x))
 
+/*! 20130810
+ * rev 명령어로 손쉽게 byte order를 뒤바꾼다.
+ */
 static inline __attribute_const__ __u32 __arch_swab32(__u32 x)
 {
 	__asm__ ("rev %0, %1" : "=r" (x) : "r" (x));

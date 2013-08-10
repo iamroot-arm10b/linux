@@ -13,6 +13,9 @@
 	(((__u16)(x) & (__u16)0x00ffU) << 8) |			\
 	(((__u16)(x) & (__u16)0xff00U) >> 8)))
 
+/*! 20130810
+ * 간단한 swap 매크로. 1<->4 2<->3 바이트들을 서로 교환
+ */
 #define ___constant_swab32(x) ((__u32)(				\
 	(((__u32)(x) & (__u32)0x000000ffUL) << 24) |		\
 	(((__u32)(x) & (__u32)0x0000ff00UL) <<  8) |		\
@@ -56,6 +59,11 @@ static inline __attribute_const__ __u16 __fswab16(__u16 val)
 
 static inline __attribute_const__ __u32 __fswab32(__u32 val)
 {
+	/*! 20130810
+	 * 컴파일러에서 내장 swap 명령어를 지원하면 해당기능을 사용하고 아니면
+	 * 아키텍쳐에서 명령어를 지원하면 해당 명령어를 사용하고
+	 * 둘다 없으면 직접 swap한다.
+	 */
 #ifdef __HAVE_BUILTIN_BSWAP32__
 	return __builtin_bswap32(val);
 #elif defined(__arch_swab32)
@@ -163,6 +171,9 @@ static inline __u16 __swab16p(const __u16 *p)
 /**
  * __swab32p - return a byteswapped 32-bit value from a pointer
  * @p: pointer to a naturally-aligned 32-bit value
+ */
+/*! 20130810
+ * pointer를 받아서 swap 한다.
  */
 static inline __u32 __swab32p(const __u32 *p)
 {

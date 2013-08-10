@@ -54,6 +54,10 @@ struct thread_info {
 	struct task_struct	*task;		/* main task structure */
 	struct exec_domain	*exec_domain;	/* execution domain */
 	__u32			cpu;		/* cpu */
+	/*! 20130810
+	 * 현재 동작 중인 thread의 cpu값을 가져온다.
+	 * 현재는 cpu = 0
+	 */
 	__u32			cpu_domain;	/* cpu domain */
 	struct cpu_context_save	cpu_context;	/* cpu context */
 	__u32			syscall;	/* syscall number */

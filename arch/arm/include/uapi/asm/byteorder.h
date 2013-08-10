@@ -15,6 +15,13 @@
 #ifndef __ASM_ARM_BYTEORDER_H
 #define __ASM_ARM_BYTEORDER_H
 
+
+/*! 20130810
+ * http://recipes.egloos.com/4993723 
+ * 대부분 little endian을 사용한다.
+ * ARMEB = ARM EABI Big-endian
+ * ARMEL = ARM EABI Little-endian
+ */
 #ifdef __ARMEB__
 #include <linux/byteorder/big_endian.h>
 #else

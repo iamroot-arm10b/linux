@@ -16,6 +16,9 @@
  */
 #ifndef __per_cpu_offset
 extern unsigned long __per_cpu_offset[NR_CPUS];
+/*! 20130810
+ * CPU 갯수만큼 할당
+ */
 
 #define per_cpu_offset(x) (__per_cpu_offset[x])
 #endif

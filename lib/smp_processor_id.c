@@ -11,6 +11,9 @@ notrace unsigned int debug_smp_processor_id(void)
 {
 	unsigned long preempt_count = preempt_count();
 	int this_cpu = raw_smp_processor_id();
+	/*! 20130810
+	 * debug쪽은 나중에 보기로 함
+	 */
 
 	if (likely(preempt_count))
 		goto out;

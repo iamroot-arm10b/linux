@@ -176,6 +176,9 @@
 extern unsigned long __pv_phys_offset;
 #define PHYS_OFFSET __pv_phys_offset
 
+/*! 20130810
+ * 물리주소 <-> 가상주소간 변환 매크로.
+ */
 #define __pv_stub(from,to,instr,type)			\
 	__asm__("@ __pv_stub\n"				\
 	"1:	" instr "	%0, %1, %2\n"		\
@@ -185,9 +188,12 @@ extern unsigned long __pv_phys_offset;
 	: "=r" (to)					\
 	: "r" (from), "I" (type))
 	/*!
-	 * 명령어에 대한 주소값을 테이블로 만들어 둔다.
+	 * 명령어에 대한 주소값을 테이블에 추가한다.
 	 */
 
+/*! 20130810
+ * 0xc0000000(virt) -> 0x40000000(phys) 이런식으로 변환
+ */
 static inline unsigned long __virt_to_phys(unsigned long x)
 {
 	unsigned long t;
@@ -201,6 +207,9 @@ static inline unsigned long __virt_to_phys(unsigned long x)
 	return t;
 }
 
+/*! 20130810
+ * 0x40000000(phys) -> 0xc0000000(virt) 이런식으로 변환
+ */
 static inline unsigned long __phys_to_virt(unsigned long x)
 {
 	unsigned long t;
@@ -251,6 +260,9 @@ static inline phys_addr_t virt_to_phys(const volatile void *x)
 	return __virt_to_phys((unsigned long)(x));
 }
 
+/*! 20130810
+ * 물리주소를 가상주소로 바꾸는 인라인 함수
+ */
 static inline void *phys_to_virt(phys_addr_t x)
 {
 	return (void *)(__phys_to_virt((unsigned long)(x)));

@@ -191,18 +191,32 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 	mdesc_best = (struct machine_desc *)&__mach_desc_GENERIC_DT;
 #endif
 
+	/*! 20130810
+	 * atag 또는 dt 포인터가 없으면 리턴
+	 */
 	if (!dt_phys)
 		return NULL;
 
 	devtree = phys_to_virt(dt_phys);
+	/*! 20130810
+	 * device tree 주소를 가상주소로 변환
+	 */
 
 	/* check device tree validity */
+	/*! 20130810
+	 * 32-bits big endian 자료를 현재 CPU의 endian에 맞게 읽어서
+	 * HEADER signature를 검사한다.
+	 */
 	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER)
 		return NULL;
 
 	/* Search the mdescs for the 'best' compatible value match */
 	initial_boot_params = devtree;
 	dt_root = of_get_flat_dt_root();
+	/*! 20130810
+	 * root node를 구했다.
+	 * 2013/08/10 여기까지
+	 */
 	for_each_machine_desc(mdesc) {
 		score = of_flat_dt_match(dt_root, mdesc->dt_compat);
 		if (score > 0 && score < mdesc_score) {

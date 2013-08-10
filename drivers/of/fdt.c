@@ -501,11 +501,21 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
 /**
  * of_get_flat_dt_root - find the root node in the flat blob
  */
+/*! 20130810
+ * base주소인 initial_boot_params에는
+ * boot_param_header 구조체가 존재한다.
+ * dt struct에서 null-terminated string을 더해서
+ * root node의 위치를 반환한다.
+ * device tree는 4바이트로 정렬된다.
+ */
 unsigned long __init of_get_flat_dt_root(void)
 {
 	unsigned long p = ((unsigned long)initial_boot_params) +
 		be32_to_cpu(initial_boot_params->off_dt_struct);
 
+	/*! 20130810
+	 * 32-bits big endian pointer를 읽는다.
+	 */
 	while (be32_to_cpup((__be32 *)p) == OF_DT_NOP)
 		p += 4;
 	BUG_ON(be32_to_cpup((__be32 *)p) != OF_DT_BEGIN_NODE);

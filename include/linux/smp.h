@@ -217,6 +217,9 @@ static inline void kick_all_cpus_sync(void) {  }
 # define smp_processor_id() debug_smp_processor_id()
 #else
 # define smp_processor_id() raw_smp_processor_id()
+/*! 20130810
+ * THREAD_INFO에서 현재 CPU의 ID를 가져온다.
+ */
 #endif
 
 #define get_cpu()		({ preempt_disable(); smp_processor_id(); })

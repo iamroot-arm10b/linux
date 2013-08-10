@@ -67,6 +67,10 @@ void __weak panic_smp_self_stop(void)
  */
 void panic(const char *fmt, ...)
 {
+	/*! 20130810
+	 * 다음에 다시 들어오면 보기로 함.
+	 * irq를 disable하고 오류내용일 출력하면서 정지한다.
+	 */
 	static DEFINE_SPINLOCK(panic_lock);
 	static char buf[1024];
 	va_list args;
