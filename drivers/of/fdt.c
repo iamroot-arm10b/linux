@@ -512,6 +512,9 @@ unsigned long __init of_get_flat_dt_root(void)
 {
 	unsigned long p = ((unsigned long)initial_boot_params) +
 		be32_to_cpu(initial_boot_params->off_dt_struct);
+	/*! 20130810
+	 * p: device tree + offset
+	 */
 
 	/*! 20130810
 	 * 32-bits big endian pointer를 읽는다.

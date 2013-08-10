@@ -206,6 +206,8 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 	/*! 20130810
 	 * 32-bits big endian 자료를 현재 CPU의 endian에 맞게 읽어서
 	 * HEADER signature를 검사한다.
+	 * Documentation/devicetree/booting-without-of.txt  참고
+	 * include/linux/of_fdt.h 에 boot_param_header 구조체가 있음
 	 */
 	if (be32_to_cpu(devtree->magic) != OF_DT_HEADER)
 		return NULL;

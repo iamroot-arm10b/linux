@@ -131,6 +131,9 @@ struct stack {
 	u32 abt[3];
 	u32 und[3];
 } ____cacheline_aligned;
+/*! 20130810
+ * 현재 CPU의 stack 구조체
+ */
 
 #ifndef CONFIG_CPU_V7M
 /*! 20130810
@@ -1080,6 +1083,9 @@ void __init setup_arch(char **cmdline_p)
 	struct machine_desc *mdesc;
 
 	setup_processor();
+	/*! 20130810
+	 * 마침
+	 */
 	mdesc = setup_machine_fdt(__atags_pointer);
 	if (!mdesc)
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
