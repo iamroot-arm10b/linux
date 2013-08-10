@@ -526,34 +526,44 @@ dtb_check_done:
  *   r4 + image length <= address of wont_overwrite -> OK
  * Note: the possible LSB in r4 is harmless here.
  */
-/*!
-  * r4 = 커널 압축을 풀 주소
-  * 2013/06/22 여기까지
-  */
-/*!
- * r10: this image(실행중 이미지)의 마지막 주소
- */
+		/*!
+		 * r4 = 커널 압축을 풀 주소
+		 * 2013/06/22 여기까지
+		 * r10: this image(실행중 이미지)의 마지막 주소
+		 */
 		add	r10, r10, #16384
+		/*!
+        	 * [ r10 + 16kb (MMU도 덮어씌어지면 안되므로 MMU 공간을 더함) ]
+		 * [ wont_overwrite 재배치 필요없이 바로 다음 코드로 ]
+		 */
 		cmp	r4, r10
+		/*!
+		 * [ r4 커널 압축 풀 위치, r10(head.S 실행중인 코드의 끝) - 16kb(=MMU 공간) ]
+		 */
 		bhs	wont_overwrite
 		/*!
-		 * r4 >= r10 이면 wont_overwrite로 분기
-		 * 안겹치면 wont_overwrite로 분기, 겹치면 아래부분 실행
+		 * [ bhs = branch high or same, r4 >= r10 인 경우, 즉 실행중 코드의 끝 주소 이후에 커널압축풀 위치가 존재하는 경우 ]
+		 * 안겹치면(r4 >= r10 이면) wont_overwrite로 분기, 겹치면 아래부분 실행
 		 * 현재 실행중인 이미지의 끝에서 16k를 더한 위치가 압축을 풀 주소의 시작이미지보다 크다면 겹치는 것.
 		 */
 		add	r10, r4, r9
 		/*!
-		 * r10 = r9(압축을 풀 공간) + r4(16k의 끝 주소)
+		 * [ r10 = r4(커널 압축 풀 위치) + r9(커널 사이즈) = end of the decompressed kernel ]
 		 */
 		adr	r9, wont_overwrite
+		/*!
+		 * [ r9 = wont_overwrite의 Runtime 주소 ]
+		 */
 		cmp	r10, r9
 		/*!
-		 * 압축을 풀 공간이 실행중인 이미지보다 작다면 겹치지 않으므로 OK
+		 * 압축을 풀 공간(r9)이 실행중인 이미지보다 작다면 겹치지 않으므로 wont_over로 바로 분기
 		 */
 		bls	wont_overwrite
 		/*!
+		 * (bls = branch less or same)
+		 * r10 <= r9 인 경우, 즉 커널 압축 푼 후의 위치가 wont_overwrite를 침범하지 않으면 점프
 		 * 커널 실행 중에 압축 풀 주소가 실행중인 코드와 겹치면 안되니까
-		 * 압축 풀 주소의 크기만큰 더해줘서 안겹치도록 한다.
+		 * 압축 풀 주소의 크기만큼 더해줘서 안겹치도록 한다.
 		 * wont_overwrite 보다 작으면 실행한 코드에 겹쳐쓰니까 괜찮지만
 		 * 실행할 코드가 남아 있는 부분에 겹쳐쓰면 재배치를 하게 된다.
 		 */
@@ -563,8 +573,7 @@ dtb_check_done:
  *   r6  = _edata
  *   r10 = end of the decompressed kernel
  * Because we always copy ahead, we need to do it from the end and go
- * backward in case the source and destination overlap.
- */
+ * backward in case the source and destination overlap.  */
 		/*
 		 * Bump to the next 256-byte boundary with the size of
 		 * the relocation code added. This avoids overwriting
@@ -575,26 +584,45 @@ dtb_check_done:
 		 * 현재 주소값에서 한 블럭 올려서 마지막 8bit를 align하는 것.
 		 * 256byte를 올림해서 한 블럭을 비워두는 것.
 		 * offset이 작을 때 스스로 overwrite하지 않기 위해서 buffer를 두는 것.
+		 * [ (reloc_code_end - restart) = 재배치를 위해 복사할 '코드'의 크기 ]
+		 * [ r10(커널 압축 푼 후 끝 위치) + ((재배치할 코드의 크기 + 0x100) & 하위 8bit 0으로)" ]
 		 */
 		bic	r10, r10, #255
 		/*!
-		 * 현재주소에서 올림해서 r10의 마지막 8bit를 지우는 것.
+		 * 현재주소에서 올림해서 r10의 마지막 8bit를 clear
 		 */
 
 		/* Get start of code we want to copy and align it down. */
 		adr	r5, restart
+		/*!
+		 * r5 = restart의 주소
+		 */
 		bic	r5, r5, #31
 		/*!
-		 * restart의 주소를 r5로 옮기고 아래 5bit를 clear.
+		 * r5의 아래 5bit를 clear.
 		 * 4byte align만 해도 되는데 32byte align을 해야하는 이유는 뭔가??
 		 * 쉽게 하기 위해서인지 다른 의도가 있는건지?
+		 * ==> 아래 hypervisor 부분에서 r0 이 32-byte aligned 이어야 하기 때문인 듯.
 		 */
 
 /* Relocate the hyp vector base if necessary */
-/*!
-* 하이퍼바이저 부분이므로 건너뜀.
-*/
 #ifdef CONFIG_ARM_VIRT_EXT
+		/*!
+		 * 하이퍼바이저 부분이므로 건너뜀.
+		 * 값은 Setting 되어 있지만, 우리는 설정 안하는 부분을 따라 분석한다.
+		 * config ARM_VIRT_EXT
+		 * 	bool
+		 * 	depends on MMU
+		 * 	default y if CPU_V7
+		 * 	help
+		 * 	  Enable the kernel to make use of the ARM Virtualization
+		 * 	  Extensions to install hypervisors without run-time firmware
+		 * 	  assistance.
+		 * 
+		 * 	  A compliant bootloader is required in order to make maximum
+		 * 	  use of this feature.  Refer to Documentation/arm/Booting for
+		 * 	  details.
+		 */
 		mrs	r0, spsr
 		and	r0, r0, #MODE_MASK
 		cmp	r0, #HYP_MODE
@@ -607,22 +635,21 @@ dtb_check_done:
 1:
 #endif
 
-		/*!
-		 * r9: zImage의 크기
-		 * r10: zImage의 크기
-		 */
 		sub	r9, r6, r5		@ size to copy
 		/*!
-		 * restart부터 끝(_edata)까지의 복사할 크기
+		 * r9 = r6(_edata) - r5(restart & ~0x1f), 재배치를 위해 복사할 데이터(코드+압축vmlinux 등) 크기
+		 * r9: zImage의 크기: restart부터 끝(_edata)까지의 복사할 크기
 		 */
 		add	r9, r9, #31		@ rounded up to a multiple
 		bic	r9, r9, #31		@ ... of 32 bytes
+		/*!
+		 * [ r9 = r9 & ~0x1f, 카피 사이즈를 32의 배수로 설정 ]
+		 */
 		add	r6, r9, r5
 		add	r9, r9, r10
 		/*!
-		 * r6 = 소스포인트. r9(복사할 크기)를 32byte align 한 값 + r5를 32byte align 한 값
-		 * r9 = 목적포인트. zImage의 가장 큰 주소값.
-		 * r9(복사할 크기)를 32byte align 한 값 + r10(현재주소에서 올림하여 마지막 8bit 지운 값)
+		 * [ r6 = r9 + r5 = aligned 복사할 크기 + aligned restart 주소 = 복사할 zImage 끝 주소 ]
+		 * [ r9 = r9 + r10 = aligned 복사할 크기 + r10(재배치할 주소) = 재배치된 zImage 끝 주소 ]
 		 */
 
 1:		ldmdb	r6!, {r0 - r3, r10 - r12, lr}
@@ -951,17 +978,18 @@ __armv3_mpu_cache_on:
 #define CB_BITS 0x0c
 #endif
 
+__setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		/*!
 		 * r4 = 커널 실제 실행할 주소
-		 * 압축을 풀어서 커널이미지를 올릴 주소
-		 * 0x40008000
+		 * [ 16kb = 4096 * 4 = 4096개의 Page Entry. 1개의 Page entry마다 1MB씩 - 4G 접근 가능 ]
+		 * [ r3 = r4 - 16kb (r4 = kernel execution address) ]
 		 */
-__setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		bic	r3, r3, #0xff		@ Align the pointer
 		bic	r3, r3, #0x3f00
 		/*!
 		 * 16KB단위로 Align 하기 위하여 bit clear 를 수행한다.
-		 * r3 = r3 & 0x3fff = 16kb align 된 Page direcory의 시작주소
+		 * [ r3 = r3 & 0xff ]
+		 * [ r3 = r3 & 0x3f00, 즉 r3 = r3 & 0x3fff = 16kb align 된 Page direcory의 시작주소 ]
 		 */
 
 /*
@@ -977,7 +1005,7 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		/*!
 		 * r0의 하위 18bit를 클리어하여 ram의 시작 위치를 구함
 		 * r9 = 물리메모리의 시작 위치
-		 * 256MB단위로 만들어준다. 정렬 단위가 256MB일 듯하다.
+		 * ram size를 256MB단위로 만들어준다. 정렬 단위가 256MB일 듯하다.
 		 */
 		add	r10, r9, #0x10000000	@ a reasonable RAM size
 		/*!
@@ -985,52 +1013,49 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
 		 * r10 = ram의 끝 위치를 나타냄 (RAM Size 256MB)
 		 */
 		mov	r1, #0x12		@ XN|U + section mapping
-		orr	r1, r1, #3 << 10	@ AP=11
-
 		/*!
-		 * r1 = 0x12 or 1100 0000 0000
-		 * r1 = 0xC12
-		 * AP = data access permission
-		 * AP = 11 -> full access
-		 * 11, 12번 비트가 AP비트를 설정하는 곳이다.
+		 * r1 = 0x12 = 0001 0010 : Section의 2번째, 5번째 bit를 1로 set
 		 */
+		orr	r1, r1, #3 << 10	@ AP=11
 		/*!
-		 * sub	r3, r4, #16384		@ Page directory size
+		 * r1 = 0x12 or 1100 0000 0000 : AP 셋팅 = Access Permission (11 = Full Access)
+		 * r1의 결과값 = 0xC12
 		 */
 
 		add	r2, r3, #16384 @0x4000
 		/*!
-		 * r2 = r4 와 동일하다
+		 * [ r2 = page directory start + 16kb ]
+		 * r2 : r4에서 16k를 뺀 r3에서 16k를 더했으므로 r4와 동일한 커널이 실제 실행할 주소이다.
 		 */
 
-		1:		cmp	r1, r9			@ if virt > start of RAM
+1:		cmp	r1, r9			@ if virt > start of RAM
 		cmphs	r10, r1			@   && end of RAM > virt
 		bic	r1, r1, #0x1c		@ clear XN|U + C + B
 		/*!
-		 * cache, buffer bit clear
+		 * [ r1 = 0xNNNN NC02. Clear XN & Cache & Buffer Bit ]
 		 */
 		orrlo	r1, r1, #0x10		@ Set XN|U for non-RAM
 		/*!
-		 * XN bit set
-		 * XN = 1이면은 실행 불가
+		 * XN bit set, XN = 1이면 실행 불가
+		 * [ r1 = 0xNNNN NC12. r1이 RAM 영역이 아닌 경우 Clear C & B Bit. XN = Execute Never ]
 		 */
 		orrhs	r1, r1, r6		@ set RAM section settings
-
 		/*!
-		 * r6 은 0xC
-		 * cache , buffer bit set
+		 * [ r1 = 0xNNNN NC0E. r1이 RAM 영역인 경우 Enable C & B Bit. r6 = 0b1110 = 0xE ]
 		 */
 		str	r1, [r0], #4		@ 1:1 mapping
 		/*!
-		 * r1 값을 r0 넣고 증가
-		 * r0 가 가르키는 메모리 주소는 page table start address
-		 * 엔트리 4byte를 계속하여 셋팅
+		 * r0 가 가리키는 메모리 주소는 page table start address. 엔트리 4byte를 계속하여 셋팅한다.
+		 * [ Page Directory 시작~끝 위치(physical address)에 r1(Section Entry) 입력 ]
 		 */
 		add	r1, r1, #1048576
+		/*!
+		 * [ 메모리를 1MB 단위의 Section으로 관리하므로 Section Base Address를 1MB씩 더하면서 수행 ]
+		 */
 		teq	r0, r2
 		/*!
 		 * r0 = page table start address
-		 * r2 = kernel load address
+		 * r2 = kernel execution address
 		 */
 		bne	1b
 /*
@@ -1041,40 +1066,42 @@ __setup_mmu:	sub	r3, r4, #16384		@ Page directory size
  */
 		orr	r1, r6, #0x04		@ ensure B is set for this
 		/*!
-		 * r6 = 0xC, r1 = 0x08
+		 * r6 = 0xE, r1 = 0xE
 		 */
 		orr	r1, r1, #3 << 10
 		/*!
-		 * r1 에 ap = 11 full access
-		 * and B  bit set
+		 * r1 에 AP = 11 full access
+		 * and B bit set
 		 */
 		mov	r2, pc
 		mov	r2, r2, lsr #20
-
 		/*!
-		 * 속성 비트를 전부다 없애버린다.
-		 * 1M 단위로 셋팅하기 위해서 .
+		 * [ Section 속성값들 20bit를 날리고 Section Entry #을 가져온다.]
+		 * 속성 비트를 전부다 없애버린다. 1M 단위로 셋팅하기 위해서 .
 		 * pc의 페이지 테이블 엔트리를 구하는 것.
-		 * r2는 실제적인 물리 주소
 		 * r0 가 인덱스 값.
 		 * r1 합성된 주소 .
-		 * 속성 영역을 없애고 위에 주소 값들만을 남겨 놓는다 .
+		 * r2는 실제적인 물리 주소
+
 		 * section base address만 남겨놓는다.
 		 */
 		orr	r1, r1, r2, lsl #20
 		/*!
-		 * r1 이 속성값을 지니고 있고
-		 * r2 section base address
+		 * [ r1 = 현재 수행중인 코드의 주소를 20bit align 하여 Section Base Address에 설정 ] 
 		 */
 		add	r0, r3, r2, lsl #2
 		/*!
 		 * 엔트리의 주소값을 구하기 위해서.
+		 * [ r0 = aligned page directory start(r3) + (section entry # * 4 byte) ]
 		 */
 		str	r1, [r0], #4
+		/*!
+		 * [ r0 위치에 1:1 mapping 하고 r0 = r0 + 4 ]
+		 */
 		add	r1, r1, #1048576
 		str	r1, [r0]
 		/*!
-		 * 1M를 2번하여 2M의 속성을 정하여 준다..
+		 * r0 위치에 1M를 2번 1:1 mapping하여 총 2MB 속성을 설정한다.
 		 */
 		mov	pc, lr
 ENDPROC(__setup_mmu)
@@ -1174,9 +1201,9 @@ __armv7_mmu_cache_on:
 		 */
 		orr	r0, r0, #0x003c		@ write buffer
 		/*!
-		 * C비트와 CP15BEN 을  set
+		 * C비트와 CP15BEN 을 set
 		 * C비트는 cache enable
-		 * CP15BEN비트는  CP15 barrier operations enabled.
+		 * CP15BEN비트는 CP15 barrier operations enabled.
 		 */
 		bic	r0, r0, #2		@ A (no unaligned access fault)
 		/*!
@@ -1184,17 +1211,18 @@ __armv7_mmu_cache_on:
 		 * Alignment fault checking disabled
 		 */
 		orr	r0, r0, #1 << 22	@ U (v6 unaligned access model)
-		/*!
-		 *  U bit set In ARMv7 this bit is RAO/SBOP,
-		 */
 						@ (needed for ARM1176)
+		/*!
+		 * U bit set In ARMv7 this bit is RAO/SBOP,
+		 * 현재까지 r0 = 0x1040503C 
+		 */
 #ifdef CONFIG_MMU
 #ifdef CONFIG_CPU_ENDIAN_BE8
 		orr	r0, r0, #1 << 25	@ big-endian page tables
 #endif
 		mrcne   p15, 0, r6, c2, c0, 2   @ read ttb control reg
 		/*!
-		 * c2 , c0 , 2  Translation Table Base Control Register
+		 * [ Translation Table Base Control Register 읽음 (Short-descriptor Registration으로 분석) ]
 		 */
 		orrne	r0, r0, #1		@ MMU enabled
 		movne	r1, #0xfffffffd		@ domain 0 = client
@@ -1228,9 +1256,9 @@ __armv7_mmu_cache_on:
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
 		/*!
 		 * C7 C5 4 = Instruction Synchronization Barrier operation
-		 * Barrier가 없으면 CPU가 이아이들의 값이 써지기 전에 코프로세서로 값을 넘기게 되면은.
-		 * 문제가 발생?
-		 * 읽고나서 써야되는데 그러지 않으면은 순서가 엉켜 버릴수가 있다.
+		 * [ 이전 명령어들을 Sync 한 후 다음 명령어들을 수행. ISB = CPU Pipeline, pre-fetch buffer 비움 ]
+		 * Barrier가 없으면 CPU가 레지스터의 값이 메모리에 기록되기 전에 코프로세서로 값을 넘기게 되어 문제가 발생할 수 있다.
+		 * 읽고나서 써야되는데 ISB를 실행하지 않으면 순서가 뒤바뀌어 실행될 수가 있다.
 		 */
 		mcr	p15, 0, r0, c1, c0, 0	@ load control register
 		/*!
@@ -1238,15 +1266,15 @@ __armv7_mmu_cache_on:
 		 */
 		mrc	p15, 0, r0, c1, c0, 0	@ and read it back
 		/*!
-		 * 일부러 의존성을 만들어서 다른 부분이 건드리지 못하게 함으로써
-		 * 배타적으로 쓰는것을 보장하여 준다.
+		 * 쓰고 다시 읽어서 쓰는 것을 확실하게 보장한다.
+		 * 일부러 의존성을 만들어서 다른 부분이 건드리지 못하게 함으로써 배타적으로 쓰는것을 보장하여 준다.
 		 */
 		mov	r0, #0
-		/*!
-		 * R0 의 값을 0으로
-		 */
 		mcr	p15, 0, r0, c7, c5, 4	@ ISB
 		mov	pc, r12
+		/*!
+		 * restart: 로 복귀
+		 */
 
 __fa526_cache_on:
 		mov	r12, lr

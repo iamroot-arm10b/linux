@@ -121,8 +121,8 @@ ENTRY(v7_flush_dcache_louis)
 	 */
 	ALT_UP(mov	r3, r3, lsr #26)	@ r3 = LoUU * 2
 	/*!
-	1276 page 확인하기 
-     */
+	 * 1276 page 확인하기 
+	 */
 	moveq	pc, lr				@ return if level == 0
 	mov	r10, #0				@ r10 (starting level) = 0
 	b	flush_levels			@ start flushing cache levels
@@ -240,8 +240,8 @@ finished:
 	isb
 	mov	pc, lr
 	/*!
-     * 현재 타입에 따라서 set/way 전체 clean &  invalidate
-     */
+	 * 현재 타입에 따라서 set/way 전체 clean &  invalidate
+	 */
 ENDPROC(v7_flush_dcache_all)
 
 /*
