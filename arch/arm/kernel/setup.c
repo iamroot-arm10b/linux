@@ -722,7 +722,7 @@ static void __init setup_processor(void)
 #ifdef MULTI_CPU
 	processor = *list->proc;
 	/*! 20130803
-	 * ~/linux/arch/arm/include/asm/proc-fns.h
+	 * arch/arm/include/asm/proc-fns.h
 	 * struct processor가 아래의 값으로 초기화된다. 
 	 * _data_abort = v7_early_abort
 	 * _prefetch_abort = v7_pabort
@@ -741,7 +741,7 @@ static void __init setup_processor(void)
 #ifdef MULTI_TLB
 	cpu_tlb = *list->tlb;
 	/*! 20130803
-	 * ~/linux/arch/arm/include/asm/tlbflush.h
+	 * arch/arm/include/asm/tlbflush.h
 	 * cpu_tlb의 type: struct cpu_tlb_fns
 	 * flush_user_range = v7wbi_flush_user_tlb_range
 	 * flush_kern_range = v7wbi_flush_kern_tlb_range
@@ -795,7 +795,7 @@ static void __init setup_processor(void)
 	 */
 	elf_hwcap = list->elf_hwcap;
 	/*! 20130810
-	 * ~/linux/arch/arm/mm/proc-v7.S 에서 설정한 flag 값
+	 * arch/arm/mm/proc-v7.S 에서 설정한 flag 값
 	 * .long	HWCAP_SWP | HWCAP_HALF | HWCAP_THUMB | HWCAP_FAST_MULT | \
 	 *		HWCAP_EDSP | HWCAP_TLS | \hwcaps
 	 *	#define HWCAP_SWP	(1 << 0)

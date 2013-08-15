@@ -328,7 +328,7 @@ ENTRY(\name\()_cache_fns)
 .endm
 
 /*! 20130803
- * ~/linux/arch/arm/mm/tlb-v7.S 파일의define_tlb_functions 참조
+ * arch/arm/mm/tlb-v7.S 파일의define_tlb_functions 참조
  */
 .macro define_tlb_functions name:req, flags_up:req, flags_smp
 	.type	\name\()_tlb_fns, #object

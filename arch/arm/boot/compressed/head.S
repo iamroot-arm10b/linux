@@ -97,7 +97,7 @@
 		/*! CONFIG_CPU_V7 인 경우에 이 부분 실행된다. */
 		.macro	loadsp,	rb, tmp
 		addruart \rb, \tmp
-		/*! addruart는 ~/linux/arch/arm/include/debug/exynos.S
+		/*! addruart는 arch/arm/include/debug/exynos.S
 		  .macro addruart, rp, rv, tmp 에서 정의됨.
 		 */
 		.endm
