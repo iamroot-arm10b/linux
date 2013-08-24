@@ -220,13 +220,25 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 	 * 2013/08/10 여기까지
 	 */
 	for_each_machine_desc(mdesc) {
+	/*! 20130824
+	 * for (p = __arch_info_begin; p < __arch_info_end; p++)
+	 */
 		score = of_flat_dt_match(dt_root, mdesc->dt_compat);
+		/*! 20130824
+		 * 일치하는 device tree 중에 가장 낮은 score 로 설정
+		 */
 		if (score > 0 && score < mdesc_score) {
 			mdesc_best = mdesc;
 			mdesc_score = score;
 		}
+		/*! 20130824
+		 * machine descript 중에서 최적의 대상 선정
+		 */
 	}
 	if (!mdesc_best) {
+		/*! 20130824
+		 * score가 0 인 경우의 예외처리
+		 */
 		const char *prop;
 		long size;
 
@@ -245,12 +257,19 @@ struct machine_desc * __init setup_machine_fdt(unsigned int dt_phys)
 	}
 
 	model = of_get_flat_dt_prop(dt_root, "model", NULL);
+	/*! 20130824
+	 * root 노드의 model 이라는 property 가져옴.
+	 * 정확한 모델명 설정
+	 */
 	if (!model)
 		model = of_get_flat_dt_prop(dt_root, "compatible", NULL);
 	if (!model)
 		model = "<unknown>";
 	pr_info("Machine: %s, model: %s\n", mdesc_best->name, model);
 
+	/*! 20130824
+	 * of_scan_flat_dt: 모든 child 노드에 대한 콜백함수를 불러주는 함수
+	 */
 	/* Retrieve various information from the /chosen node */
 	of_scan_flat_dt(early_init_dt_scan_chosen, boot_command_line);
 	/* Initialize {size,address}-cells info */

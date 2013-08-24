@@ -29,6 +29,10 @@ char *of_fdt_get_string(struct boot_param_header *blob, u32 offset)
 {
 	return ((char *)blob) +
 		be32_to_cpu(blob->off_dt_strings) + offset;
+	/*! 20130824
+	 * be32_to_cpu는 빅엔디언으로 바꾸어주는 함수
+	 * blob의 off_dt_strings에 offset만큼 더한 주소를 리턴
+	 */
 }
 
 /**
@@ -53,6 +57,10 @@ void *of_fdt_get_property(struct boot_param_header *blob,
 			return NULL;
 
 		sz = be32_to_cpup((__be32 *)p);
+		/*! 20130824
+		 * node의 처음: tag
+		 * sz: property의 크기
+		 */
 		noff = be32_to_cpup((__be32 *)(p + 4));
 		p += 8;
 		if (be32_to_cpu(blob->version) < 0x10)
@@ -71,6 +79,10 @@ void *of_fdt_get_property(struct boot_param_header *blob,
 		p += sz;
 		p = ALIGN(p, 4);
 	} while (1);
+	/*! 20130824
+	 * 이 함수는 name으로 받은 property 이름을 dtb파일에서 찾아서 
+	 * 일치하는 property의 값의 string pointer와 크기를 리턴한다.
+	 */
 }
 
 /**
@@ -90,16 +102,25 @@ int of_fdt_is_compatible(struct boot_param_header *blob,
 	unsigned long cplen, l, score = 0;
 
 	cp = of_fdt_get_property(blob, node, "compatible", &cplen);
+	/*! 20130824
+	 * node 중에서 compatible property를 가져온다.
+	 */
 	if (cp == NULL)
 		return 0;
 	while (cplen > 0) {
 		score++;
 		if (of_compat_cmp(cp, compat, strlen(compat)) == 0)
+			/*! 20130824
+			 * compat 길이만큼 cp와 compat의 char 비교하여 같으면 이곳 실행
+			 */
 			return score;
 		l = strlen(cp) + 1;
 		cp += l;
 		cplen -= l;
 	}
+	/*! 20130824
+	 * score가 작은 값일수록 좁은 범위의 대상임.
+	 */
 
 	return 0;
 }
@@ -119,6 +140,12 @@ int of_fdt_match(struct boot_param_header *blob, unsigned long node,
 		tmp = of_fdt_is_compatible(blob, node, *compat);
 		if (tmp && (score == 0 || (tmp < score)))
 			score = tmp;
+		/*! 20130824
+		 * score는 낮을수록 정확하다.
+		 * bootloader가 넘겨준 device tree 에서 compatible에 기록된 device tree struct에서
+		 * 좀 더 앞쪽에 있는 chipset에 대한 score를 셋팅한다.
+		 * 칩셋에 대한 정보 중에서 가장 일치하는 compatible을 사용하기 위해서 가능한 낮은 score를 셋팅한다.
+		 */
 		compat++;
 	}
 
@@ -454,6 +481,9 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
 				     void *data),
 			   void *data)
 {
+	/*! 20130824
+	 * 모든 child node에 대해 it 함수의 작업을 해준다.
+	 */
 	unsigned long p = ((unsigned long)initial_boot_params) +
 		be32_to_cpu(initial_boot_params->off_dt_struct);
 	int rc = 0;
@@ -491,6 +521,8 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
 		if (*pathp == '/')
 			pathp = kbasename(pathp);
 		rc = it(p, pathp, depth, data);
+		/*! 20130824 * child node 일때 해당 node에 대한 콜백함수 호출
+		 */
 		if (rc != 0)
 			break;
 	} while (1);
@@ -536,6 +568,9 @@ void *__init of_get_flat_dt_prop(unsigned long node, const char *name,
 				 unsigned long *size)
 {
 	return of_fdt_get_property(initial_boot_params, node, name, size);
+	/*! 20130824
+	 * node에 있는 name이름을 가진 property를 가져온다.
+	 */
 }
 
 /**
@@ -554,6 +589,10 @@ int __init of_flat_dt_is_compatible(unsigned long node, const char *compat)
 int __init of_flat_dt_match(unsigned long node, const char *const *compat)
 {
 	return of_fdt_match(initial_boot_params, node, compat);
+	/*! 20130824
+	 * initial_boot_params : 부트로더 뜰때 커널에 넘겨주는 두번째 인자(boot_param_header)
+	 * 가장 일치하는 device tree 검색하여 score 값을 리턴
+	 */
 }
 
 #ifdef CONFIG_BLK_DEV_INITRD
@@ -569,6 +608,9 @@ void __init early_init_dt_check_for_initrd(unsigned long node)
 	pr_debug("Looking for initrd properties... ");
 
 	prop = of_get_flat_dt_prop(node, "linux,initrd-start", &len);
+	/*! 20130824
+	 * "linux,initrd-start" 에 해당하는 node가 없으므로 return
+	 */
 	if (!prop)
 		return;
 	start = of_read_ulong(prop, len/4);
@@ -579,6 +621,9 @@ void __init early_init_dt_check_for_initrd(unsigned long node)
 	end = of_read_ulong(prop, len/4);
 
 	early_init_dt_setup_initrd_arch(start, end);
+	/*! 20130824
+	 * initrd 의 시작주소와 size 설정
+	 */
 	pr_debug("initrd_start=0x%lx  initrd_end=0x%lx\n", start, end);
 }
 #else
@@ -610,6 +655,11 @@ int __init early_init_dt_scan_root(unsigned long node, const char *uname,
 	if (prop)
 		dt_root_addr_cells = be32_to_cpup(prop);
 	pr_debug("dt_root_addr_cells = %x\n", dt_root_addr_cells);
+	/*! 20130824
+	 * 기본값 셋팅
+	 * dt_root_size_cells : 1
+	 * dt_root_addr_cells : 1
+	 */
 
 	/* break now */
 	return 1;
@@ -632,6 +682,9 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 	char *type = of_get_flat_dt_prop(node, "device_type", NULL);
 	__be32 *reg, *endp;
 	unsigned long l;
+	/*! 20130824
+	 * device_type이 memory인 것을 설정한다.
+	 */
 
 	/* We are scanning "memory" nodes only */
 	if (type == NULL) {
@@ -647,10 +700,18 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 	reg = of_get_flat_dt_prop(node, "linux,usable-memory", &l);
 	if (reg == NULL)
 		reg = of_get_flat_dt_prop(node, "reg", &l);
+		/*! 20130824
+		 * arch/arm/boot/dts/exynos5420-smdk5420.dts 에서 
+		 * reg = <0x20000000 0x80000000>;
+		 * l(size) : 8
+		 */
 	if (reg == NULL)
 		return 0;
 
 	endp = reg + (l / sizeof(__be32));
+	/*! 20130824
+	 * 2013/08/24 여기까지
+	 */
 
 	pr_debug("memory scan node %s, reg size %ld, data: %x %x %x %x,\n",
 	    uname, l, reg[0], reg[1], reg[2], reg[3]);
@@ -685,11 +746,20 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 		return 0;
 
 	early_init_dt_check_for_initrd(node);
+	/*! 20130824
+	 * initrd 의 파라미터가 있는 경우에 start와 size를 설정한다.
+	 */
 
 	/* Retrieve command line */
 	p = of_get_flat_dt_prop(node, "bootargs", &l);
+	/*! 20130824
+	 * bootargs = "console=ttySAC2,115200 init=/linuxrc";
+	 */
 	if (p != NULL && l > 0)
 		strlcpy(data, p, min((int)l, COMMAND_LINE_SIZE));
+		/*! 20130824
+		 * #define COMMAND_LINE_SIZE 1024
+		 */
 
 	/*
 	 * CONFIG_CMDLINE is meant to be a default in case nothing else
@@ -697,10 +767,16 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 	 * is set in which case we override whatever was found earlier.
 	 */
 #ifdef CONFIG_CMDLINE
+/*! 20130824
+ * CONFIG_CMDLINE="root=/dev/ram0 rw ramdisk=8192 initrd=0x41000000,8M console=ttySAC1,115200 init=/linuxrc mem=256M" 
+ */
 #ifndef CONFIG_CMDLINE_FORCE
 	if (!((char *)data)[0])
 #endif
 		strlcpy(data, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
+		/*! 20130824
+		 * null이면 default값을 복사한다.
+		 */
 #endif /* CONFIG_CMDLINE */
 
 	pr_debug("Command line is: %s\n", (char*)data);

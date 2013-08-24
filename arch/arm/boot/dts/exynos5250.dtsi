@@ -17,6 +17,9 @@
  * published by the Free Software Foundation.
 */
 
+/*! 20130824
+ * of_scan_flat_dt 함수에서 여기를 참조
+ */
 #include "exynos5.dtsi"
 #include "exynos5250-pinctrl.dtsi"
 

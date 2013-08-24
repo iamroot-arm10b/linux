@@ -72,6 +72,10 @@ extern struct machine_desc *machine_desc;
 extern struct machine_desc __arch_info_begin[], __arch_info_end[];
 #define for_each_machine_desc(p)			\
 	for (p = __arch_info_begin; p < __arch_info_end; p++)
+	/*! 20130824
+	 * .init.arch.info 의 시작, 종료지점 지정
+	 * arch/arm/mach-exynos/mach-exynos5-dt.c의 DT_MACHINE_START를 이용하여 초기화
+	 */
 
 /*
  * Set of macros to define architecture features.  This is built into

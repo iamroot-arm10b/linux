@@ -81,3 +81,8 @@ DT_MACHINE_START(EXYNOS5_DT, "SAMSUNG EXYNOS5 (Flattened Device Tree)")
 	.restart        = exynos5_restart,
 	.reserve	= exynos5_reserve,
 MACHINE_END
+/*! 20130824
+ * arch/arm/include/asm/mach/arch.h의 for_each_machine_desc 에서 호출
+ * __mach_desc_EXYNOS4210_DT
+ * __mach_desc_EXYNOS5_DT
+ */

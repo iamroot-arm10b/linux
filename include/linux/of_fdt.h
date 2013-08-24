@@ -25,6 +25,9 @@
 #define OF_DT_END		0x9
 
 #define OF_DT_VERSION		0x10
+/*! 20130824
+ * Device Tree 관련 define
+ */
 
 #ifndef __ASSEMBLY__
 /*
