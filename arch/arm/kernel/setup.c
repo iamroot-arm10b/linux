@@ -849,19 +849,31 @@ void __init dump_machine_table(void)
 int __init arm_add_memory(phys_addr_t start, phys_addr_t size)
 {
 	struct membank *bank = &meminfo.bank[meminfo.nr_banks];
+	/*! 20130831
+	 * 8개의 memory bank를 설정한다.
+	 */
 
 	if (meminfo.nr_banks >= NR_BANKS) {
 		printk(KERN_CRIT "NR_BANKS too low, "
 			"ignoring memory at 0x%08llx\n", (long long)start);
 		return -EINVAL;
 	}
+	/*! 20130831
+	 * 현재 NR_BANKS = 8
+	 */
 
 	/*
 	 * Ensure that start/size are aligned to a page boundary.
 	 * Size is appropriately rounded down, start is rounded up.
 	 */
 	size -= start & ~PAGE_MASK;
+	/*! 20130831
+	 * size = 0x80000000 - 0 = 0x80000000
+	 */
 	bank->start = PAGE_ALIGN(start);
+	/*! 20130831
+	 * 첫번째 bank->start =  0x80000000
+	 */
 
 #ifndef CONFIG_ARM_LPAE
 	if (bank->start + size < bank->start) {
@@ -877,6 +889,10 @@ int __init arm_add_memory(phys_addr_t start, phys_addr_t size)
 #endif
 
 	bank->size = size & ~(phys_addr_t)(PAGE_SIZE - 1);
+	/*! 20130831
+	 * phys_addr_t 는 u32
+	 * size값의 하위 12bit clear
+	 */
 
 	/*
 	 * Check whether this memory region has non-zero size or
@@ -1087,15 +1103,25 @@ void __init setup_arch(char **cmdline_p)
 	 * 마침
 	 */
 	mdesc = setup_machine_fdt(__atags_pointer);
+	/*! 20130831
+	 * 호환되는 descript 찾아옴.
+	 */
 	if (!mdesc)
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
+		/*! 20130831
+		 * device tree가 아니면 atag에서 찾는다.
+		 */
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
 
 	setup_dma_zone(mdesc);
+	/*! 20130831 ARM은 zone dma 을 사용하지 않는다.  */
 
 	if (mdesc->restart_mode)
 		reboot_setup(&mdesc->restart_mode);
+	/*! 20130831
+	 * arch/arm/mach-exynos/mach-exynos5-dt.c 의 DT_MACHINE_START 에 restart_mode 값이 없다.
+	 */
 
 	init_mm.start_code = (unsigned long) _text;
 	init_mm.end_code   = (unsigned long) _etext;
@@ -1107,6 +1133,7 @@ void __init setup_arch(char **cmdline_p)
 	*cmdline_p = cmd_line;
 
 	parse_early_param();
+	/*! 20130831 init/main.c 의 parse_early_param 호출 */
 
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
 	sanity_check_meminfo();

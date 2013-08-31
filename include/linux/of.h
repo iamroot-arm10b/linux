@@ -126,6 +126,10 @@ static inline u64 of_read_number(const __be32 *cell, int size)
 	u64 r = 0;
 	while (size--)
 		r = (r << 32) | be32_to_cpu(*(cell++));
+	/*! 20130831
+	 * size 가 1이면 32bit값 읽고, 2이면 64bit값 읽어서 return
+	 * cell 포인터에서 size만큼 읽는다.
+	 */
 	return r;
 }
 

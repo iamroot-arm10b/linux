@@ -410,6 +410,7 @@ static int __init do_early_param(char *param, char *val, const char *unused)
 void __init parse_early_options(char *cmdline)
 {
 	parse_args("early options", cmdline, NULL, 0, 0, 0, do_early_param);
+	/*! 20130831 kernel/params.c 의 parse_args 호출 */
 }
 
 /* Arch code calls this early on, or if not, just before other parsing. */

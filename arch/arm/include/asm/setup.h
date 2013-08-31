@@ -20,11 +20,15 @@
 #define __tag __used __attribute__((__section__(".taglist.init")))
 #define __tagtable(tag, fn) \
 static const struct tagtable __tagtable_##fn __tag = { tag, fn }
+/*! 20130831 ##fn: fn으로 들어오는 string을 그대로 복사 */
 
 /*
  * Memory map description
  */
 #define NR_BANKS	CONFIG_ARM_NR_BANKS
+/*! 20130831
+ * CONFIG_ARM_NR_BANKS = 8
+ */
 
 struct membank {
 	phys_addr_t start;

@@ -187,6 +187,8 @@ int parse_args(const char *doing,
 {
 	char *param, *val;
 
+	/*! 2013/08/31 여기까지 */
+
 	/* Chew leading spaces */
 	args = skip_spaces(args);
 

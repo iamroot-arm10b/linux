@@ -55,7 +55,13 @@ static int __init parse_tag_core(const struct tag *tag)
 	if (tag->hdr.size > 2) {
 		if ((tag->u.core.flags & 1) == 0)
 			root_mountflags &= ~MS_RDONLY;
+		/*! 20130831
+		 * flags 최하위 bit가 1이 아니면 readonly가 아님.
+		 */
 		ROOT_DEV = old_decode_dev(tag->u.core.rootdev);
+		/*! 20130831
+		 * bootload에서 넘겨준 root device 의 node 번호를 가져온다.
+		 */
 	}
 	return 0;
 }
@@ -134,6 +140,9 @@ static int __init parse_tag_cmdline(const struct tag *tag)
 	strlcpy(default_command_line, tag->u.cmdline.cmdline,
 		COMMAND_LINE_SIZE);
 #endif
+	/*! 20130831
+	 * bootloader에서 넘겨준 boot argument command line 내용을 복사한다.
+	 */
 	return 0;
 }
 
@@ -154,6 +163,9 @@ static int __init parse_tag(const struct tag *tag)
 			t->parse(tag);
 			break;
 		}
+	/*! 20130831
+	 * tagtable에서 들어온 tag와 같은 함수를 찾아서 호출하여 해당 함수들의 기능을 처리한다.
+	 */
 
 	return t < &__tagtable_end;
 }
@@ -169,6 +181,9 @@ static void __init parse_tags(const struct tag *t)
 			printk(KERN_WARNING
 				"Ignoring unrecognised tag 0x%08x\n",
 				t->hdr.tag);
+	/*! 20130831
+	 * 전체 tag를 parsing 하여 해당 함수 호출
+	 */
 }
 
 static void __init squash_mem_tags(struct tag *tag)
@@ -176,11 +191,15 @@ static void __init squash_mem_tags(struct tag *tag)
 	for (; tag->hdr.size; tag = tag_next(tag))
 		if (tag->hdr.tag == ATAG_MEM)
 			tag->hdr.tag = ATAG_NONE;
+	/*! 20130831 bootloader에서 주는 ATAG_MEM인 모든 것을 ATAG_NONE으로 바꾸어 무시한다.  */
 }
 
 struct machine_desc * __init setup_machine_tags(phys_addr_t __atags_pointer,
 						unsigned int machine_nr)
 {
+	/*! 20130831
+	 * device tree가 아니면 이곳에서 찾는다.
+	 */
 	struct tag *tags = (struct tag *)&default_tags;
 	struct machine_desc *mdesc = NULL, *p;
 	char *from = default_command_line;
@@ -192,6 +211,10 @@ struct machine_desc * __init setup_machine_tags(phys_addr_t __atags_pointer,
 	 */
 	for_each_machine_desc(p)
 		if (machine_nr == p->nr) {
+			/*! 20130831
+			 * machine number를 bootloader가 넘겨준 machine_nr값고 일치해야 함.
+			 * 예) MACH_TYPE_SMDKV210 인 경우 2456 값을 넘겨준다.
+			 */
 			printk("Machine: %s\n", p->name);
 			mdesc = p;
 			break;
@@ -219,17 +242,36 @@ struct machine_desc * __init setup_machine_tags(phys_addr_t __atags_pointer,
 	if (tags->hdr.tag != ATAG_CORE) {
 		early_print("Warning: Neither atags nor dtb found\n");
 		tags = (struct tag *)&default_tags;
+		/*! 20130831 dt와 atag 둘다 정의되지 않았을 경우 오류 */
 	}
 
 	if (mdesc->fixup)
 		mdesc->fixup(tags, &from, &meminfo);
+		/*! 20130831 fixup 없으므로 쓰지 않는다.  */
 
 	if (tags->hdr.tag == ATAG_CORE) {
 		if (meminfo.nr_banks != 0)
 			squash_mem_tags(tags);
+			/*! 20130831 atag에서 넘어오는 정보를 무시한다.  */
 		save_atags(tags);
+		/*! 20130831 atags_copy 로 memcpy */
 		parse_tags(tags);
+		/*! 20130831 tags를 parsing하여 device tree에서 셋팅하는 것과 같은 기능 처리 */
 	}
+	/*! 20130831
+	 * ATAG 구조
+	 * ++++++++++++++++++++++
+	 * +  ATAG_CORE         +         
+	 * ++++++++++++++++++++++
+	 * +  ATAG_SERIAL       +
+	 * ++++++++++++++++++++++
+	 * +  ATAG_INITRD2      +
+	 * ++++++++++++++++++++++
+	 * +   ~                +
+	 * ++++++++++++++++++++++
+	 * +  ATAG_NONE         +
+	 * ++++++++++++++++++++++
+	 */
 
 	/* parse_early_param needs a boot_command_line */
 	strlcpy(boot_command_line, from, COMMAND_LINE_SIZE);

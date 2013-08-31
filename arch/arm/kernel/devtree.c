@@ -29,6 +29,11 @@
 void __init early_init_dt_add_memory_arch(u64 base, u64 size)
 {
 	arm_add_memory(base, size);
+	/*! 20130831
+	 * base : 0x20000000
+	 * size : 0x80000000
+	 * memory bank 정보를 기록한다.
+	 */
 }
 
 void * __init early_init_dt_alloc_memory_arch(u64 size, u64 align)

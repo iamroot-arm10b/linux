@@ -22,7 +22,7 @@
 #define ATAG_NONE	0x00000000
 
 struct tag_header {
-	__u32 size;
+	__u32 size; /*! 현재tag의 size */
 	__u32 tag;
 };
 
@@ -143,6 +143,7 @@ struct tag_memclk {
 	__u32 fmemclk;
 };
 
+/*! 20130831 atag 구조체 */
 struct tag {
 	struct tag_header hdr;
 	union {
@@ -171,6 +172,9 @@ struct tag {
 struct tagtable {
 	__u32 tag;
 	int (*parse)(const struct tag *);
+	/*! 20130831
+	 * tag의 구조체는 arch/arm/include/uapi/asm/setup.h
+	 */
 };
 
 #define tag_member_present(tag,member)				\
@@ -178,6 +182,7 @@ struct tagtable {
 		<= (tag)->hdr.size * 4)
 
 #define tag_next(t)	((struct tag *)((__u32 *)(t) + (t)->hdr.size))
+/*! 20130831 atag header의 size를 읽어서 다음 구조체로 넘어간다.  */
 #define tag_size(type)	((sizeof(struct tag_header) + sizeof(struct type)) >> 2)
 
 #define for_each_tag(t,base)		\

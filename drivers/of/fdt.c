@@ -670,7 +670,13 @@ u64 __init dt_mem_next_cell(int s, __be32 **cellp)
 	__be32 *p = *cellp;
 
 	*cellp = p + s;
+	/*! 20130831
+	 * s = 1 이므로 4byte 이동한 값
+	 */
 	return of_read_number(p, s);
+	/*! 20130831
+	 * s = 1 이므로 p에서 s만큼 4byte씩 읽어들인다. 
+	 */
 }
 
 /**
@@ -709,18 +715,35 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 		return 0;
 
 	endp = reg + (l / sizeof(__be32));
-	/*! 20130824
-	 * 2013/08/24 여기까지
+	/*! 2013/08/24 여기까지 */
+	/*! 20130831
+	 * endp = reg + (8 / 4)
 	 */
 
 	pr_debug("memory scan node %s, reg size %ld, data: %x %x %x %x,\n",
 	    uname, l, reg[0], reg[1], reg[2], reg[3]);
+	/*! 20130831
+	 * "memory scan node memory, reg size 8, data: 20 80 2000000 1000000, "
+	 */
 
 	while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+		/*! 20130831
+		 * endp - reg = 2
+		 * word 단위로 비교해서 size가 2보다 크면 안되므로 체크한다.
+		 */
 		u64 base, size;
 
 		base = dt_mem_next_cell(dt_root_addr_cells, &reg);
+		/*! 20130831
+		 * dt_root_addr_cells에서 &reg만큼 읽어들인다.
+		 * 0x20000000 을 먼저 읽고
+		 * reg의 값을 읽어들이고 dt_root_addr_cells크기만큼 이동한다.
+		 */
 		size = dt_mem_next_cell(dt_root_size_cells, &reg);
+		/*! 20130831
+		 * 0x80000000 을 읽는다.
+		 * t_root_addr_cells크기만큼 이동한 다음값을 읽어들인다.
+		 */
 
 		if (size == 0)
 			continue;
@@ -728,6 +751,9 @@ int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
 		    (unsigned long long)size);
 
 		early_init_dt_add_memory_arch(base, size);
+		/*! 20130831
+		 * memory bank 정보 초기화
+		 */
 	}
 
 	return 0;
