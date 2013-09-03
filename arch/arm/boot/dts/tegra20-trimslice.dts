@@ -410,7 +410,10 @@
 			regulator-name = "usb1_vbus";
 			regulator-min-microvolt = <5000000>;
 			regulator-max-microvolt = <5000000>;
+			enable-active-high;
 			gpio = <&gpio 170 0>; /* PV2 */
+			regulator-always-on;
+			regulator-boot-on;
 		};
 	};
 

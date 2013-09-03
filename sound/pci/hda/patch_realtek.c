@@ -37,6 +37,9 @@
 #include "hda_jack.h"
 #include "hda_generic.h"
 
+/* keep halting ALC5505 DSP, for power saving */
+#define HALT_REALTEK_ALC5505
+
 /* unsol event tags */
 #define ALC_DCVOL_EVENT		0x08
 
@@ -1028,6 +1031,7 @@ enum {
 	ALC880_FIXUP_GPIO2,
 	ALC880_FIXUP_MEDION_RIM,
 	ALC880_FIXUP_LG,
+	ALC880_FIXUP_LG_LW25,
 	ALC880_FIXUP_W810,
 	ALC880_FIXUP_EAPD_COEF,
 	ALC880_FIXUP_TCL_S700,
@@ -1083,6 +1087,14 @@ static const struct hda_fixup alc880_fixups[] = {
 			{ 0x16, 0x411111f0 },
 			{ 0x18, 0x411111f0 },
 			{ 0x1a, 0x411111f0 },
+			{ }
+		}
+	},
+	[ALC880_FIXUP_LG_LW25] = {
+		.type = HDA_FIXUP_PINS,
+		.v.pins = (const struct hda_pintbl[]) {
+			{ 0x1a, 0x0181344f }, /* line-in */
+			{ 0x1b, 0x0321403f }, /* headphone */
 			{ }
 		}
 	},
@@ -1338,6 +1350,7 @@ static const struct snd_pci_quirk alc880_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1854, 0x003b, "LG", ALC880_FIXUP_LG),
 	SND_PCI_QUIRK(0x1854, 0x005f, "LG P1 Express", ALC880_FIXUP_LG),
 	SND_PCI_QUIRK(0x1854, 0x0068, "LG w1", ALC880_FIXUP_LG),
+	SND_PCI_QUIRK(0x1854, 0x0077, "LG LW25", ALC880_FIXUP_LG_LW25),
 	SND_PCI_QUIRK(0x19db, 0x4188, "TCL S700", ALC880_FIXUP_TCL_S700),
 
 	/* Below is the copied entries from alc880_quirks.c.
@@ -2659,7 +2672,19 @@ static void alc5505_dsp_init(struct hda_codec *codec)
 	alc5505_coef_set(codec, 0x880c, 0x00000004); /* DRAM Function control */
 	alc5505_coef_set(codec, 0x880c, 0x00000003);
 	alc5505_coef_set(codec, 0x880c, 0x00000010);
+
+#ifdef HALT_REALTEK_ALC5505
+	alc5505_dsp_halt(codec);
+#endif
 }
+
+#ifdef HALT_REALTEK_ALC5505
+#define alc5505_dsp_suspend(codec)	/* NOP */
+#define alc5505_dsp_resume(codec)	/* NOP */
+#else
+#define alc5505_dsp_suspend(codec)	alc5505_dsp_halt(codec)
+#define alc5505_dsp_resume(codec)	alc5505_dsp_back_from_halt(codec)
+#endif
 
 #ifdef CONFIG_PM
 static int alc269_suspend(struct hda_codec *codec)
@@ -2667,7 +2692,7 @@ static int alc269_suspend(struct hda_codec *codec)
 	struct alc_spec *spec = codec->spec;
 
 	if (spec->has_alc5505_dsp)
-		alc5505_dsp_halt(codec);
+		alc5505_dsp_suspend(codec);
 	return alc_suspend(codec);
 }
 
@@ -2696,7 +2721,7 @@ static int alc269_resume(struct hda_codec *codec)
 	alc_inv_dmic_sync(codec, true);
 	hda_call_check_power_status(codec, 0x01);
 	if (spec->has_alc5505_dsp)
-		alc5505_dsp_back_from_halt(codec);
+		alc5505_dsp_resume(codec);
 	return 0;
 }
 #endif /* CONFIG_PM */
@@ -4311,9 +4336,11 @@ static const struct hda_fixup alc662_fixups[] = {
 
 static const struct snd_pci_quirk alc662_fixup_tbl[] = {
 	SND_PCI_QUIRK(0x1019, 0x9087, "ECS", ALC662_FIXUP_ASUS_MODE2),
+	SND_PCI_QUIRK(0x1025, 0x022f, "Acer Aspire One", ALC662_FIXUP_INV_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x0308, "Acer Aspire 8942G", ALC662_FIXUP_ASPIRE),
 	SND_PCI_QUIRK(0x1025, 0x031c, "Gateway NV79", ALC662_FIXUP_SKU_IGNORE),
 	SND_PCI_QUIRK(0x1025, 0x0349, "eMachines eM250", ALC662_FIXUP_INV_DMIC),
+	SND_PCI_QUIRK(0x1025, 0x034a, "Gateway LT27", ALC662_FIXUP_INV_DMIC),
 	SND_PCI_QUIRK(0x1025, 0x038b, "Acer Aspire 8943G", ALC662_FIXUP_ASPIRE),
 	SND_PCI_QUIRK(0x1028, 0x05d8, "Dell", ALC668_FIXUP_DELL_MIC_NO_PRESENCE),
 	SND_PCI_QUIRK(0x1028, 0x05db, "Dell", ALC668_FIXUP_DELL_MIC_NO_PRESENCE),

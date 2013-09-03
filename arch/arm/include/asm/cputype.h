@@ -96,8 +96,11 @@ extern unsigned int processor_id;
 		__val;							\
 	})
 
-/*! 20130810
- * ext_reg: c2, 0
+/*! 20130810 ext_reg: c2, 0 */
+/*
+ * The memory clobber prevents gcc 4.5 from reordering the mrc before
+ * any is_smp() tests, which can cause undefined instruction aborts on
+ * ARM1136 r0 due to the missing extended CP15 registers.
  */
 #define read_cpuid_ext(ext_reg)						\
 	({								\
@@ -105,7 +108,7 @@ extern unsigned int processor_id;
 		asm("mrc	p15, 0, %0, c0, " ext_reg		\
 		    : "=r" (__val)					\
 		    :							\
-		    : "cc");						\
+		    : "memory");					\
 		__val;							\
 	})
 /*! 20130810
@@ -200,9 +203,7 @@ static inline unsigned int __attribute_const__ xscale_cpu_arch_version(void)
 static inline unsigned int __attribute_const__ read_cpuid_cachetype(void)
 {
 	return read_cpuid(CPUID_CACHETYPE);
-	/*! 20130810
-	 * Cache Type Register 를 가져온다.
-	 */
+	/*! 20130810 Cache Type Register 를 가져온다.  */
 }
 
 static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
@@ -210,9 +211,7 @@ static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
 	return read_cpuid(CPUID_TCM);
 }
 
-/*!
- * Multiprocessor affinity register를 읽는 함수
- */
+/*!  Multiprocessor affinity register를 읽는 함수 */
 static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
 {
 	return read_cpuid(CPUID_MPIDR);

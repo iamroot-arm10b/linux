@@ -129,6 +129,7 @@ static int create_fixed_stream_quirk(struct snd_usb_audio *chip,
 {
 	struct audioformat *fp;
 	struct usb_host_interface *alts;
+	struct usb_interface_descriptor *altsd;
 	int stream, err;
 	unsigned *rate_table = NULL;
 
@@ -166,6 +167,9 @@ static int create_fixed_stream_quirk(struct snd_usb_audio *chip,
 		return -EINVAL;
 	}
 	alts = &iface->altsetting[fp->altset_idx];
+	altsd = get_iface_desc(alts);
+	fp->protocol = altsd->bInterfaceProtocol;
+
 	if (fp->datainterval == 0)
 		fp->datainterval = snd_usb_parse_datainterval(chip, alts);
 	if (fp->maxpacksize == 0)
@@ -315,19 +319,19 @@ static int create_auto_midi_quirk(struct snd_usb_audio *chip,
 	if (altsd->bNumEndpoints < 1)
 		return -ENODEV;
 	epd = get_endpoint(alts, 0);
-	if (!usb_endpoint_xfer_bulk(epd) ||
+	if (!usb_endpoint_xfer_bulk(epd) &&
 	    !usb_endpoint_xfer_int(epd))
 		return -ENODEV;
 
 	switch (USB_ID_VENDOR(chip->usb_id)) {
 	case 0x0499: /* Yamaha */
 		err = create_yamaha_midi_quirk(chip, iface, driver, alts);
-		if (err < 0 && err != -ENODEV)
+		if (err != -ENODEV)
 			return err;
 		break;
 	case 0x0582: /* Roland */
 		err = create_roland_midi_quirk(chip, iface, driver, alts);
-		if (err < 0 && err != -ENODEV)
+		if (err != -ENODEV)
 			return err;
 		break;
 	}

@@ -74,7 +74,7 @@ __setup("fpe=", fpe_setup);
 
 extern void paging_init(struct machine_desc *desc);
 extern void sanity_check_meminfo(void);
-extern void reboot_setup(char *str);
+extern enum reboot_mode reboot_mode;
 extern void setup_dma_zone(struct machine_desc *desc);
 
 unsigned int processor_id;
@@ -131,14 +131,10 @@ struct stack {
 	u32 abt[3];
 	u32 und[3];
 } ____cacheline_aligned;
-/*! 20130810
- * 현재 CPU의 stack 구조체
- */
+/*! 20130810 현재 CPU의 stack 구조체 */
 
 #ifndef CONFIG_CPU_V7M
-/*! 20130810
- * 최대 CPU 갯수만큼 stack 구조체를 할당
- */
+/*! 20130810 최대 CPU 갯수만큼 stack 구조체를 할당 */
 static struct stack stacks[NR_CPUS];
 #endif
 
@@ -152,9 +148,7 @@ struct machine_desc *machine_desc __initdata;
 
 static union { char c[4]; unsigned long l; } endian_test __initdata = { { 'l', '?', '?', 'b' } };
 #define ENDIANNESS ((char)endian_test.l)
-/*! 20130810
- * 빅엔디언이면 'b', 리틀엔디언이면 'l'을 가져오게 된다.
- */
+/*! 20130810 빅엔디언이면 'b', 리틀엔디언이면 'l'을 가져오게 된다.  */
 
 DEFINE_PER_CPU(struct cpuinfo_arm, cpu_data);
 
@@ -272,9 +266,7 @@ static int __get_cpu_architecture(void)
 		if ((mmfr0 & 0x0000000f) >= 0x00000003 ||
 		    (mmfr0 & 0x000000f0) >= 0x00000030)
 			cpu_arch = CPU_ARCH_ARMv7;
-			/*! 20130803
-			 * CPU_ARCH_ARMv7 = 9
-			 */
+			/*! 20130803 CPU_ARCH_ARMv7 = 9 */
 		else if ((mmfr0 & 0x0000000f) == 0x00000002 ||
 			 (mmfr0 & 0x000000f0) == 0x00000020)
 			cpu_arch = CPU_ARCH_ARMv6;
@@ -284,18 +276,14 @@ static int __get_cpu_architecture(void)
 		cpu_arch = CPU_ARCH_UNKNOWN;
 
 	return cpu_arch;
-	/*! 20130803
-	 * cpu_arch = CPU_ARCH_ARMv7 리턴
-	 */
+	/*! 20130803 cpu_arch = CPU_ARCH_ARMv7 리턴 */
 }
 #endif
 
 int __pure cpu_architecture(void)
 {
 	BUG_ON(__cpu_architecture == CPU_ARCH_UNKNOWN);
-	/*! 20130810
-	 * __cpu_architecture: 9 이므로 
-	 */
+	/*! 20130810 __cpu_architecture: 9 이므로 */
 
 	return __cpu_architecture;
 }
@@ -306,14 +294,10 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 	unsigned int id_reg, num_sets, line_size;
 
 	/* PIPT caches never alias. */
-	/*! 20130810
-	 * 아키텍처에서 지원하는 pipt를 지원하는지를 알기위한 함수
-	 */
+	/*! 20130810 아키텍처에서 지원하는 pipt를 지원하는지를 알기위한 함수 */
 	if (icache_is_pipt())
 		return 0;
-	/*! 20130810
-	 * 우리는 pipt가 설정되어 있으므로 여기서 리턴됨.
-	 */
+	/*! 20130810 우리는 pipt가 설정되어 있으므로 여기서 리턴된다.  */
 
 	/* arch specifies the register format */
 	switch (arch) {
@@ -342,9 +326,7 @@ static int cpu_has_aliasing_icache(unsigned int arch)
 static void __init cacheid_init(void)
 {
 	unsigned int arch = cpu_architecture();
-	/*! 20130810
-	 * arch = 9 (CPU_ARCH_ARMv7)
-	 */
+	/*! 20130810 arch = 9 (CPU_ARCH_ARMv7) */
 
 	if (arch == CPU_ARCH_ARMv7M) {
 		cacheid = 0;
@@ -375,9 +357,7 @@ static void __init cacheid_init(void)
 				 * L1ip: b11 이므로 여기로 온다.
 				 */
 				cacheid |= CACHEID_PIPT;
-				/*! 20130810
-				 * cacheid = 0b100010
-				 */
+				/*! 20130810 cacheid = 0b100010 */
 				break;
 			}
 		} else {
@@ -440,9 +420,7 @@ static void __init cpuid_init_hwcaps(void)
 
 	if (cpu_architecture() < CPU_ARCH_ARMv7)
 		return;
-	/*! 20130810
-	 * 여기는 지나감
-	 */
+	/*! 20130810 여기는 지나감 */
 
 	divide_instrs = (read_cpuid_ext(CPUID_EXT_ISAR0) & 0x0f000000) >> 24;
 	/*! 20130810
@@ -469,17 +447,13 @@ static void __init cpuid_init_hwcaps(void)
 	 */
 	if (vmsa >= 5)
 		elf_hwcap |= HWCAP_LPAE;
-	/*! 20130810
-	 * LPAE flag도 설정한다.
-	 */
+	/*! 20130810 LPAE flag도 설정한다.  */
 }
 
 static void __init feat_v6_fixup(void)
 {
 	int id = read_cpuid_id();
-	/*! 20130810
-	 * MIDR값을 얻어온다.
-	 */
+	/*! 20130810 MIDR값을 얻어온다.  */
 
 	if ((id & 0xff0f0000) != 0x41070000)
 		return;
@@ -505,9 +479,7 @@ void notrace cpu_init(void)
 {
 #ifndef CONFIG_CPU_V7M
 	unsigned int cpu = smp_processor_id();
-	/*! 20130810
-	 * 현재 cpu id = 0
-	 */
+	/*! 20130810 현재 cpu id = 0 */
 	struct stack *stk = &stacks[cpu];
 	/*! 20130810
 	 * 현재 cpu(0)에 해당하는 stack 주소를 가리킨다.
@@ -534,9 +506,7 @@ void notrace cpu_init(void)
 	 */
 
 	cpu_proc_init();
-	/*! 20130810
-	 * armv7에서는 processor init은 dummy 함수다.
-	 */
+	/*! 20130810 armv7에서 processor init은 dummy 함수다.  */
 
 	/*
 	 * Define the placement constraint for the inline asm directive below.
@@ -591,13 +561,9 @@ u32 __cpu_logical_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 void __init smp_setup_processor_id(void)
 {
 	int i;
-	/*!
-	 * MPIDR에서 하위 24비트를 가져온다.
-	 */
+	/*! MPIDR에서 하위 24비트를 가져온다.  */
 	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
-	/*!
-	 * affinity level 0을 가져온다.
-	 */
+	/*!  affinity level 0을 가져온다.  */
 	u32 cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 
 	/*!
@@ -858,9 +824,7 @@ int __init arm_add_memory(phys_addr_t start, phys_addr_t size)
 			"ignoring memory at 0x%08llx\n", (long long)start);
 		return -EINVAL;
 	}
-	/*! 20130831
-	 * 현재 NR_BANKS = 8
-	 */
+	/*! 20130831 현재 NR_BANKS = 8 */
 
 	/*
 	 * Ensure that start/size are aligned to a page boundary.
@@ -1079,6 +1043,8 @@ static int __init meminfo_cmp(const void *_a, const void *_b)
 void __init hyp_mode_check(void)
 {
 #ifdef CONFIG_ARM_VIRT_EXT
+	sync_boot_mode();
+
 	if (is_hyp_mode_available()) {
 		pr_info("CPU: All CPU(s) started in HYP mode.\n");
 		pr_info("CPU: Virtualization extensions available.\n");
@@ -1093,15 +1059,11 @@ void __init hyp_mode_check(void)
 
 void __init setup_arch(char **cmdline_p)
 {
-	/*! 20130803
-	 * 시작
-	 */
+	/*! 20130803 시작 */
 	struct machine_desc *mdesc;
 
 	setup_processor();
-	/*! 20130810
-	 * 마침
-	 */
+	/*! 20130810 마침 */
 	mdesc = setup_machine_fdt(__atags_pointer);
 	/*! 20130831
 	 * 호환되는 descript 찾아옴.
@@ -1115,13 +1077,13 @@ void __init setup_arch(char **cmdline_p)
 	machine_name = mdesc->name;
 
 	setup_dma_zone(mdesc);
-	/*! 20130831 ARM은 zone dma 을 사용하지 않는다.  */
-
-	if (mdesc->restart_mode)
-		reboot_setup(&mdesc->restart_mode);
 	/*! 20130831
+	 * ARM은 zone dma 을 사용하지 않는다.
 	 * arch/arm/mach-exynos/mach-exynos5-dt.c 의 DT_MACHINE_START 에 restart_mode 값이 없다.
 	 */
+
+	if (mdesc->reboot_mode != REBOOT_HARD)
+		reboot_mode = mdesc->reboot_mode;
 
 	init_mm.start_code = (unsigned long) _text;
 	init_mm.end_code   = (unsigned long) _etext;
@@ -1231,6 +1193,7 @@ static const char *hwcap_str[] = {
 	"vfpv4",
 	"idiva",
 	"idivt",
+	"vfpd32",
 	"lpae",
 	NULL
 };
