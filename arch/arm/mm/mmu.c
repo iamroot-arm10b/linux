@@ -1023,6 +1023,7 @@ void __init sanity_check_meminfo(void)
 		*bank = meminfo.bank[i];
 		size_limit = bank->size;
 
+		/*! vmalloc_limit는 물리메모리상의 vmalloc 상한선을 나타낸다.  */
 		if (bank->start >= vmalloc_limit)
 			highmem = 1;
 		else
@@ -1037,7 +1038,7 @@ void __init sanity_check_meminfo(void)
 		 */
 		if (!highmem && bank->size > size_limit) {
 			if (meminfo.nr_banks >= NR_BANKS) {
-				//NR_BAKS = 8
+				// NR_BANKS = 8
 				printk(KERN_CRIT "NR_BANKS too low, "
 						 "ignoring high memory\n");
 			} else {
@@ -1047,6 +1048,12 @@ void __init sanity_check_meminfo(void)
 				 */
 				memmove(bank + 1, bank,
 					(meminfo.nr_banks - i) * sizeof(*bank));
+				/*!
+				 * 현재 bank를 하나 복제하면서 bank 끝까지 복사해 덮어쓴다.
+				 * 때문에 겹쳐쓸수 있는 memmove 함수를 쓴다.
+				 * ex) (1 2 3 4)라는 자료에서 bank가 2면
+				 * memmove 뒤에는 (1 2 2 3 4)가 된다.
+				 */
 				meminfo.nr_banks++;
 				i++;
 				bank[1].size -= size_limit;
@@ -1089,7 +1096,11 @@ void __init sanity_check_meminfo(void)
 
 			if (bank_end > arm_lowmem_limit)
 				arm_lowmem_limit = bank_end;
-
+			/*!
+			 * arm_lowmem_limit는 highmem에 속하지 않는다.
+			 * highmem을 넘지 않으면 메모리의 최대값이며
+			 * highmem을 넘는다면 highmem과의 경계선이다.
+			 */
 			/*
 			 * Find the first non-section-aligned page, and point
 			 * memblock_limit at it. This relies on rounding the
@@ -1133,6 +1144,7 @@ void __init sanity_check_meminfo(void)
 	}
 #endif
 	meminfo.nr_banks = j;
+	/* j는 banks의 갯수를 나타낸다. */
 	high_memory = __va(arm_lowmem_limit - 1) + 1;
 
 	/*
