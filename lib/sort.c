@@ -44,17 +44,21 @@ static void generic_swap(void *a, void *b, int size)
  * it less suitable for kernel use.
  */
 
+
+//sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
 void sort(void *base, size_t num, size_t size,
 	  int (*cmp_func)(const void *, const void *),
 	  void (*swap_func)(void *, void *, int size))
 {
 	/* pre-scale counters for performance */
 	int i = (num/2 - 1) * size, n = num * size, c, r;
-
 	if (!swap_func)
 		swap_func = (size == 4 ? u32_swap : generic_swap);
 
 	/* heapify */
+	/*! 20130907
+	 * 부모가 자식보다 큰 이진트리 
+	 */
 	for ( ; i >= 0; i -= size) {
 		for (r = i; r * 2 + size < n; r  = c) {
 			c = r * 2 + size;

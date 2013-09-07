@@ -956,6 +956,11 @@ void __init debug_ll_io_init(void)
 
 static void * __initdata vmalloc_min =
 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
+	/*! 20130907
+	 * VMALLOC_END 0xff000000
+	 * f0000000 - VMALLOC_OFFSET = 0xEF800000
+	 * vmalloc_min = EF800000
+	 */
 
 /*
  * vmalloc=size forces the vmalloc area to be exactly 'size'
@@ -991,10 +996,28 @@ void __init sanity_check_meminfo(void)
 {
 	phys_addr_t memblock_limit = 0;
 	int i, j, highmem = 0;
+	/*! 20130907
+	 * highmem = zone high
+	 */
 	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
+	/*! 20130907
+	 * vmalloc_min = 0xEF800000
+	 * pa(vmalloc_min -1)+1 = 0x4F800000
+	 * vmalloc_limit = 0x4F800000
+	 * __pa virtual_to_physical
+	 */
 
+	/*! 20130907
+	 * meminfo
+	 * nr_bank = 1
+	 * 20000000 start
+	 * 80000000 size
+	 */
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
 		struct membank *bank = &meminfo.bank[j];
+		/*! 20130907
+		 * 이전까지 highmem 설정이 되지않았다.
+		 */
 		phys_addr_t size_limit;
 
 		*bank = meminfo.bank[i];
@@ -1004,7 +1027,7 @@ void __init sanity_check_meminfo(void)
 			highmem = 1;
 		else
 			size_limit = vmalloc_limit - bank->start;
-
+			//size_limit = 0x2F800000
 		bank->highmem = highmem;
 
 #ifdef CONFIG_HIGHMEM
@@ -1014,9 +1037,14 @@ void __init sanity_check_meminfo(void)
 		 */
 		if (!highmem && bank->size > size_limit) {
 			if (meminfo.nr_banks >= NR_BANKS) {
+				//NR_BAKS = 8
 				printk(KERN_CRIT "NR_BANKS too low, "
 						 "ignoring high memory\n");
 			} else {
+				/*! 20130907
+				 * Bank를 논리적으로 나누어 760M의 Bank[0]설정
+				 * 이후 Bank[1] = 나머지 공간.
+				 */
 				memmove(bank + 1, bank,
 					(meminfo.nr_banks - i) * sizeof(*bank));
 				meminfo.nr_banks++;
@@ -1029,6 +1057,9 @@ void __init sanity_check_meminfo(void)
 			bank->size = size_limit;
 		}
 #else
+		/*! 20130907
+		 * 들어가지 않는다.
+		 */
 		/*
 		 * Highmem banks not allowed with !CONFIG_HIGHMEM.
 		 */

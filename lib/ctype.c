@@ -8,6 +8,15 @@
 #include <linux/compiler.h>
 #include <linux/export.h>
 
+/*!
+  _C = control char
+  _S = space
+  _U = uppercase
+  _L = lowercase
+  _X = 
+   0 =
+  _SP= 
+  */
 const unsigned char _ctype[] = {
 _C,_C,_C,_C,_C,_C,_C,_C,				/* 0-7 */
 _C,_C|_S,_C|_S,_C|_S,_C|_S,_C|_S,_C,_C,			/* 8-15 */

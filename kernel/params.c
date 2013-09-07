@@ -78,6 +78,7 @@ bool parameqn(const char *a, const char *b, size_t n)
 	return true;
 }
 
+/*! check a == b */
 bool parameq(const char *a, const char *b)
 {
 	return parameqn(a, b, strlen(a)+1);
@@ -97,6 +98,7 @@ static int parse_one(char *param,
 	int err;
 
 	/* Find parameter */
+	/*! 20130907 현재는 params = NULL, num_params = 0이므로 for문 생략. 나중에 분석. */
 	for (i = 0; i < num_params; i++) {
 		if (parameq(param, params[i].name)) {
 			if (params[i].level < min_level
@@ -126,6 +128,9 @@ static int parse_one(char *param,
 
 /* You can use " around spaces, but can't escape ". */
 /* Hyphens and underscores equivalent in parameter names. */
+/*! ex) args = console=ttySAC2,115200 init=/linuxrc;
+      param = console, val = ttySAC2,115200 
+      return value = 다음 param의 시작 pointer 여기서는 i를 가리키는 pointer */
 static char *next_arg(char *args, char **param, char **val)
 {
 	unsigned int i, equals = 0;
@@ -139,12 +144,16 @@ static char *next_arg(char *args, char **param, char **val)
 	}
 
 	for (i = 0; args[i]; i++) {
+		/*! args[i] 가 공백(_S)이고 "로 시작하지 않은 경우 break, i = 공백의 index */
 		if (isspace(args[i]) && !in_quote)
 			break;
+		/*! = 문자의 index를 equals 에 할당 */
 		if (equals == 0) {
 			if (args[i] == '=')
 				equals = i;
 		}
+
+		/*! 따옴표가 끝나면 in_quote를 비활성화 */
 		if (args[i] == '"')
 			in_quote = !in_quote;
 	}
@@ -190,6 +199,8 @@ int parse_args(const char *doing,
 	/*! 2013/08/31 여기까지 */
 
 	/* Chew leading spaces */
+	/*! args의 string 앞에 있는 공백을 제거한 첫 문자 pointer를 반환
+	*   bootargs = "console=ttySAC2,115200 init=/linuxrc"; */
 	args = skip_spaces(args);
 
 	if (*args)
@@ -200,14 +211,23 @@ int parse_args(const char *doing,
 		int irq_was_disabled;
 
 		args = next_arg(args, &param, &val);
+		/*! irq_was_disabled = cpsr & (IRQMASK_I_BIT = 0x00000080) */
 		irq_was_disabled = irqs_disabled();
 		ret = parse_one(param, val, doing, params, num,
 				min_level, max_level, unknown);
 		if (irq_was_disabled && !irqs_disabled())
+			/*! 20130907
+			 * irq disable되어있었는데 함수호출후 상태가 변경될시 
+			 * 프린트 하여준다.
+			 */
 			pr_warn("%s: option '%s' enabled irq's!\n",
 				doing, param);
 
 		switch (ret) {
+			/*! 20130907
+			 * ret = do_early_param의 return 값
+			 * 성공시 0 값.
+			 */
 		case -ENOENT:
 			pr_err("%s: Unknown parameter `%s'\n", doing, param);
 			return ret;
