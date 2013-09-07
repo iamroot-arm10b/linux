@@ -56,6 +56,16 @@ memblock_type_name(struct memblock_type *type)
 static inline phys_addr_t memblock_cap_size(phys_addr_t base, phys_addr_t *size)
 {
 	return *size = min(*size, (phys_addr_t)ULLONG_MAX - base);
+	/*!
+	 * 정상적인 상황이라면 다음 조건을 만족시킨다
+	 * (base + size <= 0xffffffff), (size <= 0xffffffff - base)
+	 * 반대로 overflow되는 경우는 size가 더 크다.
+	 * (base + size > 0xffffffff), (size > 0xffffffff - base)
+	 * overflow 시에는 (0xffffffff - base) 값이 overflow되지 않는 최대 크기다.
+	 * min 값을 취하면 언제나 overflow되지 않는 size를 구할수 있다.
+	 * 
+	 * ULL은 64비트의 최대값(0xffff...)이지만 phys_addr_t때문이 32비트로 casting 된다.
+	 */
 }
 
 /*
@@ -369,10 +379,7 @@ static int __init_memblock memblock_add_region(struct memblock_type *type,
 	bool insert = false;
 	phys_addr_t obase = base;
 	phys_addr_t end = base + memblock_cap_size(base, &size);
-	/*! 20130907
-	 * memblock_cap_size overflow를 보안해 주기위해서 사이즈의
-	 *크기를 최대값으로 조절.
-	 */
+	/*! memblock_cap_size 함수는 overflow 되지 않는 size를 반환한다. */
 	int i, nr_new;
 
 	if (!size)
