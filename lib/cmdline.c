@@ -54,7 +54,7 @@ int get_option (char **str, int *pint)
 	char *cur = *str;
 
 	if (!cur || !(*cur))
-		return 0;
+		return 0;	/*! 20130907 str 으로 들어온 값이 null 이거나 값이 없으면 0 리턴 */
 	*pint = simple_strtol (cur, str, 0);
 	if (cur == *str)
 		return 0;

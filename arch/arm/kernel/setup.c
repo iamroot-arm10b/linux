@@ -1099,6 +1099,7 @@ void __init setup_arch(char **cmdline_p)
 
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
 	sanity_check_meminfo();
+	/*! 20130907 memory info 영역에서 bank를 나누어 highmem 영역을 분리한다.  */
 	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);

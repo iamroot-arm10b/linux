@@ -1027,6 +1027,10 @@ void __init sanity_check_meminfo(void)
 				j++;
 			}
 			bank->size = size_limit;
+			/*! 20130907
+			 * vmaloc_limit 만큼을 자르고 그 이후를 highmem 으로 설정한다.
+			 * 현재 device tree 에서 bank가 1로 들어왔는데 2개로 나누는 것. 
+			 */
 		}
 #else
 		/*

@@ -57,6 +57,7 @@ void sort(void *base, size_t num, size_t size,
 	/* heapify */
 	for ( ; i >= 0; i -= size) {
 		for (r = i; r * 2 + size < n; r  = c) {
+			/*! 20130907 r: root, c: child */
 			c = r * 2 + size;
 			if (c < n - size &&
 					cmp_func(base + c, base + c + size) < 0)
