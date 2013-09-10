@@ -335,6 +335,7 @@ phys_addr_t __init arm_memblock_steal(phys_addr_t size, phys_addr_t align)
 	return phys;
 }
 
+//arm_memblock_init(&meminfo, mdesc);
 void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 {
 	int i;
@@ -344,11 +345,14 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 
 	/* Register the kernel text, kernel data and initrd with memblock. */
 #ifdef CONFIG_XIP_KERNEL
+	//NO
 	memblock_reserve(__pa(_sdata), _end - _sdata);
 #else
 	memblock_reserve(__pa(_stext), _end - _stext);
 #endif
-#ifdef CONFIG_BLK_DEV_INITRD
+
+#ifdef CONFIG_BLK_DEV_INITRD 
+	// YES
 	if (phys_initrd_size &&
 	    !memblock_is_region_memory(phys_initrd_start, phys_initrd_size)) {
 		pr_err("INITRD: 0x%08llx+0x%08lx is not a memory region - disabling initrd\n",

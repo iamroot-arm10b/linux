@@ -230,6 +230,10 @@ static int __init loglevel(char *str)
 }
 
 early_param("loglevel", loglevel);
+/*! 20130907
+ * 자료구조를 생성하여 준다  early_param("string" ,"function",1)
+ early_param 을 사용하여 섹션에 밀어넣어서 실행
+ */
 
 /* Change NUL term back to "=", to make "param" the whole string. */
 static int __init repair_env_string(char *param, char *val, const char *unused)
@@ -393,8 +397,16 @@ static noinline void __init_refok rest_init(void)
 /* Check for early params. */
 static int __init do_early_param(char *param, char *val, const char *unused)
 {
+	/*! 20130907
+	 * 파라미터를 파싱하는 것을 제한적으로 실행한다.
+	 */
+// __setup	
 	const struct obs_kernel_param *p;
 
+	/*! 20130907
+	 * 선언은 __setup Macro로 선언되고 .init.setup 섹션에 시작과 끝만큼 
+	 * early_param  
+	 */
 	for (p = __setup_start; p < __setup_end; p++) {
 		if ((p->early && parameq(param, p->str)) ||
 		    (strcmp(param, "console") == 0 &&

@@ -361,12 +361,18 @@ static void __init_memblock memblock_insert_region(struct memblock_type *type,
  * RETURNS:
  * 0 on success, -errno on failure.
  */
+
+// memblock_add_region(&memblock.memory, base, size, MAX_NUMNODES);
 static int __init_memblock memblock_add_region(struct memblock_type *type,
 				phys_addr_t base, phys_addr_t size, int nid)
 {
 	bool insert = false;
 	phys_addr_t obase = base;
 	phys_addr_t end = base + memblock_cap_size(base, &size);
+	/*! 20130907
+	 * memblock_cap_size overflow를 보안해 주기위해서 사이즈의
+	 *크기를 최대값으로 조절.
+	 */
 	int i, nr_new;
 
 	if (!size)
@@ -394,6 +400,10 @@ repeat:
 		struct memblock_region *rgn = &type->regions[i];
 		phys_addr_t rbase = rgn->base;
 		phys_addr_t rend = rbase + rgn->size;
+		/*! 20130907
+		 * rbase = 0x20000000
+		 * rend =  0x4F800000
+		 */
 
 		if (rbase >= end)
 			break;
@@ -423,6 +433,9 @@ repeat:
 	/*
 	 * If this was the first round, resize array and repeat for actual
 	 * insertions; otherwise, merge and return.
+	 */
+	/*! 20130907
+	 * 20130907 여기까지...  
 	 */
 	if (!insert) {
 		while (type->cnt + nr_new > type->max)

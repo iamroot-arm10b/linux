@@ -51,6 +51,9 @@ static int get_range(char **str, int *pint)
 
 int get_option (char **str, int *pint)
 {
+	/*! 20130907
+	 * loglevel 에서 들어옴
+	 */
 	char *cur = *str;
 
 	if (!cur || !(*cur))

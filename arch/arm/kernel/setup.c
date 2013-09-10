@@ -1096,6 +1096,10 @@ void __init setup_arch(char **cmdline_p)
 
 	parse_early_param();
 	/*! 20130831 init/main.c 의 parse_early_param 호출 */
+	/*! 20130907
+	 * 받아온 boot parameter를 early관련 함수들을 처리하여 주었다.
+	 * parameter에 대한 것을 처리됨( ex loglevel)
+	 */
 
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
 	sanity_check_meminfo();

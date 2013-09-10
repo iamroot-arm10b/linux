@@ -140,6 +140,8 @@ static inline void arch_local_irq_disable(void)
  */
 static inline unsigned long arch_local_save_flags(void)
 {
+	/*! falgs = cpsr 값
+	  IRQMASK_REG_NAME_R = cpsr */
 	unsigned long flags;
 	asm volatile(
 		"	mrs	%0, " IRQMASK_REG_NAME_R "	@ local_save_flags"
@@ -161,6 +163,7 @@ static inline void arch_local_irq_restore(unsigned long flags)
 
 static inline int arch_irqs_disabled_flags(unsigned long flags)
 {
+	/*! IRQMASK_I_BIT = 0x00000080 */
 	return flags & IRQMASK_I_BIT;
 }
 

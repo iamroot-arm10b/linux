@@ -235,6 +235,12 @@ struct obs_kernel_param {
  * Force the alignment so the compiler doesn't space elements of the
  * obs_kernel_param "array" too far apart in .init.setup.
  */
+/*! 20130907
+ex) __setup_param("user_debug=", user_debug_setup, user_debug_setup, 0)
+   static const char __setup_str_user_debug_setup[] __initconst __aligned(1) = "user_debug=";
+   static struct obs_kernel_param __setup_user_debug_setup __used __section(.init.setup)... =
+		{ __setup_str_user_debug_setup, user_debug_setup, 0 }
+ */
 #define __setup_param(str, unique_id, fn, early)			\
 	static const char __setup_str_##unique_id[] __initconst	\
 		__aligned(1) = str; \
@@ -243,11 +249,13 @@ struct obs_kernel_param {
 		__attribute__((aligned((sizeof(long)))))	\
 		= { __setup_str_##unique_id, fn, early }
 
+/*! 20130907 ex) __setup("user_debug=", user_debug_setup); */
 #define __setup(str, fn)					\
 	__setup_param(str, fn, fn, 0)
 
 /* NOTE: fn is as per module_param, not __setup!  Emits warning if fn
  * returns non-zero. */
+/*! 20130907 ex) early_param("loglevel", loglevel); */
 #define early_param(str, fn)					\
 	__setup_param(str, fn, fn, 1)
 
