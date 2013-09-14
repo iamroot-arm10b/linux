@@ -57,6 +57,10 @@ extern unsigned long sysctl_admin_reserve_kbytes;
 
 /* to align the pointer to the (next) page boundary */
 #define PAGE_ALIGN(addr) ALIGN(addr, PAGE_SIZE)
+/*! 20130914 
+ * addr를 PAGE_SIZE(4k)기준으로 올림하여
+ * PAGE_SIZE 보다 작은 자리는 0으로 clear하여 align 한다.
+ */
 
 /* test whether an address (unsigned long or pointer) is aligned to PAGE_SIZE */
 #define PAGE_ALIGNED(addr)	IS_ALIGNED((unsigned long)addr, PAGE_SIZE)

@@ -340,6 +340,7 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 {
 	int i;
 
+	/*! 20130914 현재 nr_banks = 2 로 본다.  */
 	for (i = 0; i < mi->nr_banks; i++)
 		memblock_add(mi->bank[i].start, mi->bank[i].size);
 

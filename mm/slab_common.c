@@ -284,6 +284,7 @@ EXPORT_SYMBOL(kmem_cache_destroy);
 int slab_is_available(void)
 {
 	return slab_state >= UP;
+	/*! 20130914 slab 을 사용할 수 있는지 확인하여 여부를 리턴 */
 }
 
 #ifndef CONFIG_SLOB

@@ -957,9 +957,10 @@ void __init debug_ll_io_init(void)
 static void * __initdata vmalloc_min =
 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
 	/*! 20130907
-	 * VMALLOC_END 0xff000000
-	 * f0000000 - VMALLOC_OFFSET = 0xEF800000
-	 * vmalloc_min = EF800000
+	 * VMALLOC_END = 0xff000000
+	 * VMALLOC_OFFSET = 0x800000
+	 * 0xff000000 - 0xf0000000 - 0x800000 = 0xef800000
+	 * vmalloc_min = 0xef800000
 	 */
 
 /*
@@ -996,12 +997,10 @@ void __init sanity_check_meminfo(void)
 {
 	phys_addr_t memblock_limit = 0;
 	int i, j, highmem = 0;
-	/*! 20130907
-	 * highmem = zone high
-	 */
+	/*! 20130907 highmem = zone high */
 	phys_addr_t vmalloc_limit = __pa(vmalloc_min - 1) + 1;
 	/*! 20130907
-	 * vmalloc_min = 0xEF800000
+	 * vmalloc_min = 0xEF800000 : highmem의 시작주소에서 8M 만큼 뺀 주소
 	 * pa(vmalloc_min -1)+1 = 0x4F800000
 	 * vmalloc_limit = 0x4F800000
 	 * __pa virtual_to_physical
@@ -1010,14 +1009,12 @@ void __init sanity_check_meminfo(void)
 	/*! 20130907
 	 * meminfo
 	 * nr_bank = 1
-	 * 20000000 start
-	 * 80000000 size
+	 * 0x20000000 start
+	 * 0x80000000 size
 	 */
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
 		struct membank *bank = &meminfo.bank[j];
-		/*! 20130907
-		 * 이전까지 highmem 설정이 되지않았다.
-		 */
+		/*! 20130907 이전까지 highmem 설정이 되지않았다.  */
 		phys_addr_t size_limit;
 
 		*bank = meminfo.bank[i];
@@ -1025,10 +1022,11 @@ void __init sanity_check_meminfo(void)
 
 		/*! vmalloc_limit는 물리메모리상의 vmalloc 상한선을 나타낸다.  */
 		if (bank->start >= vmalloc_limit)
+			/*! 20130907 start가 vmalloc_limit 보다 크면 이미 highmem */
 			highmem = 1;
 		else
 			size_limit = vmalloc_limit - bank->start;
-			//size_limit = 0x2F800000
+			/*! 20130907 size_limit = 0x2f800000 */
 		bank->highmem = highmem;
 
 #ifdef CONFIG_HIGHMEM
@@ -1038,17 +1036,17 @@ void __init sanity_check_meminfo(void)
 		 */
 		if (!highmem && bank->size > size_limit) {
 			if (meminfo.nr_banks >= NR_BANKS) {
-				// NR_BANKS = 8
+				/*! 20130907 NR_BANKS = 8 */
 				printk(KERN_CRIT "NR_BANKS too low, "
 						 "ignoring high memory\n");
 			} else {
 				/*! 20130907
-				 * Bank를 논리적으로 나누어 760M의 Bank[0]설정
-				 * 이후 Bank[1] = 나머지 공간.
+				 * bank를 논리적으로 나누어 760M의 bank[0]설정
+				 * 이후 bank[1] = 나머지 공간.
 				 */
 				memmove(bank + 1, bank,
 					(meminfo.nr_banks - i) * sizeof(*bank));
-				/*!
+				/*! 20130907
 				 * 현재 bank를 하나 복제하면서 bank 끝까지 복사해 덮어쓴다.
 				 * 때문에 겹쳐쓸수 있는 memmove 함수를 쓴다.
 				 * ex) (1 2 3 4)라는 자료에서 bank가 2면
@@ -1068,9 +1066,7 @@ void __init sanity_check_meminfo(void)
 			 */
 		}
 #else
-		/*! 20130907
-		 * 들어가지 않는다.
-		 */
+		/*! 20130907 들어가지 않는다. */
 		/*
 		 * Highmem banks not allowed with !CONFIG_HIGHMEM.
 		 */
@@ -1100,7 +1096,7 @@ void __init sanity_check_meminfo(void)
 
 			if (bank_end > arm_lowmem_limit)
 				arm_lowmem_limit = bank_end;
-			/*!
+			/*! 20130907 
 			 * arm_lowmem_limit는 highmem에 속하지 않는다.
 			 * highmem을 넘지 않으면 메모리의 최대값이며
 			 * highmem을 넘는다면 highmem과의 경계선이다.
@@ -1158,10 +1154,12 @@ void __init sanity_check_meminfo(void)
 	 */
 	if (memblock_limit)
 		memblock_limit = round_down(memblock_limit, SECTION_SIZE);
+		/*! 20130907  #define SECTION_SIZE  (1UL << 20) */
 	if (!memblock_limit)
 		memblock_limit = arm_lowmem_limit;
 
 	memblock_set_current_limit(memblock_limit);
+	/*! 20130907 memblock의 limit를 arm_lowmem_limit 로 설정 */
 }
 
 static inline void prepare_page_table(void)

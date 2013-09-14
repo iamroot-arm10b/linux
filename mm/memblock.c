@@ -25,8 +25,10 @@ static struct memblock_region memblock_reserved_init_regions[INIT_MEMBLOCK_REGIO
 
 struct memblock memblock __initdata_memblock = {
 	.memory.regions		= memblock_memory_init_regions,
+	/*! 20130914 memblock_memory_init_regions를 128개 생성 */
 	.memory.cnt		= 1,	/* empty dummy entry */
 	.memory.max		= INIT_MEMBLOCK_REGIONS,
+	/*! 20130914 INIT_MEMBLOCK_REGIONS = 128 */
 
 	.reserved.regions	= memblock_reserved_init_regions,
 	.reserved.cnt		= 1,	/* empty dummy entry */
@@ -37,6 +39,11 @@ struct memblock memblock __initdata_memblock = {
 
 int memblock_debug __initdata_memblock;
 static int memblock_can_resize __initdata_memblock;
+/*! 20130914
+ * #define __initdata_memblock __meminitdata
+ * #define __meminitdata    __section(.meminit.data)
+ * memblock_can_resize는 BSS 영역에 포함되므로 초기값은 0
+ */
 static int memblock_memory_in_slab __initdata_memblock = 0;
 static int memblock_reserved_in_slab __initdata_memblock = 0;
 
@@ -109,18 +116,30 @@ phys_addr_t __init_memblock memblock_find_in_range_node(phys_addr_t start,
 					phys_addr_t end, phys_addr_t size,
 					phys_addr_t align, int nid)
 {
+	/*! 20130914 새로 node를 할당할 range를 찾는 과정 */
 	phys_addr_t this_start, this_end, cand;
 	u64 i;
 
 	/* pump up @end */
 	if (end == MEMBLOCK_ALLOC_ACCESSIBLE)
+		/*! 20130914
+		 * MEMBLOCK_ALLOC_ACCESSIBLE = 0
+		 * end = 0xffffffff (메모리 사이즈 마지막 값)
+		 */
 		end = memblock.current_limit;
 
 	/* avoid allocating the first page */
 	start = max_t(phys_addr_t, start, PAGE_SIZE);
+	/*! 20130914 start가 첫번째 page 영역인 경우에 PAGE_SIZE 로 재설정 */
 	end = max(start, end);
+	/*! 20130914 만약 end도 PAGE_SIZE보다 작으면 end와 start가 같아짐 */
 
 	for_each_free_mem_range_reverse(i, nid, &this_start, &this_end, NULL) {
+		/*! 20130914
+		 * for (i = (u64)ULLONG_MAX, __next_free_mem_range_rev(&i, nid, p_start, p_end, p_nid);
+		 *      i != (u64)ULLONG_MAX;
+		 *      __next_free_mem_range_rev(&i, nid, p_start, p_end, p_nid))
+		 */
 		this_start = clamp(this_start, start, end);
 		this_end = clamp(this_end, start, end);
 
@@ -205,28 +224,35 @@ static int __init_memblock memblock_double_array(struct memblock_type *type,
 	struct memblock_region *new_array, *old_array;
 	phys_addr_t old_alloc_size, new_alloc_size;
 	phys_addr_t old_size, new_size, addr;
-	int use_slab = slab_is_available();
+	int use_slab = slab_is_available(); /*! 20130914 use_slab = 0 */
 	int *in_slab;
 
 	/* We don't allow resizing until we know about the reserved regions
 	 * of memory that aren't suitable for allocation
 	 */
 	if (!memblock_can_resize)
+		/*! 20130914 memblock_can_resize은 전역변수이므로 0 */
 		return -1;
 
 	/* Calculate new doubled size */
 	old_size = type->max * sizeof(struct memblock_region);
 	new_size = old_size << 1;
+	/*! 20130914 new_size는 두배로 늘림 */
 	/*
 	 * We need to allocated new one align to PAGE_SIZE,
 	 *   so we can free them completely later.
 	 */
 	old_alloc_size = PAGE_ALIGN(old_size);
 	new_alloc_size = PAGE_ALIGN(new_size);
+	/*! 20130914 size를 PAGE_SIZE 만큼 align 한다. */
 
 	/* Retrieve the slab flag */
 	if (type == &memblock.memory)
 		in_slab = &memblock_memory_in_slab;
+		/*! 20130914
+		 * type이 가리키는 주소와 
+		 * memblock.memory가 가리키는 주소가 같으면 memblock_memory_in_slab
+		 */
 	else
 		in_slab = &memblock_reserved_in_slab;
 
@@ -245,6 +271,7 @@ static int __init_memblock memblock_double_array(struct memblock_type *type,
 		new_array = kmalloc(new_size, GFP_KERNEL);
 		addr = new_array ? __pa(new_array) : 0;
 	} else {
+		/*! 20130914 현재까지 slap 사용안함 */
 		/* only exclude range when trying to double reserved.regions */
 		if (type != &memblock.reserved)
 			new_area_start = new_area_size = 0;
@@ -318,6 +345,10 @@ static void __init_memblock memblock_merge_regions(struct memblock_type *type)
 		if (this->base + this->size != next->base ||
 		    memblock_get_region_node(this) !=
 		    memblock_get_region_node(next)) {
+			/*! 20130914
+			 * region의 영역이 연속되지 않았거나,
+			 * node가 다른 경우 병합하지 않는다.
+			 */
 			BUG_ON(this->base + this->size > next->base);
 			i++;
 			continue;
@@ -327,6 +358,7 @@ static void __init_memblock memblock_merge_regions(struct memblock_type *type)
 		/* move forward from next + 1, index of which is i + 2 */
 		memmove(next, next + 1, (type->cnt - (i + 2)) * sizeof(*next));
 		type->cnt--;
+		/*! 20130914 두 region을 합치고 다음 node를 가리킴 */
 	}
 }
 
@@ -345,6 +377,7 @@ static void __init_memblock memblock_insert_region(struct memblock_type *type,
 						   int idx, phys_addr_t base,
 						   phys_addr_t size, int nid)
 {
+	/*! 20130914 rbase > base 인 경우에 region의 정보를 삽입 */
 	struct memblock_region *rgn = &type->regions[idx];
 
 	BUG_ON(type->cnt >= type->max);
@@ -387,6 +420,10 @@ static int __init_memblock memblock_add_region(struct memblock_type *type,
 
 	/* special case for empty array */
 	if (type->regions[0].size == 0) {
+	/*! 20130914 
+	 * 처음 진입할때는 type->regions[0].size == 0 이므로 여기 실행 
+	 * memblock_type 구조체 초기화
+	 */
 		WARN_ON(type->cnt != 1 || type->total_size);
 		type->regions[0].base = base;
 		type->regions[0].size = size;
@@ -410,8 +447,16 @@ repeat:
 		/*! 20130907
 		 * rbase = 0x20000000
 		 * rend =  0x4F800000
+		 * 760M 에 대한 값.
 		 */
-
+		/*! 20130914
+		 * rbase, rend는 i값이 증가하면서 따라 증가하고, 
+		 * base, end는 고정되어 있으므로 
+		 * rend <= base 인 경우: continue
+		 * rbase >= end 인 경우: break
+		 * rbase > base 인 경우: insert_region
+		 * continue와 break가 아닌 경우: base를 min(rend, end)로 교체
+		 */
 		if (rbase >= end)
 			break;
 		if (rend <= base)
@@ -425,25 +470,29 @@ repeat:
 			if (insert)
 				memblock_insert_region(type, i++, base,
 						       rbase - base, nid);
+			/*! 20130914
+			 * rbase - base 크기만큼의(겹치지 않는 크기만큼의) memblock을 resion에 삽입
+			 */
 		}
 		/* area below @rend is dealt with, forget about it */
 		base = min(rend, end);
+		/*! 20130914 rend가 base보다 크면 base를 rend와 end 중 작은 주소로 대체 */
 	}
+	/*! 20130914 for문이 끝나면 base는 등록할 위치를 가리킨다.  */
 
 	/* insert the remaining portion */
 	if (base < end) {
 		nr_new++;
 		if (insert)
 			memblock_insert_region(type, i, base, end - base, nid);
+		/*! 20130914 memblock을 region에 insert한다. */
 	}
 
 	/*
 	 * If this was the first round, resize array and repeat for actual
 	 * insertions; otherwise, merge and return.
 	 */
-	/*! 20130907
-	 * 20130907 여기까지...  
-	 */
+	/*! 20130907 2013/09/07 여기까지...  */
 	if (!insert) {
 		while (type->cnt + nr_new > type->max)
 			if (memblock_double_array(type, obase, size) < 0)
@@ -452,6 +501,7 @@ repeat:
 		goto repeat;
 	} else {
 		memblock_merge_regions(type);
+		/*! 20130914 연속된 region을 하나의 region으로 병합 */
 		return 0;
 	}
 }
@@ -677,8 +727,10 @@ void __init_memblock __next_free_mem_range_rev(u64 *idx, int nid,
 	struct memblock_type *rsv = &memblock.reserved;
 	int mi = *idx & 0xffffffff;
 	int ri = *idx >> 32;
+	/*! 20130914 주소를 상위 32bit(ri)와 하위 32bit(mi)로 나눈다.  */
 
 	if (*idx == (u64)ULLONG_MAX) {
+		/*! 20130914 처음이면 여기 실행 */
 		mi = mem->cnt - 1;
 		ri = rsv->cnt;
 	}
@@ -690,6 +742,7 @@ void __init_memblock __next_free_mem_range_rev(u64 *idx, int nid,
 
 		/* only memory regions are associated with nodes, check it */
 		if (nid != MAX_NUMNODES && nid != memblock_get_region_node(m))
+			/*! 20130914 원하는 node id에 대해서만 검사한다.  */
 			continue;
 
 		/* scan areas before each reservation for intersection */
@@ -697,6 +750,12 @@ void __init_memblock __next_free_mem_range_rev(u64 *idx, int nid,
 			struct memblock_region *r = &rsv->regions[ri];
 			phys_addr_t r_start = ri ? r[-1].base + r[-1].size : 0;
 			phys_addr_t r_end = ri < rsv->cnt ? r->base : ULLONG_MAX;
+			/*! 20130914
+			 * 처음값 r_start = free 영역의 시작주소
+			 *        r_end = ULLONG_MAX
+			 * reservation 메모리가 아닌 공간을 찾는 것
+			 * 2013/09/14 여기까지
+			 */
 
 			/* if ri advanced past mi, break out to advance mi */
 			if (r_end <= m_start)

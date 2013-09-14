@@ -133,6 +133,7 @@ static inline int memblock_get_region_node(const struct memblock_region *r)
 #else
 static inline void memblock_set_region_node(struct memblock_region *r, int nid)
 {
+	/*! 20130914 아무것도 안함.  */
 }
 
 static inline int memblock_get_region_node(const struct memblock_region *r)
