@@ -42,7 +42,14 @@ static int memblock_can_resize __initdata_memblock;
 /*! 20130914
  * #define __initdata_memblock __meminitdata
  * #define __meminitdata    __section(.meminit.data)
- * memblock_can_resize는 BSS 영역에 포함되므로 초기값은 0
+ * 
+ * arm에서는 CONFIG_ARCH_DISCARD_MEMBLOCK가 설정되어 있지 않기 때문에
+ * __meminitdata 매크로는 무의미해지며 bss 섹션에 들어간다.
+ * 
+ * 만약 x86처럼 CONFIG_ARCH_DISCARD_MEMBLOCK이 설정되어 있으면
+ * __meminitdata가 붙으면 .meminit.data 섹션이 선언되며
+ * 결국 INIT_DATA의 MEM_DISCARD로 .init.data에 들어간다.
+ * 이 경우에도 선언되지 않은 변수의 초기값은 0이 된다.
  */
 static int memblock_memory_in_slab __initdata_memblock = 0;
 static int memblock_reserved_in_slab __initdata_memblock = 0;
@@ -754,6 +761,7 @@ void __init_memblock __next_free_mem_range_rev(u64 *idx, int nid,
 			 * 처음값 r_start = free 영역의 시작주소
 			 *        r_end = ULLONG_MAX
 			 * reservation 메모리가 아닌 공간을 찾는 것
+			 * negative 배열 선언은 불가능하지만 [-1]처럼 지정하는 것은 가능하다.
 			 * 2013/09/14 여기까지
 			 */
 
