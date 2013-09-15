@@ -1144,8 +1144,21 @@ void __init sanity_check_meminfo(void)
 	}
 #endif
 	meminfo.nr_banks = j;
-	/* j는 banks의 갯수를 나타낸다. */
+	/*! j는 banks의 갯수다. */
 	high_memory = __va(arm_lowmem_limit - 1) + 1;
+	/*! __va, __pa 사용 전에 -1을 하는 이유는
+	 * 이 값이 상한값(limit)이기 때문이다.
+	 * limit가 0x20000000(512M) 인 경우 가용범위는 0 ~ 0x1fffffff 이다.
+	 * 불연속적인 메모리 공간의 경우 엉뚱한 메모리 주소가 변환될 수 있다.
+	 * 
+	 * 예를들면 아래와 같은 두개의 512M 메모리 블럭을 가정해보자.
+	 * 0x00000000(phys) -> 0xc0000000(virt)
+	 * 0x80000000(phys) -> 0xe0000000(virt)
+	 * 
+	 * 경계지점인 512M의 limit를 변환할 때
+	 * 0xe0000000를 변환하면 0x80000000이 되고
+	 * 0xdfffffff르 변환하면 0x1fffffff이 된다.
+	 */
 
 	/*
 	 * Round the memblock limit down to a section size.  This
