@@ -343,17 +343,22 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 	/*! 20130914 현재 nr_banks = 2 로 본다.  */
 	for (i = 0; i < mi->nr_banks; i++)
 		memblock_add(mi->bank[i].start, mi->bank[i].size);
+	/*! 20130928
+	 * 두개의 bank에 대한 memblock을 추가한다. 
+	 * bank는 두개로 나누고 memblock은 합친다. 
+	 * 2013/09/28 여기까지!
+	 */
 
 	/* Register the kernel text, kernel data and initrd with memblock. */
 #ifdef CONFIG_XIP_KERNEL
-	//NO
 	memblock_reserve(__pa(_sdata), _end - _sdata);
 #else
+	/*! 20130907 여기 실행 */
 	memblock_reserve(__pa(_stext), _end - _stext);
 #endif
 
 #ifdef CONFIG_BLK_DEV_INITRD 
-	// YES
+	/*! 20130907 여기 실행 */
 	if (phys_initrd_size &&
 	    !memblock_is_region_memory(phys_initrd_start, phys_initrd_size)) {
 		pr_err("INITRD: 0x%08llx+0x%08lx is not a memory region - disabling initrd\n",

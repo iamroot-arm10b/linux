@@ -784,18 +784,12 @@ static void __init setup_processor(void)
 #endif
 
 	feat_v6_fixup();
-	/*! 20130810
-	 * v6 중 특정 아키텍처일때 thread local storage flag를 clear한다.
-	 */
+	/*! 20130810 v6 중 특정 아키텍처일때 thread local storage flag를 clear한다.  */
 
 	cacheid_init();
-	/*! 20130810
-	 * cacheid 초기화. PIPT, nonaliasing 설정
-	 */
+	/*! 20130810 cacheid 초기화. PIPT, nonaliasing 설정 */
 	cpu_init();
-	/*! 20130810
-	 * CPU 초기화와 abt, irq, und 모드의 스택 설정
-	 */
+	/*! 20130810 CPU 초기화와 abt, irq, und 모드의 스택 설정 */
 }
 
 void __init dump_machine_table(void)
@@ -1065,21 +1059,17 @@ void __init setup_arch(char **cmdline_p)
 	setup_processor();
 	/*! 20130810 마침 */
 	mdesc = setup_machine_fdt(__atags_pointer);
-	/*! 20130831
-	 * 호환되는 descript 찾아옴.
-	 */
+	/*! 20130831 호환되는 descript 찾아옴. */
 	if (!mdesc)
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
-		/*! 20130831
-		 * device tree가 아니면 atag에서 찾는다.
-		 */
+		/*! 20130831 device tree가 아니면 atag에서 찾는다. */
 	machine_desc = mdesc;
 	machine_name = mdesc->name;
 
 	setup_dma_zone(mdesc);
 	/*! 20130831
 	 * ARM은 zone dma 을 사용하지 않는다.
-	 * arch/arm/mach-exynos/mach-exynos5-dt.c 의 DT_MACHINE_START 에 restart_mode 값이 없다.
+	 * arch/arm/mach-exynos/mach-exynos5-dt.c 의 DT_MACHINE_START에 restart_mode값이 없다.
 	 */
 
 	if (mdesc->reboot_mode != REBOOT_HARD)

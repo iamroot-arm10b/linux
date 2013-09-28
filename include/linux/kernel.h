@@ -712,6 +712,10 @@ static inline void ftrace_dump(enum ftrace_dump_mode oops_dump_mode) { }
 	(void) (&__val == &__max);		\
 	__val = __val < __min ? __min: __val;	\
 	__val > __max ? __max: __val; })
+/*! 20130928
+ * (void) (&__val == &__min) : type 이 다르면 == 연산시 warning 발생
+ * val가 min과 max 값을 벗어나면 가까운 값으로 셋팅
+ */
 
 /*
  * ..and if you can't take the strict
