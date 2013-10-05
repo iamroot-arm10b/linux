@@ -1218,6 +1218,7 @@ static inline void prepare_page_table(void)
 	 */
 	/*! 20131005 MODULES_VADDR = (3056M) 0xbf000000 , PMD_SIZE = 2M */
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
+		/*! 20131005 2013/10/05 여기까지!  */
 		pmd_clear(pmd_off_k(addr));
 
 #ifdef CONFIG_XIP_KERNEL
