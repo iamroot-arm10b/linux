@@ -171,6 +171,7 @@ static inline void memblock_dump_all(void)
 {
 	if (memblock_debug)
 		__memblock_dump_all();
+	/*! 20131005 debug 옵션이 켜져 있으면 모두 출력 */
 }
 
 /**

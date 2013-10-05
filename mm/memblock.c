@@ -88,6 +88,7 @@ static inline phys_addr_t memblock_cap_size(phys_addr_t base, phys_addr_t *size)
 static unsigned long __init_memblock memblock_addrs_overlap(phys_addr_t base1, phys_addr_t size1,
 				       phys_addr_t base2, phys_addr_t size2)
 {
+	/*! 20131005 주어진 두 영역이 겹치면 1 리턴 */
 	return ((base1 < (base2 + size2)) && (base2 < (base1 + size1)));
 }
 
@@ -100,10 +101,12 @@ static long __init_memblock memblock_overlaps_region(struct memblock_type *type,
 		phys_addr_t rgnbase = type->regions[i].base;
 		phys_addr_t rgnsize = type->regions[i].size;
 		if (memblock_addrs_overlap(base, size, rgnbase, rgnsize))
+			/*! 20131005 주어진 두 영역이 겹치면 break */
 			break;
 	}
 
 	return (i < type->cnt) ? i : -1;
+	/*! 20131005 regions의 구간이 겹치는 index를 리턴 */
 }
 
 /**
@@ -618,7 +621,7 @@ static int __init_memblock memblock_isolate_range(struct memblock_type *type,
 		if (rend <= base)
 			continue;
 		/*! 20130928
-		 * 고립시킬 영역이 계속 찾고, 
+		 * 고립시킬 영역이 region의 끝보다 클 경우 다음 region을 계속 찾고, 
 		 * 고립시킬 영역이 region을 벗어나는 경우 break.
 		 */
 
@@ -707,6 +710,7 @@ int __init_memblock memblock_free(phys_addr_t base, phys_addr_t size)
 
 int __init_memblock memblock_reserve(phys_addr_t base, phys_addr_t size)
 {
+	/*! 20131005 전달받은 메모리 영역을 reserved region에 추가로 등록한다. */
 	struct memblock_type *_rgn = &memblock.reserved;
 
 	memblock_dbg("memblock_reserve: [%#016llx-%#016llx] %pF\n",
@@ -1071,6 +1075,10 @@ static int __init_memblock memblock_search(struct memblock_type *type, phys_addr
 		else
 			return mid;
 	} while (left < right);
+	/*! 20131005
+	 * 넘겨온 type으로 주어진 regions에서 addr 가 속한 region의 index를 찾는 것.
+	 */
+
 	return -1;
 }
 
@@ -1097,13 +1105,16 @@ int __init_memblock memblock_is_memory(phys_addr_t addr)
 int __init_memblock memblock_is_region_memory(phys_addr_t base, phys_addr_t size)
 {
 	int idx = memblock_search(&memblock.memory, base);
+	/*! 20131005 memblock.memory에서 base가 속한 region의 index 를 구한다. */
 	phys_addr_t end = base + memblock_cap_size(base, &size);
+	/*! 20131005 size가 경계를 넘어가는 경우에는 경계까지만 size로 정한다.  */
 
 	if (idx == -1)
 		return 0;
 	return memblock.memory.regions[idx].base <= base &&
 		(memblock.memory.regions[idx].base +
 		 memblock.memory.regions[idx].size) >= end;
+	/*! 20131005 base와 end가 해당 region 에 속하는지 확인 */
 }
 
 /**
@@ -1120,6 +1131,7 @@ int __init_memblock memblock_is_region_reserved(phys_addr_t base, phys_addr_t si
 {
 	memblock_cap_size(base, &size);
 	return memblock_overlaps_region(&memblock.reserved, base, size) >= 0;
+	/*! 20131005 base ~ base+size가 memblock.reserved 에서 겹치는 부분이 있는지 확인 */
 }
 
 void __init_memblock memblock_trim_memory(phys_addr_t align)
@@ -1157,6 +1169,7 @@ static void __init_memblock memblock_dump(struct memblock_type *type, char *name
 	unsigned long long base, size;
 	int i;
 
+	/*! 20131005 type의 name 영역 출력 */
 	pr_info(" %s.cnt  = 0x%lx\n", name, type->cnt);
 
 	for (i = 0; i < type->cnt; i++) {
@@ -1181,6 +1194,7 @@ void __init_memblock __memblock_dump_all(void)
 	pr_info(" memory size = %#llx reserved size = %#llx\n",
 		(unsigned long long)memblock.memory.total_size,
 		(unsigned long long)memblock.reserved.total_size);
+	/*! 20131005 printk(KERN_INFO pr_fmt(fmt), ##__VA_ARGS__) */
 
 	memblock_dump(&memblock.memory, "memory");
 	memblock_dump(&memblock.reserved, "reserved");

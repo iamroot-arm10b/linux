@@ -125,6 +125,10 @@ void __init dma_contiguous_reserve(phys_addr_t limit)
 	}
 
 	if (selected_size) {
+		/*! 20131005
+		 * early_cma(char *p) 가 실행되면 size_cmdline이 -1이 아닌 값을 가지고
+		 * selected_size 가 0보다 크게되어 이곳이 실행된다.
+		 */
 		pr_debug("%s: reserving %ld MiB for global area\n", __func__,
 			 (unsigned long)selected_size / SZ_1M);
 

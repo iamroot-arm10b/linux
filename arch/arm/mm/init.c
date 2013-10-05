@@ -327,6 +327,7 @@ phys_addr_t __init arm_memblock_steal(phys_addr_t size, phys_addr_t align)
 	phys_addr_t phys;
 
 	BUG_ON(!arm_memblock_steal_permitted);
+	/*! 20131005 arm_memblock_steal_permitted이 false 이면 패닉 발생 */
 
 	phys = memblock_alloc_base(size, align, MEMBLOCK_ALLOC_ANYWHERE);
 	memblock_free(phys, size);
@@ -343,11 +344,11 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 	/*! 20130914 현재 nr_banks = 2 로 본다.  */
 	for (i = 0; i < mi->nr_banks; i++)
 		memblock_add(mi->bank[i].start, mi->bank[i].size);
-	/*! 20130928
-	 * 두개의 bank에 대한 memblock을 추가한다. 
-	 * bank는 두개로 나누고 memblock은 합친다. 
-	 * 2013/09/28 여기까지!
-	 */
+		/*! 20130928
+		 * 두개의 bank에 대한 memblock을 추가한다. 
+		 * bank는 두개로 나누고 memblock은 합친다. 
+		 * 2013/09/28 여기까지!
+		 */
 
 	/* Register the kernel text, kernel data and initrd with memblock. */
 #ifdef CONFIG_XIP_KERNEL
@@ -355,47 +356,84 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 #else
 	/*! 20130907 여기 실행 */
 	memblock_reserve(__pa(_stext), _end - _stext);
+	/*! 20131005 
+	 * _stext: 0xC0008000 
+	 * __pa(_stext): 0x20008000 
+	 * _end - _stext = 커널의 크기
+	 * 커널 코드영역을 memblock의 reserved region에 추가한다.
+	 */
 #endif
 
 #ifdef CONFIG_BLK_DEV_INITRD 
 	/*! 20130907 여기 실행 */
 	if (phys_initrd_size &&
 	    !memblock_is_region_memory(phys_initrd_start, phys_initrd_size)) {
+		/*! 20131005 부트로더에서 전달받은 initrd 주소가 memblock.memory에 속해 있는지 확인 */
 		pr_err("INITRD: 0x%08llx+0x%08lx is not a memory region - disabling initrd\n",
 		       (u64)phys_initrd_start, phys_initrd_size);
 		phys_initrd_start = phys_initrd_size = 0;
+		/*! 20131005 만약 유효하지 않은 값이면 에러로그 출력하고 0으로 초기화한다.  */
 	}
 	if (phys_initrd_size &&
 	    memblock_is_region_reserved(phys_initrd_start, phys_initrd_size)) {
 		pr_err("INITRD: 0x%08llx+0x%08lx overlaps in-use memory region - disabling initrd\n",
 		       (u64)phys_initrd_start, phys_initrd_size);
 		phys_initrd_start = phys_initrd_size = 0;
+		/*! 20131005
+		 * 등록하려는 부분이 reserved가 아니어야 한다.
+		 * 등록하려는 부분이 겹치면 에러로그 출력하고 0으로 초기화한다.
+		 */
 	}
 	if (phys_initrd_size) {
 		memblock_reserve(phys_initrd_start, phys_initrd_size);
+		/*! 20131005 reserved region에 initrd 영역을 추가한다. */
 
 		/* Now convert initrd to virtual addresses */
 		initrd_start = __phys_to_virt(phys_initrd_start);
 		initrd_end = initrd_start + phys_initrd_size;
+		/*! 20131005 initrd_start와 initrd_end 를 virtual address로 변환하여 셋팅
+		  */
 	}
 #endif
 
 	arm_mm_memblock_reserve();
+	/*! 20131005 
+	 * swapper_pg_dir (the virtual address of the initial page table.)에서
+	 * 16k만큼 reserved로 마킹한다.
+	 */
 	arm_dt_memblock_reserve();
+	/*! 20131005
+	 * device tree 에서 정의한 reserved의 영역을 reserve region에 추가한다.
+	 */
 
 	/* reserve any platform specific memblock areas */
 	if (mdesc->reserve)
 		mdesc->reserve();
+	/*! 20131005
+	 * exynos5_reserve() 함수 실행한다. ( .reserve = exynos5_reserve,)
+	 * dtb file에서 지정한 mfc 관련 reserve영역을 찾아 reserve 영역에 추가한다.
+	 */
 
 	/*
 	 * reserve memory for DMA contigouos allocations,
 	 * must come from DMA area inside low memory
 	 */
 	dma_contiguous_reserve(min(arm_dma_limit, arm_lowmem_limit));
+	/*! 20131005
+	 * arm_dma_limit = ((phys_addr_t)~0) = 0xFFFFFFFF
+	 * arm_lowmem_limit = bank_end;
+	 * CONFIG_CMA_SIZE_~~ 상수들이 정의되지 않아 아무일도 안한다.
+	 */
 
 	arm_memblock_steal_permitted = false;
+	/*! 20131005 memblock에서 해당영역을 지우지 못하게 하는 것 */
 	memblock_allow_resize();
+	/*! 20131005
+	 * memblock_can_resize = 1;
+	 * mm/memblock.c의 memblock_double_array에서 double array로의 확장이 가능해진다.
+	 */
 	memblock_dump_all();
+	/*! 20131005 여지까지 했던 memblock 작업의 결과를 모두 출력한다.  */
 }
 
 void __init bootmem_init(void)

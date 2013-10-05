@@ -130,19 +130,24 @@ int __init s5p_fdt_find_mfc_mem(unsigned long node, const char *uname,
 	struct s5p_mfc_dt_meminfo *mfc_mem = data;
 
 	if (!data)
+		/*! 20131005 주소가 0이면 종료 */
 		return 0;
 
 	if (!of_flat_dt_is_compatible(node, mfc_mem->compatible))
+		/*! 20131005 device tree에서 mfc관련된 값이 없으면 종료 */
 		return 0;
 
 	prop = of_get_flat_dt_prop(node, "samsung,mfc-l", &len);
+	/*! 20131005 node에 있는 "samsung,mfc-l" property를 가져온다. */
 	if (!prop || (len != 2 * sizeof(unsigned long)))
+		/*! 20131005 prop가 없거나 len가 8byte가 아니면 종료 */
 		return 0;
 
 	mfc_mem->loff = be32_to_cpu(prop[0]);
 	mfc_mem->lsize = be32_to_cpu(prop[1]);
 
 	prop = of_get_flat_dt_prop(node, "samsung,mfc-r", &len);
+	/*! 20131005 node에 있는 "samsung,mfc-r" property를 가져온다. */
 	if (!prop || (len != 2 * sizeof(unsigned long)))
 		return 0;
 

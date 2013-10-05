@@ -49,6 +49,10 @@
 #endif
 
 	.globl	swapper_pg_dir
+	/*! 20131005
+	 * swapper_pg_dir is the virtual address of the initial page table.
+	 * swapper_pg_dir : 0xC0004000
+	 */
 	.equ	swapper_pg_dir, KERNEL_RAM_VADDR - PG_DIR_SIZE
 
 	.macro	pgtbl, rd, phys

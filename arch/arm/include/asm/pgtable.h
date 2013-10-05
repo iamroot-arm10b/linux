@@ -175,11 +175,13 @@ extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
 
 /* to find an entry in a page-table-directory */
 #define pgd_index(addr)		((addr) >> PGDIR_SHIFT)
+/*! 20131005 PGDIR_SHIFT = 21 */
 
 #define pgd_offset(mm, addr)	((mm)->pgd + pgd_index(addr))
 
 /* to find an entry in a kernel page-table-directory */
 #define pgd_offset_k(addr)	pgd_offset(&init_mm, addr)
+/*! 20131005 초기화를 하기 위해서 2M를 사용한다. */
 
 #define pmd_none(pmd)		(!pmd_val(pmd))
 #define pmd_present(pmd)	(pmd_val(pmd))

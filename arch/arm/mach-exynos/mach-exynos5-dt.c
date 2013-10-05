@@ -64,6 +64,7 @@ static void __init exynos5_reserve(void)
 
 	/* Reserve memory for MFC only if it's available */
 	mfc_mem.compatible = "samsung,mfc-v6";
+	/*! 20131005 mfc: multi format codec */
 	if (of_scan_flat_dt(s5p_fdt_find_mfc_mem, &mfc_mem))
 		s5p_mfc_reserve_mem(mfc_mem.roff, mfc_mem.rsize, mfc_mem.loff,
 				mfc_mem.lsize);

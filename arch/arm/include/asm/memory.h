@@ -216,7 +216,7 @@ static inline unsigned long __phys_to_virt(unsigned long x)
 	__pv_stub(x, t, "sub", __PV_BITS_31_24);
 	/*!
 	 * __PV_BITS_31_24 = 0x81000000 : 배럴쉬프트를 고정하기 위한 값
-	 *                     immed값의 최상위, 최하위 값을 1로 고정하기 위한 값
+	 *                   immed값의 최상위, 최하위 값을 1로 고정하기 위한 값
 	 * P - Delta = V
 	 * __pv_stub는 여기서 Delta 를 바꾸기 위한 것.
 	 */

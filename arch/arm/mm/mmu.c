@@ -342,9 +342,11 @@ static void __init build_mem_type_table(void)
 {
 	struct cachepolicy *cp;
 	unsigned int cr = get_cr();
+	/*! 20131005 cr: System control register (cp15의 c1:SCTLR) */
 	pteval_t user_pgprot, kern_pgprot, vecs_pgprot;
 	pteval_t hyp_device_pgprot, s2_pgprot, s2_device_pgprot;
 	int cpu_arch = cpu_architecture();
+	/*! 20131005 cpu_arch = 9 */
 	int i;
 
 	if (cpu_arch < CPU_ARCH_ARMv6) {
@@ -362,6 +364,10 @@ static void __init build_mem_type_table(void)
 		ecc_mask = 0;
 	}
 	if (is_smp())
+		/*! 20131005
+		 * CPOLICY_WRITEALLOC = 4
+		 * A Write-Back cache with Write Allocation
+		 */
 		cachepolicy = CPOLICY_WRITEALLOC;
 
 	/*
@@ -373,6 +379,7 @@ static void __init build_mem_type_table(void)
 		for (i = 0; i < ARRAY_SIZE(mem_types); i++)
 			mem_types[i].prot_sect &= ~PMD_SECT_TEX(7);
 	if ((cpu_arch < CPU_ARCH_ARMv6 || !(cr & CR_XP)) && !cpu_is_xsc3())
+		/*! 20131005 여기 안탄다.  */
 		for (i = 0; i < ARRAY_SIZE(mem_types); i++)
 			mem_types[i].prot_sect &= ~PMD_SECT_S;
 
@@ -448,12 +455,24 @@ static void __init build_mem_type_table(void)
 		 * On others, write combining is "Uncached/Buffered"
 		 */
 		mem_types[MT_DEVICE_WC].prot_sect |= PMD_SECT_BUFFERABLE;
+		/*! 20131005
+		 * prototype section을 WRITE BACK으로 설정한다.
+		 * PMD_SECT_BUFFERABLE = 4
+		 * MT_DEVICE_WC = 3
+		 */
 	}
 
 	/*
 	 * Now deal with the memory-type mappings
 	 */
 	cp = &cache_policies[cachepolicy];
+	/*! 20131005
+	 * .policy	= "writealloc",
+	 * .cr_mask	= 0,
+	 * .pmd		= PMD_SECT_WBWA,
+	 * .pte		= L_PTE_MT_WRITEALLOC,
+	 * .pte_s2	= s2_policy(L_PTE_S2_MT_WRITEBACK),
+	 */
 	vecs_pgprot = kern_pgprot = user_pgprot = cp->pte;
 	s2_pgprot = cp->pte_s2;
 	hyp_device_pgprot = s2_device_pgprot = mem_types[MT_DEVICE].prot_pte;
@@ -470,6 +489,10 @@ static void __init build_mem_type_table(void)
 		mem_types[MT_ROM].prot_sect |= PMD_SECT_APX|PMD_SECT_AP_WRITE;
 		mem_types[MT_MINICLEAN].prot_sect |= PMD_SECT_APX|PMD_SECT_AP_WRITE;
 		mem_types[MT_CACHECLEAN].prot_sect |= PMD_SECT_APX|PMD_SECT_AP_WRITE;
+		/*! 20131005
+		 * 해당 bit들을 켜준다.
+		 * APX = AP[2] : access permissions control 참조
+		 */
 #endif
 
 		if (is_smp()) {
@@ -527,6 +550,10 @@ static void __init build_mem_type_table(void)
 	for (i = 0; i < 16; i++) {
 		pteval_t v = pgprot_val(protection_map[i]);
 		protection_map[i] = __pgprot(v | user_pgprot);
+		/*! 20131005 
+		 * user_pgprot = cp->pte;
+		 * user_pgprot |= L_PTE_SHARED;
+		 */
 	}
 
 	mem_types[MT_LOW_VECTORS].prot_pte |= vecs_pgprot;
@@ -546,6 +573,7 @@ static void __init build_mem_type_table(void)
 	mem_types[MT_MEMORY_DMA_READY].prot_pte |= kern_pgprot;
 	mem_types[MT_MEMORY_NONCACHED].prot_sect |= ecc_mask;
 	mem_types[MT_ROM].prot_sect |= cp->pmd;
+	/*! 20131005 ecc: error correcting code */
 
 	switch (cp->pmd) {
 	case PMD_SECT_WT:
@@ -566,6 +594,11 @@ static void __init build_mem_type_table(void)
 		if (t->prot_sect)
 			t->prot_sect |= PMD_DOMAIN(t->domain);
 	}
+	/*! 20131005
+	 * 현재 arch/processor 에 따라 mem_types 의 type별 속성 설정
+	 * arch/arm/include/asm/pgtable-2level-hwdef.h 참조 
+	 * 기본적인 것을 처음에 만들어두고 필요한 것을 여기서 추가한다.
+	 */
 }
 
 #ifdef CONFIG_ARM_DMA_MEM_BUFFERABLE
@@ -1183,6 +1216,7 @@ static inline void prepare_page_table(void)
 	/*
 	 * Clear out all the mappings below the kernel image.
 	 */
+	/*! 20131005 MODULES_VADDR = (3056M) 0xbf000000 , PMD_SIZE = 2M */
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
 
@@ -1227,6 +1261,14 @@ void __init arm_mm_memblock_reserve(void)
 	 * and can only be in node 0.
 	 */
 	memblock_reserve(__pa(swapper_pg_dir), SWAPPER_PG_DIR_SIZE);
+	/*! 20131005
+	 * swapper_pg_dir : 0xC0004000
+	 * #define SWAPPER_PG_DIR_SIZE	(PTRS_PER_PGD * sizeof(pgd_t))
+	 * PTRS_PER_PGD : 2048
+	 * sizeof(pgd_t) : 8
+	 * SWAPPER_PG_DIR_SIZE : 2048 * 8 = 16384 (16k)
+	 * 커널이 사용하고 있는 영역을 reserved로 마킹한다.
+	 */
 
 #ifdef CONFIG_SA1111
 	/*
@@ -1381,6 +1423,10 @@ void __init paging_init(struct machine_desc *mdesc)
 {
 	void *zero_page;
 
+	/*! 20131005
+	 * memory type table을 설정한다.
+	 * 현재 arch/processor 에 따라 mem_types 의 type별 속성 설정한다.
+	 */
 	build_mem_type_table();
 	prepare_page_table();
 	map_lowmem();

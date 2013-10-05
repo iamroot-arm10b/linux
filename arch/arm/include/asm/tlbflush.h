@@ -500,6 +500,7 @@ static inline void flush_pmd_entry(void *pmd)
 
 static inline void clean_pmd_entry(void *pmd)
 {
+	/*! 20131005 현재 주소에 해당하는 tlb의 entry를 clear. */
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	tlb_op(TLB_DCLEAN, "c7, c10, 1	@ flush_pmd", pmd);

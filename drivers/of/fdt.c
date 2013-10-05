@@ -102,9 +102,7 @@ int of_fdt_is_compatible(struct boot_param_header *blob,
 	unsigned long cplen, l, score = 0;
 
 	cp = of_fdt_get_property(blob, node, "compatible", &cplen);
-	/*! 20130824
-	 * node 중에서 compatible property를 가져온다.
-	 */
+	/*! 20130824 node 중에서 compatible property를 가져온다. */
 	if (cp == NULL)
 		return 0;
 	while (cplen > 0) {
@@ -483,9 +481,7 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
 				     void *data),
 			   void *data)
 {
-	/*! 20130824
-	 * 모든 child node에 대해 it 함수의 작업을 해준다.
-	 */
+	/*! 20130824 모든 child node에 대해 it 함수의 작업을 해준다. */
 	unsigned long p = ((unsigned long)initial_boot_params) +
 		be32_to_cpu(initial_boot_params->off_dt_struct);
 	int rc = 0;
@@ -523,8 +519,7 @@ int __init of_scan_flat_dt(int (*it)(unsigned long node,
 		if (*pathp == '/')
 			pathp = kbasename(pathp);
 		rc = it(p, pathp, depth, data);
-		/*! 20130824 * child node 일때 해당 node에 대한 콜백함수 호출
-		 */
+		/*! 20130824 child node 일때 해당 node에 대한 콜백함수 호출 */
 		if (rc != 0)
 			break;
 	} while (1);
@@ -570,9 +565,7 @@ void *__init of_get_flat_dt_prop(unsigned long node, const char *name,
 				 unsigned long *size)
 {
 	return of_fdt_get_property(initial_boot_params, node, name, size);
-	/*! 20130824
-	 * node에 있는 name이름을 가진 property를 가져온다.
-	 */
+	/*! 20130824 node에 있는 name이름을 가진 property를 가져온다. */
 }
 
 /**
@@ -583,6 +576,7 @@ void *__init of_get_flat_dt_prop(unsigned long node, const char *name,
 int __init of_flat_dt_is_compatible(unsigned long node, const char *compat)
 {
 	return of_fdt_is_compatible(initial_boot_params, node, compat);
+	/*! 20131005 node에서 compat가 있는지 확인 */
 }
 
 /**
