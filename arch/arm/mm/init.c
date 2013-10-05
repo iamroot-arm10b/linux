@@ -423,6 +423,11 @@ void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 	 * arm_dma_limit = ((phys_addr_t)~0) = 0xFFFFFFFF
 	 * arm_lowmem_limit = bank_end;
 	 * CONFIG_CMA_SIZE_~~ 상수들이 정의되지 않아 아무일도 안한다.
+	 * 
+	 * boot parameter에 cma= 옵션이 들어올 때는 cma가 활성화 된다.
+	 * 자세한 사항은 아래 두 파일을 참조
+	 * Documentation/kernel-parameters.txt
+	 * include/linux/dma-contiguous.h
 	 */
 
 	arm_memblock_steal_permitted = false;
