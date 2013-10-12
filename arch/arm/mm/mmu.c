@@ -1220,20 +1220,48 @@ static inline void prepare_page_table(void)
 	for (addr = 0; addr < MODULES_VADDR; addr += PMD_SIZE)
 		/*! 20131005 2013/10/05 여기까지!  */
 		pmd_clear(pmd_off_k(addr));
+	/*! 20131012
+	 * Virtual Address 0 ~ MODULES_VADDR까지 영역에 대한 페이지테이블 영역 Clear 
+	 * 페이지테이블영역: 0xC0004000 ~ 0xC0006FC7 
+	 * (1528번 * 8byte) : 8byte씩 Clear한다.
+	 * MODULES_VADDR 까지의 페이지테이블 엔트리를 Clear한다.
+	 *
+	 * 리눅스의 1level entry는 2M를 쓰겠다는 것.
+	 * 내용 참조: http://studyfoss.egloos.com/5008142
+	 * 주석 참조: arch/arm/include/asm/pgtable-2level.h
+	 * This leads to the page tables having the following layout:
+	 *
+	 *    pgd             pte
+	 * |        |
+	 * +--------+
+	 * |        |       +------------+ +0
+	 * +- - - - +       | Linux pt 0 |
+	 * |        |       +------------+ +1024
+	 * +--------+ +0    | Linux pt 1 |
+	 * |        |-----> +------------+ +2048
+	 * +- - - - + +4    |  h/w pt 0  |
+	 * |        |-----> +------------+ +3072
+	 * +--------+ +8    |  h/w pt 1  |
+	 * |        |       +------------+ +4096
+	 */
 
 #ifdef CONFIG_XIP_KERNEL
 	/* The XIP kernel is mapped in the module area -- skip over it */
 	addr = ((unsigned long)_etext + PMD_SIZE - 1) & PMD_MASK;
 #endif
+	/*! 20131012 PAGE_OFFSET: 0xC0000000 */
 	for ( ; addr < PAGE_OFFSET; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
+	/*! 20131012 MODULES_VADDR ~ PAGE_OFFSET 영역에 대한 페이지테이블 영역 Clear */
 
 	/*
 	 * Find the end of the first block of lowmem.
 	 */
 	end = memblock.memory.regions[0].base + memblock.memory.regions[0].size;
+	/*! 20131012 end = 0x20000000 + 0x80000000 */
 	if (end >= arm_lowmem_limit)
 		end = arm_lowmem_limit;
+	/*! 20131012 end = 0x4F800000 */
 
 	/*
 	 * Clear out all the kernel space mappings, except for the first
@@ -1242,6 +1270,11 @@ static inline void prepare_page_table(void)
 	for (addr = __phys_to_virt(end);
 	     addr < VMALLOC_START; addr += PMD_SIZE)
 		pmd_clear(pmd_off_k(addr));
+	/*! 20131012
+	 * addr = 0xEF800000 (arm_lowmem_limit)
+	 * VMALLOC_START : addr + VMALLOC_OFFSET => arm_lowmem_limit 위쪽의 8M 영역을 Clear
+	 */
+	/*! 20131012 0x20000000 ~  영역에 대한 페이지테이블 영역 Clear */
 }
 
 #ifdef CONFIG_ARM_LPAE

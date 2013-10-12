@@ -503,7 +503,9 @@ static inline void clean_pmd_entry(void *pmd)
 	/*! 20131005 현재 주소에 해당하는 tlb의 entry를 clear. */
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
+	/*! 20131012 "mcr p15, 0, %0, c7, c10, 1" : reference_manual.pdf 2584page */
 	tlb_op(TLB_DCLEAN, "c7, c10, 1	@ flush_pmd", pmd);
+	/*! 20131012 TLB_L2CLEAN_FR: Feroceon에서만 사용한다.  */
 	tlb_l2_op(TLB_L2CLEAN_FR, "c15, c9, 1  @ L2 flush_pmd", pmd);
 }
 

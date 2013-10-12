@@ -177,6 +177,7 @@ extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
 #define pgd_index(addr)		((addr) >> PGDIR_SHIFT)
 /*! 20131005 PGDIR_SHIFT = 21 */
 
+/*! 20131012 (mm)->pgd = swapper_pg_dir : 0xC0004000 */
 #define pgd_offset(mm, addr)	((mm)->pgd + pgd_index(addr))
 
 /* to find an entry in a kernel page-table-directory */
