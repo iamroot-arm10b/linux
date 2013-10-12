@@ -666,12 +666,19 @@ static void __init __map_init_section(pmd_t *pmd, unsigned long addr,
 	 * (See arch/arm/include/asm/pgtable-2level.h)
 	 */
 	if (addr & SECTION_SIZE)
+		/*! 20131012 pmd 를 2M 단위로 만들기 위한 것 */
 		pmd++;
 #endif
 	do {
+		/*! 20131012 page talbe의 entry 만들기 */
 		*pmd = __pmd(phys | type->prot_sect);
 		phys += SECTION_SIZE;
+		/*! 20131012
+		 * while 조건문 안의 문장은 순서대로 실행되고,
+		 * 마지막 문장의 조건문만 비교한다.
+		 */
 	} while (pmd++, addr += SECTION_SIZE, addr != end);
+	/*! 20131012 오늘은 여기까지!! 다음주에 다시 합시다!!  */
 
 	flush_pmd_entry(p);
 }
@@ -681,6 +688,7 @@ static void __init alloc_init_pmd(pud_t *pud, unsigned long addr,
 				      const struct mem_type *type)
 {
 	pmd_t *pmd = pmd_offset(pud, addr);
+	/*! 20131012 pmd = pud = pgd */
 	unsigned long next;
 
 	do {
@@ -689,6 +697,7 @@ static void __init alloc_init_pmd(pud_t *pud, unsigned long addr,
 		 * all the pmds for the given range.
 		 */
 		next = pmd_addr_end(addr, end);
+		/*! 20131012 next = end */
 
 		/*
 		 * Try a section mapping - addr, next and phys must all be
@@ -696,6 +705,10 @@ static void __init alloc_init_pmd(pud_t *pud, unsigned long addr,
 		 */
 		if (type->prot_sect &&
 				((addr | next | phys) & ~SECTION_MASK) == 0) {
+			/*! 20131012
+			 * type이 section 을 지원하고, 
+			 * addr, next, phys 가 모두 section align 되어 있는 경우
+			 */
 			__map_init_section(pmd, addr, next, phys, type);
 		} else {
 			alloc_init_pte(pmd, addr, next,
@@ -711,10 +724,12 @@ static void __init alloc_init_pud(pgd_t *pgd, unsigned long addr,
 				  unsigned long end, phys_addr_t phys,
 				  const struct mem_type *type)
 {
+	/*! 20131012 pud = pgd */
 	pud_t *pud = pud_offset(pgd, addr);
 	unsigned long next;
 
 	do {
+		/*! 20131012 next = end */
 		next = pud_addr_end(addr, end);
 		alloc_init_pmd(pud, addr, next, phys, type);
 		phys += next - addr;
@@ -797,6 +812,11 @@ static void __init create_mapping(struct map_desc *md)
 	const struct mem_type *type;
 	pgd_t *pgd;
 
+	/*! 20131012
+	 * user 영역에 대해서는 mapping하지 않는다.
+	 * 20131012 vectors_base() : 0xffff0000
+	 * TASK_SIZE : 0xbf000000
+	 */
 	if (md->virtual != vectors_base() && md->virtual < TASK_SIZE) {
 		printk(KERN_WARNING "BUG: not creating mapping for 0x%08llx"
 		       " at 0x%08lx in user region\n",
@@ -804,6 +824,7 @@ static void __init create_mapping(struct map_desc *md)
 		return;
 	}
 
+	/*! 20131012 VMALLOC 주소영역이 아니면 mapping하지 않는다. */
 	if ((md->type == MT_DEVICE || md->type == MT_ROM) &&
 	    md->virtual >= PAGE_OFFSET &&
 	    (md->virtual < VMALLOC_START || md->virtual >= VMALLOC_END)) {
@@ -818,16 +839,31 @@ static void __init create_mapping(struct map_desc *md)
 	/*
 	 * Catch 36-bit addresses
 	 */
+	/*! 20131012 PAE인 경우에 32bit를 초과하면 이곳 실행된다. */
 	if (md->pfn >= 0x100000) {
 		create_36bit_mapping(md, type);
 		return;
 	}
 #endif
 
+	/*! 20131012
+	 * md->pfn = __phys_to_pfn(start);
+	 * md->virtual = __phys_to_virt(start);
+	 * md->length = end - start;
+	 * md->type = MT_MEMORY;
+	 */
 	addr = md->virtual & PAGE_MASK;
 	phys = __pfn_to_phys(md->pfn);
+	/*! 20131012
+	 * VA 의 시작주소가 page 의 시작이 아니면 2page가 필요하므로 
+	 * 2page에 나누어 할당하기 위해 align한다.
+	 */
 	length = PAGE_ALIGN(md->length + (md->virtual & ~PAGE_MASK));
 
+	/*! 20131012
+	 * PMD 가 fault type 이고, addr, phys, length 중 하나라도 
+	 * 1M 단위로 SECTION align이 안되어 있으면 리턴
+	 */
 	if (type->prot_l1 == 0 && ((addr | phys | length) & ~SECTION_MASK)) {
 		printk(KERN_WARNING "BUG: map for 0x%08llx at 0x%08lx can not "
 		       "be mapped using pages, ignoring.\n",
@@ -1274,7 +1310,6 @@ static inline void prepare_page_table(void)
 	 * addr = 0xEF800000 (arm_lowmem_limit)
 	 * VMALLOC_START : addr + VMALLOC_OFFSET => arm_lowmem_limit 위쪽의 8M 영역을 Clear
 	 */
-	/*! 20131012 0x20000000 ~  영역에 대한 페이지테이블 영역 Clear */
 }
 
 #ifdef CONFIG_ARM_LPAE
@@ -1431,6 +1466,12 @@ static void __init map_lowmem(void)
 
 	/* Map all the lowmem memory banks. */
 	for_each_memblock(memory, reg) {
+	/*! 20131012
+	 * #define for_each_memblock(memblock_type, region)					\
+	 * for (region = memblock.memblock_type.regions;				\
+	 *	 region < (memblock.memblock_type.regions + memblock.memblock_type.cnt);	\
+	 *	 region++)
+	 */
 		phys_addr_t start = reg->base;
 		phys_addr_t end = start + reg->size;
 		struct map_desc map;
@@ -1440,6 +1481,11 @@ static void __init map_lowmem(void)
 		if (start >= end)
 			break;
 
+		/*! 20131012
+		 * map.pfn = ((unsigned long)((start) >> 12))
+		 * start 주소를 4k 단위로 나누어서 구한 page frame의 index. 
+		 * PTE size가 4k이므로.(page frame number)
+		 */
 		map.pfn = __phys_to_pfn(start);
 		map.virtual = __phys_to_virt(start);
 		map.length = end - start;
@@ -1462,6 +1508,9 @@ void __init paging_init(struct machine_desc *mdesc)
 	 * 현재 arch/processor 에 따라 mem_types 의 type별 속성 설정한다.
 	 */
 	build_mem_type_table();
+	/*! 20131012 현재 초기화되어있지 않은 페이지테이블 영역을 Clear
+	 * user space 영역(3056M), module address 영역(16M), VMALLOC gap 영역 (8M)
+	 */
 	prepare_page_table();
 	map_lowmem();
 	dma_contiguous_remap();

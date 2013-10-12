@@ -134,6 +134,7 @@
 /*
  * Convert a physical address to a Page Frame Number and back
  */
+/*! 20131012 PAGE_SHIFT : 12 */
 #define	__phys_to_pfn(paddr)	((unsigned long)((paddr) >> PAGE_SHIFT))
 #define	__pfn_to_phys(pfn)	((phys_addr_t)(pfn) << PAGE_SHIFT)
 

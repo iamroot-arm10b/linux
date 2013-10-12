@@ -242,6 +242,7 @@ static inline int pmd_same(pmd_t pmd_a, pmd_t pmd_b)
  * vma end wraps to 0, rounded up __boundary may wrap to 0 throughout.
  */
 
+/*! 20131012 __boundary: addr에 2M를 더한 다음 2M 단위로 align 한다 */
 #define pgd_addr_end(addr, end)						\
 ({	unsigned long __boundary = ((addr) + PGDIR_SIZE) & PGDIR_MASK;	\
 	(__boundary - 1 < (end) - 1)? __boundary: (end);		\
