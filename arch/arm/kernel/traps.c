@@ -837,6 +837,7 @@ void __init early_trap_init(void *vectors_base)
 	 */
 	for (i = 0; i < PAGE_SIZE / sizeof(u32); i++)
 		((u32 *)vectors_base)[i] = 0xe7fddef1;
+	/*! 20131019 vector로 사용하기 위해 할당받은 영역에 undefined instruction 을 채운다. */
 
 	/*
 	 * Copy the vectors, stubs and kuser helpers (in entry-armv.S)
@@ -845,6 +846,11 @@ void __init early_trap_init(void *vectors_base)
 	 */
 	memcpy((void *)vectors, __vectors_start, __vectors_end - __vectors_start);
 	memcpy((void *)vectors + 0x1000, __stubs_start, __stubs_end - __stubs_start);
+	/*! 20131019
+	 * vectors 영역에 __vectors_start, __stubs_start 를 채운다.
+	 * stubs: handler
+	 * arch/arm/kernel/entry-armv.S 봐야할 차례
+	 */
 
 	kuser_init(vectors_base);
 

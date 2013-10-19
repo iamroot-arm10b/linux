@@ -129,11 +129,18 @@ static inline void pte_free(struct mm_struct *mm, pgtable_t pte)
 static inline void __pmd_populate(pmd_t *pmdp, phys_addr_t pte,
 				  pmdval_t prot)
 {
+	/*! 20131019 PTE_HWTABLE_OFF : 2048 */
 	pmdval_t pmdval = (pte + PTE_HWTABLE_OFF) | prot;
+	/*! 20131019 
+	 * pmd populate: pmd 에 pte를 만들기 위한 second level 테이블의 Base주소 및 속성 설정
+	 */
+	/*! 20131019 second level 테이블의 H/W 1 에 대한 주소 */
 	pmdp[0] = __pmd(pmdval);
 #ifndef CONFIG_ARM_LPAE
+	/*! 20131019 second level 테이블의 H/W 2 에 대한 주소 */
 	pmdp[1] = __pmd(pmdval + 256 * sizeof(pte_t));
 #endif
+	/*! 20131019 pmdb에 대한 TLB, cache fluch */
 	flush_pmd_entry(pmdp);
 }
 

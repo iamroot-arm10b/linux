@@ -995,6 +995,8 @@ ENDPROC(vector_\name)
 	.align	2
 	@ handler addresses follow this label
 1:
+/*! 20131019 이 위치에 예외처리 부분이 있어야 한다. */
+/*! 20131019 2013/10/19 여기까지!  */
 	.endm
 
 	.section .stubs, "ax", %progbits
@@ -1137,6 +1139,10 @@ __vectors_start:
 	W(b)	vector_addrexcptn
 	W(b)	vector_irq
 	W(b)	vector_fiq
+	/*! 20131019
+	 * reset 을 제외한 나머지는 못찾음
+	 * 실제 예외처리 과정은 다음에...
+	 */
 
 	.data
 

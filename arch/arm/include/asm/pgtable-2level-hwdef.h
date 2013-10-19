@@ -65,6 +65,7 @@
 /*
  *   - extended small page/tiny page
  */
+/*! 20131019 H/W ARM PTE 구조 */
 #define PTE_EXT_XN		(_AT(pteval_t, 1) << 0)		/* v6 */
 #define PTE_EXT_AP_MASK		(_AT(pteval_t, 3) << 4)
 #define PTE_EXT_AP0		(_AT(pteval_t, 1) << 4)

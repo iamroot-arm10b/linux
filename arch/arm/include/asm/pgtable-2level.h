@@ -115,6 +115,7 @@
  * The PTE table pointer refers to the hardware entries; the "Linux"
  * entries are stored 1024 bytes below.
  */
+/*! 20131019 linux PTE의 하위 12bit 구조 */
 #define L_PTE_VALID		(_AT(pteval_t, 1) << 0)		/* Valid */
 #define L_PTE_PRESENT		(_AT(pteval_t, 1) << 0)
 #define L_PTE_YOUNG		(_AT(pteval_t, 1) << 1)
@@ -160,6 +161,7 @@ static inline pmd_t *pmd_offset(pud_t *pud, unsigned long addr)
 	return (pmd_t *)pud;
 }
 
+/*! 20131019 해당페이지가 section으로 설정되어 있는지 확인 */
 #define pmd_bad(pmd)		(pmd_val(pmd) & 2)
 
 #define copy_pmd(pmdpd,pmdps)		\

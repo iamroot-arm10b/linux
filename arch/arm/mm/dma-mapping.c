@@ -412,6 +412,7 @@ void __init dma_contiguous_early_fixup(phys_addr_t base, unsigned long size)
 void __init dma_contiguous_remap(void)
 {
 	int i;
+	/*! 20131019 CMA 관련 정의가 안되어 있으므로 dma_mmu_remap_num : 0 */
 	for (i = 0; i < dma_mmu_remap_num; i++) {
 		phys_addr_t start = dma_mmu_remap[i].base;
 		phys_addr_t end = start + dma_mmu_remap[i].size;

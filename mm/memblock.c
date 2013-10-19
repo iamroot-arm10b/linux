@@ -951,9 +951,12 @@ static phys_addr_t __init memblock_alloc_base_nid(phys_addr_t size,
 
 	/* align @size to avoid excessive fragmentation on reserved array */
 	size = round_up(size, align);
+	/*! 20131019 올림 정렬 */
 
+	/*! 20131019 memblock에서 memory 에 속하고 reserve에 속하지 않는 메모리block 할당 */
 	found = memblock_find_in_range_node(0, max_addr, size, align, nid);
 	if (found && !memblock_reserve(found, size))
+		/*! 20131019 memory 할당하고 할당된 영역을 reseved로 마킹한다. */
 		return found;
 
 	return 0;
@@ -967,6 +970,7 @@ phys_addr_t __init memblock_alloc_nid(phys_addr_t size, phys_addr_t align, int n
 phys_addr_t __init __memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys_addr_t max_addr)
 {
 	return memblock_alloc_base_nid(size, align, max_addr, MAX_NUMNODES);
+	/*! 20131019 size 만큼의 memory 할당하고 그 주소 리턴 */
 }
 
 phys_addr_t __init memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys_addr_t max_addr)
@@ -975,6 +979,7 @@ phys_addr_t __init memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys
 
 	alloc = __memblock_alloc_base(size, align, max_addr);
 
+	/*! 20131019 size만큼의 메모리할당이 실패하면 에러로그 발생 */
 	if (alloc == 0)
 		panic("ERROR: Failed to allocate 0x%llx bytes below 0x%llx.\n",
 		      (unsigned long long) size, (unsigned long long) max_addr);
@@ -984,6 +989,7 @@ phys_addr_t __init memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys
 
 phys_addr_t __init memblock_alloc(phys_addr_t size, phys_addr_t align)
 {
+	/*! 20131019 memblock에서 size 만큼 align된 memory 할당하고 그 주소 리턴 */
 	return memblock_alloc_base(size, align, MEMBLOCK_ALLOC_ACCESSIBLE);
 }
 

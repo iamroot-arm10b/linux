@@ -618,6 +618,7 @@ EXPORT_SYMBOL(phys_mem_access_prot);
 
 static void __init *early_alloc_aligned(unsigned long sz, unsigned long align)
 {
+	/*! 20131019 memblock은 pa 할당하므로 va로 변환한 후 0으로 초기화 */
 	void *ptr = __va(memblock_alloc(sz, align));
 	memset(ptr, 0, sz);
 	return ptr;
@@ -626,15 +627,22 @@ static void __init *early_alloc_aligned(unsigned long sz, unsigned long align)
 static void __init *early_alloc(unsigned long sz)
 {
 	return early_alloc_aligned(sz, sz);
+	/*! 20131019 sz만큼의 메모리 할당 및 초기화 */
 }
 
 static pte_t * __init early_pte_alloc(pmd_t *pmd, unsigned long addr, unsigned long prot)
 {
+	/*! 20131019 pmd에서 할당되어 있지 않으면 pte를 할당함 */
 	if (pmd_none(*pmd)) {
+		/*! 20131019 PTE_HWTABLE_OFF = 2048, PTE_HWTABLE_SIZE = 2048 */
+		/*! 20131019 pte에 두번째 table 엔터리를 할당한다.  */
 		pte_t *pte = early_alloc(PTE_HWTABLE_OFF + PTE_HWTABLE_SIZE);
+		/*! 20131019 pmd 에 pte를 만들기 위한 second level 테이블의 Base주소 및 속성 설정 */
 		__pmd_populate(pmd, __pa(pte), prot);
 	}
+	/*! 20131019 section은 2차페이지 테이블이 필요없는데 여기 들어오면 무한루프 */
 	BUG_ON(pmd_bad(*pmd));
+	/*! 20131019 addr에 대한 pte의 주소를 리턴한다.  */
 	return pte_offset_kernel(pmd, addr);
 }
 
@@ -642,9 +650,12 @@ static void __init alloc_init_pte(pmd_t *pmd, unsigned long addr,
 				  unsigned long end, unsigned long pfn,
 				  const struct mem_type *type)
 {
+	/*! 20131019 addr에 대한 pte의 주소를 얻는다. */
 	pte_t *pte = early_pte_alloc(pmd, addr, type->prot_l1);
 	do {
+		/*! 20131019 arch/arm/mm/proc-v7-2level.S 의 cpu_v7_set_pte_ext 참조 */
 		set_pte_ext(pte, pfn_pte(pfn, __pgprot(type->prot_pte)), 0);
+		/*! 20131019 linux pte 값을 이용하여 H/W pte 값 설정 */
 		pfn++;
 	} while (pte++, addr += PAGE_SIZE, addr != end);
 }
@@ -678,8 +689,10 @@ static void __init __map_init_section(pmd_t *pmd, unsigned long addr,
 		 * 마지막 문장의 조건문만 비교한다.
 		 */
 	} while (pmd++, addr += SECTION_SIZE, addr != end);
-	/*! 20131012 오늘은 여기까지!! 다음주에 다시 합시다!!  */
+	/*! 20131012 2013/10/12 여기까지!! */
 
+	/*! 20131019 스터디 시작 */
+	/*! 20131019 pmd의 TLB와 캐시를 flush한다. */
 	flush_pmd_entry(p);
 }
 
@@ -713,11 +726,13 @@ static void __init alloc_init_pmd(pud_t *pud, unsigned long addr,
 		} else {
 			alloc_init_pte(pmd, addr, next,
 						__phys_to_pfn(phys), type);
+			/*! 20131019 addr에 해당하는 pmd의 pte 초기화 */
 		}
 
 		phys += next - addr;
 
 	} while (pmd++, addr = next, addr != end);
+	/*! 20131019 section일때는 1M씩, pte일때는 4k씩 증가 */
 }
 
 static void __init alloc_init_pud(pgd_t *pgd, unsigned long addr,
@@ -731,6 +746,7 @@ static void __init alloc_init_pud(pgd_t *pgd, unsigned long addr,
 	do {
 		/*! 20131012 next = end */
 		next = pud_addr_end(addr, end);
+		/*! 20131019 addr에 해당하는 pud의 pmd 초기화 */
 		alloc_init_pmd(pud, addr, next, phys, type);
 		phys += next - addr;
 	} while (pud++, addr = next, addr != end);
@@ -876,6 +892,7 @@ static void __init create_mapping(struct map_desc *md)
 	do {
 		unsigned long next = pgd_addr_end(addr, end);
 
+		/*! 20131019 addr에 해당하는 pgd의 pud 초기화 */
 		alloc_init_pud(pgd, addr, next, phys, type);
 
 		phys += next - addr;
@@ -1364,6 +1381,7 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	/*
 	 * Allocate the vector page early.
 	 */
+	/*! 20131019 8K만큼 메모리 할당 및 초기화 */
 	vectors = early_alloc(PAGE_SIZE * 2);
 
 	early_trap_init(vectors);
@@ -1492,6 +1510,7 @@ static void __init map_lowmem(void)
 		map.type = MT_MEMORY;
 
 		create_mapping(&map);
+		/*! 20131019 memory type의 lowmem 영역에 대한 page table 초기화 */
 	}
 }
 
@@ -1512,7 +1531,9 @@ void __init paging_init(struct machine_desc *mdesc)
 	 * user space 영역(3056M), module address 영역(16M), VMALLOC gap 영역 (8M)
 	 */
 	prepare_page_table();
+	/*! 20131019 lowmem 영역에 대한 page table 초기화 */
 	map_lowmem();
+	/*! 20131019 CMA 관련 define 이 없으므로 아무일도 안함 */
 	dma_contiguous_remap();
 	devicemaps_init(mdesc);
 	kmap_init();

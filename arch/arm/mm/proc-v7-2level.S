@@ -82,23 +82,39 @@ ENDPROC(cpu_v7_switch_mm)
  *	- ext	- value for extended PTE bits
  */
 ENTRY(cpu_v7_set_pte_ext)
+	/*! 20131019 아키텍처에 의존적이어서 Asm으로 구현 */
 #ifdef CONFIG_MMU
 	str	r1, [r0]			@ linux version
 
+	/*! 20131019
+	 * r1: H/W pte를 셋팅하기 위해 필요한 linux pte 정보
+	 * r3: H/W pte 정보를 셋팅한다. 
+	 * arm reference manual B3.5.1 small page 참조
+	 */
 	bic	r3, r1, #0x000003f0
+	/*! 20131019 4~9번 bit clear */
 	bic	r3, r3, #PTE_TYPE_MASK
+	/*! 20131019 #PTE_TYPE_MASK: 0, 1번 bit clear */
 	orr	r3, r3, r2
 	orr	r3, r3, #PTE_EXT_AP0 | 2
+	/*! 20131019
+	 * #PTE_EXT_AP0: 4번 bit, Access flag 설정
+	 * 2 : small page
+	 */
 
 	tst	r1, #1 << 4
 	orrne	r3, r3, #PTE_EXT_TEX(1)
+	/*! 20131019 r1의 4번 bit가 1이라면 TEX[0](6번 bit)을 1로 설정 */
 
 	eor	r1, r1, #L_PTE_DIRTY
+	/*! 20131019 L_PTE_DIRTY 를 토글 */
 	tst	r1, #L_PTE_RDONLY | L_PTE_DIRTY
 	orrne	r3, r3, #PTE_EXT_APX
+	/*! 20131019 L_PTE_RDONLY: 1, L_PTE_DIRTY: 0 인 경우 readonly로 설정(9번bit:1) */
 
 	tst	r1, #L_PTE_USER
 	orrne	r3, r3, #PTE_EXT_AP1
+	/*! 20131019 L_PTE_USER: 1 인 경우에는 모든 권한에서 접근 가능하도록 설정(5번bit:1) */
 #ifdef CONFIG_CPU_USE_DOMAINS
 	@ allow kernel read/write access to read-only user pages
 	tstne	r3, #PTE_EXT_APX
@@ -107,6 +123,7 @@ ENTRY(cpu_v7_set_pte_ext)
 
 	tst	r1, #L_PTE_XN
 	orrne	r3, r3, #PTE_EXT_XN
+	/*! 20131019 L_PTE_XN: 1 인 경우에는 실행불가 (0번bit:1) */
 
 	tst	r1, #L_PTE_YOUNG
 	tstne	r1, #L_PTE_VALID
@@ -115,7 +132,12 @@ ENTRY(cpu_v7_set_pte_ext)
 	tstne	r1, #L_PTE_NONE
 #endif
 	moveq	r3, #0
+	/*! 20131019
+	 * L_PTE_YOUNG: 1, L_PTE_VALID: 1 이면 pass
+	 * L_PTE_YOUNG:0 또는 L_PTE_VALID:0 인 경우에는 r3를 0으로 설정
+	 */
 
+	/*! 20131019 현재 address에 대한 H/W pte 값 설정 */
  ARM(	str	r3, [r0, #2048]! )
  THUMB(	add	r0, r0, #2048 )
  THUMB(	str	r3, [r0] )

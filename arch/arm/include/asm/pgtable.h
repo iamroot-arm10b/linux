@@ -189,6 +189,11 @@ extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
 
 static inline pte_t *pmd_page_vaddr(pmd_t pmd)
 {
+	/*! 20131019
+	 * PHYS_MASK: 0xffff ffff 
+	 * PAGE_MASK: 0xffff f000
+	 * pmd 하위 12bit를 clear 시켜서 linux pt의 base 주소를 리턴
+	 */
 	return __va(pmd_val(pmd) & PHYS_MASK & (s32)PAGE_MASK);
 }
 
@@ -202,8 +207,14 @@ static inline pte_t *pmd_page_vaddr(pmd_t pmd)
 #define __pte_unmap(pte)	kunmap_atomic(pte)
 #endif
 
+/*! 20131019 PAGE_SHIFT : 12, PTRS_PER_PTE : 512 */
+/*! 20131019 2단계 페이지 테이블의 index를 계산 */
 #define pte_index(addr)		(((addr) >> PAGE_SHIFT) & (PTRS_PER_PTE - 1))
 
+/*! 20131019
+ * pmd: H/W page table
+ * linux pt base + offset = linux pte 의 주소를 리턴한다.
+ */
 #define pte_offset_kernel(pmd,addr)	(pmd_page_vaddr(*(pmd)) + pte_index(addr))
 
 #define pte_offset_map(pmd,addr)	(__pte_map(pmd) + pte_index(addr))

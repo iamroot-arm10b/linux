@@ -496,6 +496,7 @@ static inline void flush_pmd_entry(void *pmd)
 
 	if (tlb_flag(TLB_WB))
 		dsb();
+	/*! 20131019 TLB, cache flush */
 }
 
 static inline void clean_pmd_entry(void *pmd)
