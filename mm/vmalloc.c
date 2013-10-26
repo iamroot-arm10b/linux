@@ -1126,25 +1126,32 @@ static struct vm_struct *vmlist __initdata;
  */
 void __init vm_area_add_early(struct vm_struct *vm)
 {
+	/*! vm_struct에는 prev가 없기 때문에 2중 포인터를 이용해 접근한다. */
+
 	struct vm_struct *tmp, **p;
 
 	/*! 본 vmalloc 초기화 후에 early 함수를 사용하면 panic */
 	BUG_ON(vmap_initialized);
-	/*! 삽입할 위치 탐색 */
+	/*! 삽입할 위치 탐색
+ 	 * 처음에는 list head(vmlist)가 가리키는 값을 가리키며
+ 	 * 이후 *p는 prev_list->next를 의미한다.
+	 */
 	for (p = &vmlist; (tmp = *p) != NULL; p = &tmp->next) {
+		/* 알맞는 위치를 찾았으면 */
 		if (tmp->addr >= vm->addr) {
-			/* 겹치면 panic */
+			/*! 겹치면 panic */
 			BUG_ON(tmp->addr < vm->addr + vm->size);
-			/* 아니면 탐색 완료 */
+			/*! 탐색중인 list와 영역이 겹치지 않으면 완료 */
 			break;
 		} else
 			BUG_ON(tmp->addr + tmp->size > vm->addr);
 	}
-	/*! 올바른 위치에 삽입한다. */
+	/*! 올바른 위치에 삽입한다. *p는 prev_list->next */
 	vm->next = *p;
-	/*! p는 예전 vm의 next를 뜻한다. */
 	*p = vm;
-	/*! p -> n에서 p -> vm -> n가 된다. */
+	/*! p -> n 에서 new(vm)을 삽입하면
+	 *  p -> new -> n 가 된다.
+	 */
 }
 
 /**

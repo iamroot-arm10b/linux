@@ -911,6 +911,11 @@ void __init iotable_init(struct map_desc *io_desc, int nr)
 	struct map_desc *md;
 	struct vm_struct *vm;
 	struct static_vm *svm;
+	/*!
+	 * vm_struct는 singly-linked list로 연결된다.
+	 * static_vm은 vm_struct에 static list의
+	 * doubly-linked list 정보만 추가된 것이다.
+	 */
 
 	if (!nr)
 		return;
