@@ -1000,7 +1000,7 @@ vector_\name:
  ARM(	ldr	lr, [pc, lr, lsl #2]	)
 	movs	pc, lr			@ branch to handler in SVC mode
 	/* SVC모드에서 핸들러로 점프 */ 
-	 ENDPROC(vector_\name)
+ENDPROC(vector_\name)
 	/* 이 아래에는 각 mode vector entry(16)들이 와야 한다. */ 
 
 	.align	2
