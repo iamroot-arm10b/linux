@@ -98,6 +98,12 @@ static inline void list_add(struct list_head *new, struct list_head *head)
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
+/*! head 앞쪽에 넣는다.
+ * tail <-> head
+ * 에서
+ * tail <-> new <-> head
+ * 가 된다.
+ */
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
 	__list_add(new, head->prev, head);

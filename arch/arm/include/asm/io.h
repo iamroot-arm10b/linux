@@ -101,6 +101,7 @@ static inline u8 __raw_readb(const volatile void __iomem *addr)
 	return val;
 }
 
+/*! addr에서 값을 읽어 val 로 리턴  */
 static inline u32 __raw_readl(const volatile void __iomem *addr)
 {
 	u32 val;

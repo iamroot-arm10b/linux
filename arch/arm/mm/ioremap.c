@@ -84,22 +84,30 @@ struct static_vm *find_static_vm_vaddr(void *vaddr)
 	return NULL;
 }
 
+/*! 2013.10.26
+ * 이 함수는 해당 svm을 static_vmlist(global)의 정렬된 위치에 삽입한다
+ * 또한 vmlist(global)에도 해당 vm을 추가한다.
+ * static_vmlist는 doubly linked list다.
+ */
 void __init add_static_vm_early(struct static_vm *svm)
 {
 	struct static_vm *curr_svm;
 	struct vm_struct *vm;
 	void *vaddr;
 
+	/*! vm 리스트를 vmlist에 정렬된 위치에 추가한다. */
 	vm = &svm->vm;
 	vm_area_add_early(vm);
 	vaddr = vm->addr;
 
+	/*! 삽입할 위치가 sort된 위치를 찾는다. */
 	list_for_each_entry(curr_svm, &static_vmlist, list) {
 		vm = &curr_svm->vm;
 
 		if (vm->addr > vaddr)
 			break;
 	}
+	/*! (curr_svm->prev) <-> (svm->list) <-> (curr_svm->list) */
 	list_add_tail(&svm->list, &curr_svm->list);
 }
 

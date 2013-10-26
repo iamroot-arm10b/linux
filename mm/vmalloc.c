@@ -1128,16 +1128,23 @@ void __init vm_area_add_early(struct vm_struct *vm)
 {
 	struct vm_struct *tmp, **p;
 
+	/*! 본 vmalloc 초기화 후에 early 함수를 사용하면 panic */
 	BUG_ON(vmap_initialized);
+	/*! 삽입할 위치 탐색 */
 	for (p = &vmlist; (tmp = *p) != NULL; p = &tmp->next) {
 		if (tmp->addr >= vm->addr) {
+			/* 겹치면 panic */
 			BUG_ON(tmp->addr < vm->addr + vm->size);
+			/* 아니면 탐색 완료 */
 			break;
 		} else
 			BUG_ON(tmp->addr + tmp->size > vm->addr);
 	}
+	/*! 올바른 위치에 삽입한다. */
 	vm->next = *p;
+	/*! p는 예전 vm의 next를 뜻한다. */
 	*p = vm;
+	/*! p -> n에서 p -> vm -> n가 된다. */
 }
 
 /**

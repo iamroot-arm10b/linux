@@ -302,7 +302,7 @@ void __init exynos_init_late(void)
 
 	exynos_pm_late_initcall();
 }
-
+/*! chipid를 위한 phys -> virt io mapping */
 static int __init exynos_fdt_map_chipid(unsigned long node, const char *uname,
 					int depth, void *data)
 {
@@ -310,17 +310,23 @@ static int __init exynos_fdt_map_chipid(unsigned long node, const char *uname,
 	__be32 *reg;
 	unsigned long len;
 
+	/*! 둘중 하나라도 compatible하면 아래 코드를 실행 (no return)
+	 * 4210에 compatible하다
+	 */
 	if (!of_flat_dt_is_compatible(node, "samsung,exynos4210-chipid") &&
 		!of_flat_dt_is_compatible(node, "samsung,exynos5440-clock"))
 		return 0;
 
+	/*! reg = <0x10000000 0x100>; */
 	reg = of_get_flat_dt_prop(node, "reg", &len);
 	if (reg == NULL || len != (sizeof(unsigned long) * 2))
 		return 0;
 
+	/*! io 매핑될 물리주소는 0x10000000 */
 	iodesc.pfn = __phys_to_pfn(be32_to_cpu(reg[0]));
 	iodesc.length = be32_to_cpu(reg[1]) - 1;
 	iodesc.virtual = (unsigned long)S5P_VA_CHIPID;
+        /*! #define S5P_VA_CHIPID		S3C_ADDR(0x02000000) */
 	iodesc.type = MT_DEVICE;
 	iotable_init(&iodesc, 1);
 	return 1;
@@ -331,7 +337,7 @@ static int __init exynos_fdt_map_chipid(unsigned long node, const char *uname,
  *
  * register the standard cpu IO areas
  */
-
+/* exynos의 io 영역(vmalloc)을 매핑한다. */
 void __init exynos_init_io(void)
 {
 	debug_ll_io_init();
@@ -359,6 +365,10 @@ static void __init exynos4_map_io(void)
 		iotable_init(exynos4x12_iodesc, ARRAY_SIZE(exynos4x12_iodesc));
 }
 
+/*! 2013.10.26 io 장치들의 물리 주소를 가상 주소로 매핑을 위한
+ * 페이지 테이블을 초기화하고 vmlist와 static_vmlist linked list를
+ * 초기화한다.
+ */
 static void __init exynos5_map_io(void)
 {
 	iotable_init(exynos5_iodesc, ARRAY_SIZE(exynos5_iodesc));

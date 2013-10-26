@@ -309,6 +309,7 @@ ENTRY(\name\()_processor_functions)
 	.size	\name\()_processor_functions, . - \name\()_processor_functions
 .endm
 
+	/* struct cache functions를 만들어주는 함수 */ 
 .macro define_cache_functions name:req
 	.align 2
 	.type	\name\()_cache_fns, #object

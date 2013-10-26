@@ -50,6 +50,7 @@
 #else	/*! CONFIG_THUMB2_KERNEL */
 
 /* The CPSR bit describing the instruction set (ARM) */
+/* thumb2는 사용하지 않는다. (v7m에서 사용) */
 #define PSR_ISETSTATE	0
 
 #define ARM(x...)	x
