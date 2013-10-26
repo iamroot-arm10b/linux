@@ -97,6 +97,7 @@ void __init add_static_vm_early(struct static_vm *svm)
 
 	/*! vm 리스트를 vmlist에 정렬된 위치에 추가한다. */
 	vm = &svm->vm;
+	/*! 20131026 vm_struct 를 static_vm list 에 추가한다.  */
 	vm_area_add_early(vm);
 	vaddr = vm->addr;
 

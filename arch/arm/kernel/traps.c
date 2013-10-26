@@ -855,6 +855,7 @@ void __init early_trap_init(void *vectors_base)
 	memcpy((void *)vectors + 0x1000, __stubs_start, __stubs_end - __stubs_start);
 	/*! 20131019
 	 * vectors 영역에 __vectors_start, __stubs_start 를 채운다.
+	 * vectors: 0xFFFF0000
 	 * stubs: handler
 	 * arch/arm/kernel/entry-armv.S 봐야할 차례
 	 */
@@ -867,6 +868,7 @@ void __init early_trap_init(void *vectors_base)
 	 * v7_coherent_kern_range
 	 */
 	flush_icache_range(vectors, vectors + PAGE_SIZE * 2);
+	/*! 20131026 domain 을 사용하지 않으므로 아무일도 안함 */
 	modify_domain(DOMAIN_USER, DOMAIN_CLIENT);
 #else /* ifndef CONFIG_CPU_V7M */
 	/*

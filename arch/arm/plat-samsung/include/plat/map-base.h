@@ -22,6 +22,7 @@
  * an single MOVS instruction (ie, only 8 bits of set data)
  */
 
+/*! 20131026 va의 base 주소 */
 #define S3C_ADDR_BASE	0xF6000000
 
 #ifndef __ASSEMBLY__

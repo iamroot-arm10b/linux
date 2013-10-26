@@ -931,6 +931,7 @@ kuser_cmpxchg32_fixup:
 	kuser_pad __kuser_cmpxchg, 32
 	/* TLS 값을 얻기 위한 코드  */ 
 __kuser_get_tls:				@ 0xffff0fe0
+/*! 20131026 TLS 에뮬레이션 */
 	ldr	r0, [pc, #(16 - 8)]	@ read TLS, set in kuser_get_tls_init
 	usr_ret	lr
 	mrc	p15, 0, r0, c13, c0, 3	@ 0xffff0fe8 hardware TLS code
@@ -988,6 +989,7 @@ vector_\name:
 	mrs	r0, cpsr
 	eor	r0, r0, #(\mode ^ SVC_MODE | PSR_ISETSTATE)
 	msr	spsr_cxsf, r0
+	/*! 20131026 spsr이 돌아갈 모드가 SVC 모드 */
 
 	@
 	@ the branch table must immediately follow this code

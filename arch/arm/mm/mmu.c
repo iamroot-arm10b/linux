@@ -903,7 +903,8 @@ static void __init create_mapping(struct map_desc *md)
 /*
  * Create the architecture specific mappings
  */
-/*! 현재 우리의 타겟은 exynos5_iodesc
+/*! 20131026
+ * 현재 우리의 타겟은 exynos5_iodesc
  * nr= array size
  */
 void __init iotable_init(struct map_desc *io_desc, int nr)
@@ -911,7 +912,7 @@ void __init iotable_init(struct map_desc *io_desc, int nr)
 	struct map_desc *md;
 	struct vm_struct *vm;
 	struct static_vm *svm;
-	/*!
+	/*! 20131026
 	 * vm_struct는 singly-linked list로 연결된다.
 	 * static_vm은 vm_struct에 static list의
 	 * doubly-linked list 정보만 추가된 것이다.
@@ -920,12 +921,13 @@ void __init iotable_init(struct map_desc *io_desc, int nr)
 	if (!nr)
 		return;
 
-	/* vm 구조체들을 위한 할당 */
+	/*! 20131026 vm 구조체들을 위한 할당 */
 	svm = early_alloc_aligned(sizeof(*svm) * nr, __alignof__(*svm));
 
 	for (md = io_desc; nr; md++, nr--) {
 		create_mapping(md);
 
+		/*! 20131026 svm 이 vm 리스트를 가리키게 한다.  */
 		vm = &svm->vm;
 		vm->addr = (void *)(md->virtual & PAGE_MASK);
 		vm->size = PAGE_ALIGN(md->length + (md->virtual & ~PAGE_MASK));
@@ -1393,10 +1395,10 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	/*! 20131019 8K만큼 메모리 할당 및 초기화 */
 	vectors = early_alloc(PAGE_SIZE * 2);
 
-	/*! vector 초기화 */
+	/*! 20131026 vector 초기화 */
 	early_trap_init(vectors);
 
-	/*! VMALLOC_START = 0xf0000000
+	/*! 20131026 VMALLOC_START = 0xf0000000
 	 * VMALLOC_START부터 끝까지 PMD entry clear
 	 */
 	for (addr = VMALLOC_START; addr; addr += PMD_SIZE)
@@ -1417,9 +1419,10 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	/*
 	 * Map the cache flushing regions.
 	 */
-	/*! cache flush 영역이 있으면 매핑
-	 * 우리는 해당사항 없음
-	 */
+/*! 20131026
+ * cache flush 영역이 있으면 매핑
+ * arch/arm/mach-머신명/include/mach/memory.h 가 없으므로 define 없음
+ */
 #ifdef FLUSH_BASE
 	map.pfn = __phys_to_pfn(FLUSH_BASE_PHYS);
 	map.virtual = FLUSH_BASE;
@@ -1440,22 +1443,22 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	 * location (0xffff0000).  If we aren't using high-vectors, also
 	 * create a mapping at the low-vectors virtual address.
 	 */
-	/*! 얻어온 vector 공간(virt)를
-	 * page number(phys)로 변환해서 넘긴다.
+	/*! 20131026
+	 * 얻어온 vector 공간(virt)를 page number(phys)로 변환해서 넘긴다.
 	 */
 	map.pfn = __phys_to_pfn(virt_to_phys(vectors));
 	map.virtual = 0xffff0000;
 	map.length = PAGE_SIZE;
 #ifdef CONFIG_KUSER_HELPERS
-	/* vector(high,low)는 read-only */
+	/*! 20131026 vector(high,low)는 read-only */
 	map.type = MT_HIGH_VECTORS;
 #else
 	map.type = MT_LOW_VECTORS;
 #endif
-	/*! 할당한 vector 페이지를 0xffff0000(virt)로 매핑한다. */
+	/*! 20131026 할당한 vector 페이지를 0xffff0000(virt)로 매핑한다. */
 	create_mapping(&map);
 
-	/*! low vector 관련 처리 */
+	/*! 20131026 low vector 관련 처리 */
 	if (!vectors_high()) {
 		map.virtual = 0;
 		map.length = PAGE_SIZE * 2;
@@ -1464,7 +1467,7 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	}
 
 	/* Now create a kernel read-only mapping */
-	/*! vector와 관련된 stub 페이지를 0xffff1000으로 매핑한다. */
+	/*! 20131026 vector와 관련된 stub 페이지를 0xffff1000으로 매핑한다. */
 	map.pfn += 1;
 	map.virtual = 0xffff0000 + PAGE_SIZE;
 	map.length = PAGE_SIZE;
@@ -1474,13 +1477,17 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	/*
 	 * Ask the machine support to map in the statically mapped devices.
 	 */
-	/*! exynos_init_io() */
+	/*! 20131026
+	 * arch/arm/mach-exynos/mach-exynos5-dt.c 의
+	 * DT_MACHINE_START(EXYNOS5_DT, "SAMSUNG EXYNOS5 (Flattened Device Tree)") 에서
+	 * .map_io	= exynos_init_io 에 의해 exynos_init_io()를 봐야 함.
+	 */
 	if (mdesc->map_io)
-		/*  */
+		/*! 20131026 arch/arm/mach-exynos/common.c 의 exynos_init_io() 가 call 된다. */
 		mdesc->map_io();
 	else
 		debug_ll_io_init();
-	/* 2013.10.26 여기까지 */
+	/*! 20131026 2013.10.26 여기까지 */
 	fill_pmd_gaps();
 
 	/* Reserve fixed i/o space in VMALLOC region */

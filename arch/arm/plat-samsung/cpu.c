@@ -53,6 +53,7 @@ void __init s3c64xx_init_cpu(void)
 /*! chip id에서 값은 cpu_id가 되고 하위 1바이트는 rev가 된다.  */
 void __init s5p_init_cpu(void __iomem *cpuid_addr)
 {
+	/*! 20131026 chip id의 값을 읽어온다. */
 	samsung_cpu_id = __raw_readl(cpuid_addr);
 	samsung_cpu_rev = samsung_cpu_id & 0xFF;
 }
