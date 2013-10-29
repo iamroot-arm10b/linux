@@ -799,7 +799,7 @@ void __init trap_init(void)
 }
 
 #ifdef CONFIG_KUSER_HELPERS
-/*!
+/*! 20131026
  * kernel user helper 관련 루틴을 vector(0xffff0000)
  * 블럭(4096)의 끝으로 복사
  */
@@ -814,8 +814,8 @@ static void __init kuser_init(void *vectors)
 	 * vectors + 0xfe0 = __kuser_get_tls
 	 * vectors + 0xfe8 = hardware TLS instruction at 0xffff0fe8
 	 */
-	/*! emulation 또는 하드웨어에서 TLS instruction을 지원하면
-	 * 해당 명령어를 복사
+	/*! 20131026
+	 * emulation 또는 하드웨어에서 TLS instruction을 지원하면 해당 명령어를 복사
          */
 	if (tls_emu || has_tls_reg)
 		memcpy(vectors + 0xfe0, vectors + 0xfe8, 4);
@@ -860,10 +860,11 @@ void __init early_trap_init(void *vectors_base)
 	 * arch/arm/kernel/entry-armv.S 봐야할 차례
 	 */
 
-	/*! kuser 영역을 vector 쪽으로 복사 */
+	/*! 20131026 kuser 영역을 vector 쪽으로 복사 */
 	kuser_init(vectors_base);
 
-	/* 이 함수는 arm/mm/cache-v7.S 에서 정의된다.
+	/*! 20131026
+	 * 이 함수는 arm/mm/cache-v7.S 에서 정의된다.
 	 * define_cache_functions v7
 	 * v7_coherent_kern_range
 	 */

@@ -743,7 +743,7 @@ ENDPROC(__switch_to)
 #endif
 	.endm
 
-	 /*!
+	 /*! 20131026
 	 * sym부터 size의 위치까지의 und inst를 패딩하는 매크로
 	 * 다음 위치를 fix시키기 위해 사용된다.
 	 */ 
@@ -929,14 +929,14 @@ kuser_cmpxchg32_fixup:
 #endif
 
 	kuser_pad __kuser_cmpxchg, 32
-	/* TLS 값을 얻기 위한 코드  */ 
+	/*! 20131026 TLS 값을 얻기 위한 코드  */ 
 __kuser_get_tls:				@ 0xffff0fe0
 /*! 20131026 TLS 에뮬레이션 */
 	ldr	r0, [pc, #(16 - 8)]	@ read TLS, set in kuser_get_tls_init
 	usr_ret	lr
 	mrc	p15, 0, r0, c13, c0, 3	@ 0xffff0fe8 hardware TLS code
 	kuser_pad __kuser_get_tls, 16
-	/*! 위치를 fix시킨다. */
+	/*! 20131026 위치를 fix시킨다. */
 	.rep	3
 	.word	0			@ 0xffff0ff0 software TLS value, then
 	.endr				@ pad up to __kuser_helper_version
@@ -967,7 +967,7 @@ __kuser_helper_end:
 	.macro	vector_stub, name, mode, correction=0
 	.align	5
 
-	 /*! 2013.10.26 interrupt vector 생성을 위한 매크로 */ 
+	 /*! 20131026 interrupt vector 생성을 위한 매크로 */ 
 vector_\name:
 	.if \correction
 	sub	lr, lr, #\correction
@@ -977,7 +977,7 @@ vector_\name:
 	@ Save r0, lr_<exception> (parent PC) and spsr_<exception>
 	@ (parent CPSR)
 	@
-	/* 스택에 r0와 lr, 원래 spsr을 저장 */ 
+	/*! 20131026 스택에 r0와 lr, 원래 spsr을 저장 */ 
 	stmia	sp, {r0, lr}		@ save r0, lr
 	mrs	lr, spsr
 	str	lr, [sp, #8]		@ save spsr
@@ -985,7 +985,7 @@ vector_\name:
 	@
 	@ Prepare for SVC32 mode.  IRQs remain disabled.
 	@
-	/* 바꿀 모드(spsr의 모드)를 SVC_MODE로 변경 */ 
+	/*! 20131026 바꿀 모드(spsr의 모드)를 SVC_MODE로 변경 */ 
 	mrs	r0, cpsr
 	eor	r0, r0, #(\mode ^ SVC_MODE | PSR_ISETSTATE)
 	msr	spsr_cxsf, r0
@@ -994,16 +994,16 @@ vector_\name:
 	@
 	@ the branch table must immediately follow this code
 	@
-	/* mode의 하위 4비트만 남긴다. */ 
+	/*! 20131026 mode의 하위 4비트만 남긴다. */ 
 	and	lr, lr, #0x0f
  THUMB(	adr	r0, 1f			)
  THUMB(	ldr	lr, [r0, lr, lsl #2]	)
 	mov	r0, sp
  ARM(	ldr	lr, [pc, lr, lsl #2]	)
 	movs	pc, lr			@ branch to handler in SVC mode
-	/* SVC모드에서 핸들러로 점프 */ 
+	/*! 20131026 SVC모드에서 핸들러로 점프 */ 
 ENDPROC(vector_\name)
-	/* 이 아래에는 각 mode vector entry(16)들이 와야 한다. */ 
+	/*! 20131026 이 아래에는 각 mode vector entry(16)들이 와야 한다. */ 
 
 	.align	2
 	@ handler addresses follow this label
@@ -1013,7 +1013,7 @@ ENDPROC(vector_\name)
 	.endm
 
 	.section .stubs, "ax", %progbits
-	/*! 2013.10.26
+	/*! 20131026
 	 * system call루틴이 가장 처음에 오고
 	 * 각 예외 핸들러이 여기에 위치한다. (vector + 0x1000 + label)
 	 */ 
@@ -1147,7 +1147,7 @@ vector_fiq:
 	.equ	vector_fiq_offset, vector_fiq
 
 	.section .vectors, "ax", %progbits
-	/* 인터럽트 예외 벡터로 복사할 벡터들 */ 
+	/*! 20131026 인터럽트 예외 벡터로 복사할 벡터들 */ 
 __vectors_start:
 	W(b)	vector_rst
 	W(b)	vector_und
@@ -1157,10 +1157,6 @@ __vectors_start:
 	W(b)	vector_addrexcptn
 	W(b)	vector_irq
 	W(b)	vector_fiq
-	/*! 20131019
-	 * reset 을 제외한 나머지는 못찾음
-	 * 실제 예외처리 과정은 다음에...
-	 */
 
 	.data
 

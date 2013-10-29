@@ -60,9 +60,7 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
  * the prev/next entries already!
  */
 
-/*!
- * prev와 next 사이에 new 리스트 삽입
- */
+/*! 20131026 prev와 next 사이에 new 리스트 삽입 */
 #ifndef CONFIG_DEBUG_LIST
 static inline void __list_add(struct list_head *new,
 			      struct list_head *prev, struct list_head *next)
@@ -98,11 +96,10 @@ static inline void list_add(struct list_head *new, struct list_head *head)
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-/*! head 앞쪽에 넣는다.
- * tail <-> head
- * 에서
- * tail <-> new <-> head
- * 가 된다.
+/*! 20131026
+ * head 앞쪽에 넣는다.
+ * tail <-> head 에서
+ * tail <-> new <-> head 가 된다.
  */
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {

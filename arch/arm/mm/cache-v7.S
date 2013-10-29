@@ -91,7 +91,7 @@ ENTRY(v7_flush_dcache_louis)
 	dmb					@ ensure ordering with previous memory accesses
 	/*!
 	 * data memory barrier
-	*/
+	 */
 	mrc	p15, 1, r0, c0, c0, 1		@ read clidr, r0 = clidr
 	/*!
          * Cache Level ID Register = clidr
@@ -105,9 +105,7 @@ ENTRY(v7_flush_dcache_louis)
 	 */
 	ALT_UP(ands	r3, r0, #(7 << 27))	@ extract LoUU from clidr
 #ifdef CONFIG_ARM_ERRATA_643719
-	/*!
-	 * Set 되지 않음.
-	 */
+	/*! Set 되지 않음.  */
 	ALT_SMP(mrceq	p15, 0, r2, c0, c0, 0)	@ read main ID register
 	ALT_UP(moveq	pc, lr)			@ LoUU is zero, so nothing to do
 	ldreq	r1, =0x410fc090                 @ ID of ARM Cortex A9 r0p?
@@ -116,13 +114,9 @@ ENTRY(v7_flush_dcache_louis)
 	orreqs	r3, #(1 << 21)			@   fix LoUIS value (and set flags state to 'ne')
 #endif
 	ALT_SMP(mov	r3, r3, lsr #20)	@ r3 = LoUIS * 2
-	/*!
-	 * r3 = LoUIS값(2) * 2 = 4
-	 */
+	/*! r3 = LoUIS값(2) * 2 = 4 */
 	ALT_UP(mov	r3, r3, lsr #26)	@ r3 = LoUU * 2
-	/*!
-	 * 1276 page 확인하기 
-	 */
+	/*! 1276 page 확인하기 */
 	moveq	pc, lr				@ return if level == 0
 	mov	r10, #0				@ r10 (starting level) = 0
 	b	flush_levels			@ start flushing cache levels
@@ -145,55 +139,40 @@ ENTRY(v7_flush_dcache_all)
 	beq	finished			@ if loc is 0, then no need to clean
 	mov	r10, #0				@ start clean at cache level 0
 flush_levels:
-/*!
- * r10 = 0
- * r0 = clidr
-*/
+/*! r10 = 0, r0 = clidr */
 	add	r2, r10, r10, lsr #1		@ work out 3x current cache level
-	/*!
-	 * r2 = 0, r10 = 0
-	 */
+	/*! r2 = 0, r10 = 0 */
 	mov	r1, r0, lsr r2			@ extract cache type bits from clidr
-	/*!
-	 * r0 = clidr값(2) = r1
-	 */
+	/*! r0 = clidr값(2) = r1 */
 	and	r1, r1, #7			@ mask of the bits for current cache only
 	cmp	r1, #2				@ see what cache we have at this level
 	blt	skip				@ skip if no cache, or just i-cache
 #ifdef CONFIG_PREEMPT
 	save_and_disable_irqs_notrace r9	@ make cssr&csidr read atomic
-	/*!
-	 * 예전 cpsr r9에 저장후 interrupt disable 
-	 */
+	/*! 예전 cpsr r9에 저장후 interrupt disable */
 #endif
 	mcr	p15, 2, r10, c0, c0, 0		@ select current cache level in cssr
 	/*!
-	 *  r10 = 0
-	  0 = Data or Unified cache
-	  1 = Instruction Cache 
+	 * r10 = 0
+	 * 0 = Data or Unified cache
+	 * 1 = Instruction Cache 
 	 */
 	isb					@ isb to sych the new cssr&csidr
 	/*!
 	 * CPU 파이프라인과 prefetch buffer를 비운다.
 	 */
 	mrc	p15, 1, r1, c0, c0, 0		@ read the new csidr
-	/*!
-	 *	 r1 = CCSIDR
-	*/
+	/*! r1 = CCSIDR */
 #ifdef CONFIG_PREEMPT
-	/*!
-	 * r9 에저장해놓은 cpsr_c를 다시 가져온다.
-	*/
+	/*! r9 에저장해놓은 cpsr_c를 다시 가져온다. */
 	restore_irqs_notrace r9
-	/*!
-	 * 인터럽트 복구
-	 */
+	/*! 인터럽트 복구 */
 #endif
 	/*!
-	* r1 = CSIDR
-	CSIDR[2:0] = LineSize = (log2 (number of word in cache line) ) -2
-	=> 16 words per line
-	*/
+	 * r1 = CSIDR
+	 * CSIDR[2:0] = LineSize = (log2 (number of word in cache line) ) -2
+	 * => 16 words per line
+	 */
 	and	r2, r1, #7			@ extract the length of the cache lines
 	add	r2, r2, #4			@ add 4 (line length offset)
 	ldr	r4, =0x3ff
@@ -205,8 +184,8 @@ loop1:
 	mov	r9, r4				@ create working copy of max way size
 	/*!
 	 * r4 = CSIDR[12:3] = Associativity 
-	 way. 0x001= 2way , 0x00F = 16way
-	*/
+	 * way. 0x001= 2way , 0x00F = 16way
+	 */
 loop2:
  ARM(	orr	r11, r10, r9, lsl r5	)	@ factor way and cache number into r11
  THUMB(	lsl	r6, r9, r5		)

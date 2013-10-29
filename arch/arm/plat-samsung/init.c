@@ -31,7 +31,7 @@
 
 static struct cpu_table *cpu;
 
-/*! id table에서 일치하는 cpu 탐색 */
+/*! 20131026 id table에서 일치하는 cpu 탐색 */
 static struct cpu_table * __init s3c_lookup_cpu(unsigned long idcode,
 						struct cpu_table *tab,
 						unsigned int count)
@@ -47,7 +47,7 @@ static struct cpu_table * __init s3c_lookup_cpu(unsigned long idcode,
 void __init s3c_init_cpu(unsigned long idcode,
 			 struct cpu_table *cputab, unsigned int cputab_size)
 {
-	/* cpu로 일치하는 table 탐색 */
+	/*! 20131026 cpu로 일치하는 table 탐색 */
 	cpu = s3c_lookup_cpu(idcode, cputab, cputab_size);
 
 	if (cpu == NULL) {
@@ -62,7 +62,7 @@ void __init s3c_init_cpu(unsigned long idcode,
 		panic("Unsupported Samsung CPU");
 	}
 
-	/*! exynos5_map_io() 를 호출한다. */
+	/*! 20131026 exynos5_map_io() 를 호출한다. */
 	if (cpu->map_io)
 		cpu->map_io();
 }

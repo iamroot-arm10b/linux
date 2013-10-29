@@ -18,9 +18,7 @@
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 
-/*!
- * doubly linked list 초기화
- */
+/*! 20131026 doubly linked list 초기화 */
 #define LIST_HEAD(name) \
 	struct list_head name = LIST_HEAD_INIT(name)
 
@@ -39,9 +37,7 @@ static inline void INIT_LIST_HEAD(struct list_head *list)
  * This is only for internal list manipulation where we know
  * the prev/next entries already!
  */
-/*!
- * prev와 next 사이에 new 리스트 삽입
- */
+/*! prev와 next 사이에 new 리스트 삽입 */
 #ifndef CONFIG_DEBUG_LIST
 static inline void __list_add(struct list_head *new,
 			      struct list_head *prev,

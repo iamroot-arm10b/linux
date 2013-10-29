@@ -31,7 +31,8 @@
 #define S3C_ADDR(x)	(S3C_ADDR_BASE + (x))
 #endif
 
-/*! base + va_offset. vmalloc 영역(cpu specific하다.)
+/*! 20131026 
+ * base + va_offset. vmalloc 영역(cpu specific하다.)
  * SFR(special function register)에 맞게 매핑된다.
  * (exynos manual 2.2 SFR Address)
  */
