@@ -237,6 +237,7 @@ static struct map_desc exynos5_iodesc[] __initdata = {
 		.length		= SZ_16K,
 		.type		= MT_DEVICE,
 	}, {
+		/*! 20131102 S3C_VA_WATCHDOG: S3C_ADDR(0x00400000) */
 		.virtual	= (unsigned long)S3C_VA_WATCHDOG,
 		.pfn		= __phys_to_pfn(EXYNOS5_PA_WATCHDOG),
 		.length		= SZ_4K,

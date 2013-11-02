@@ -286,6 +286,11 @@ extern struct cpu_tlb_fns cpu_tlb;
  * implemented the "%?" method, but this has been discontinued due to too
  * many people getting it wrong.
  */
+/*! 20131102 v7wbi_possible_flags 만 set 
+ * TLB_V7_UIS_FULL | TLB_V7_UIS_PAGE | TLB_V7_UIS_ASID | TLB_V7_UIS_BP | \
+ * TLB_WB | TLB_DCLEAN | TLB_BARRIER | TLB_V6_U_FULL | TLB_V6_U_PAGE | \
+ * TLB_V6_U_ASID | TLB_V6_BP
+ */
 #define possible_tlb_flags	(v4_possible_flags | \
 				 v4wbi_possible_flags | \
 				 fr_possible_flags | \
@@ -294,6 +299,7 @@ extern struct cpu_tlb_fns cpu_tlb;
 				 v6wbi_possible_flags | \
 				 v7wbi_possible_flags)
 
+/*! 20131102 v7wbi_always_flags 만 set: TLB_WB | TLB_BARRIER */
 #define always_tlb_flags	(v4_always_flags & \
 				 v4wbi_always_flags & \
 				 fr_always_flags & \
@@ -316,6 +322,8 @@ extern struct cpu_tlb_fns cpu_tlb;
 			    : "cc");					\
 	} while (0)
 
+/*! 20131102 
+  */
 #define tlb_op(f, regs, arg)	__tlb_op(f, "p15, 0, %0, " regs, arg)
 #define tlb_l2_op(f, regs, arg)	__tlb_op(f, "p15, 1, %0, " regs, arg)
 
@@ -325,14 +333,17 @@ static inline void local_flush_tlb_all(void)
 	const unsigned int __tlb_flag = __cpu_tlb_flags;
 
 	if (tlb_flag(TLB_WB))
+		/*! 20131102 data synchronization barrier */
 		dsb();
 
+	/*! 20131102 모든 TLB 의 data 를 clear 한다. */
 	tlb_op(TLB_V4_U_FULL | TLB_V6_U_FULL, "c8, c7, 0", zero);
 	tlb_op(TLB_V4_D_FULL | TLB_V6_D_FULL, "c8, c6, 0", zero);
 	tlb_op(TLB_V4_I_FULL | TLB_V6_I_FULL, "c8, c5, 0", zero);
 	tlb_op(TLB_V7_UIS_FULL, "c8, c3, 0", zero);
 
 	if (tlb_flag(TLB_BARRIER)) {
+		/*! 20131102 데이터 동기화 및 명령어 동기화 BARRIER */
 		dsb();
 		isb();
 	}

@@ -978,6 +978,7 @@ phys_addr_t __init memblock_alloc_base(phys_addr_t size, phys_addr_t align, phys
 	phys_addr_t alloc;
 
 	alloc = __memblock_alloc_base(size, align, max_addr);
+	/*! 20131102 size로 align 시켜서 메모리 할당 */
 
 	/*! 20131019 size만큼의 메모리할당이 실패하면 에러로그 발생 */
 	if (alloc == 0)

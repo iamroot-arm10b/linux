@@ -56,6 +56,7 @@ early_param("bootmem_debug", bootmem_debug_setup);
 
 static unsigned long __init bootmap_bytes(unsigned long pages)
 {
+	/*! 20131102 lowmem을 표현하기 위해 필요한 byte 계산 */
 	unsigned long bytes = DIV_ROUND_UP(pages, 8);
 
 	return ALIGN(bytes, sizeof(long));
@@ -67,6 +68,7 @@ static unsigned long __init bootmap_bytes(unsigned long pages)
  */
 unsigned long __init bootmem_bootmap_pages(unsigned long pages)
 {
+	/*! 20131102 190k개의 page만큼 bitmap 할당, 24320byte(6개 page)로 표현 가능 */
 	unsigned long bytes = bootmap_bytes(pages);
 
 	return PAGE_ALIGN(bytes) >> PAGE_SHIFT;

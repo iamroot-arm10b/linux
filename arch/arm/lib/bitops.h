@@ -1,6 +1,7 @@
 #include <asm/unwind.h>
 
 #if __LINUX_ARM_ARCH__ >= 6
+/*! 20131102 instr를 atomic 하게 동작하기 위한 코드 */
 	.macro	bitop, name, instr
 ENTRY(	\name		)
 UNWIND(	.fnstart	)

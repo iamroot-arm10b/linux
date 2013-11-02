@@ -145,11 +145,15 @@ static void __init find_limits(unsigned long *min, unsigned long *max_low,
 	int i;
 
 	/* This assumes the meminfo array is properly sorted */
+	/*! 20131102 pfn : page frame number */
 	*min = bank_pfn_start(&mi->bank[0]);
 	for_each_bank (i, mi)
+	/*! 20131102 for (iter = 0; i < (mi)->nr_banks; i++) */
 		if (mi->bank[i].highmem)
 				break;
+	/*! 20131102 max_low: lowmem의 끝주소 = highmem의 시작주소 */
 	*max_low = bank_pfn_end(&mi->bank[i - 1]);
+	/*! 20131102 max_high: highmem의 끝주소 */
 	*max_high = bank_pfn_end(&mi->bank[mi->nr_banks - 1]);
 }
 
@@ -165,7 +169,9 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 	 * Allocate the bootmem bitmap page.  This must be in a region
 	 * of memory which has already been mapped.
 	 */
+	 /*! 20131102 boot_pages: 6 으로 표현 가능 */
 	boot_pages = bootmem_bootmap_pages(end_pfn - start_pfn);
+	/*! 20131102 boot_pages 만큼 align하여 메모리 할당, L1_CACHE_BYTES: 64 */
 	bitmap = memblock_alloc_base(boot_pages << PAGE_SHIFT, L1_CACHE_BYTES,
 				__pfn_to_phys(end_pfn));
 
@@ -447,6 +453,10 @@ void __init bootmem_init(void)
 
 	max_low = max_high = 0;
 
+	/*! 20131102 
+	 * min: memory 시작주소, max_low: lowmem의 끝주소, 
+	 * max_high: highmem의 끝주소 설정
+	 */
 	find_limits(&min, &max_low, &max_high);
 
 	arm_bootmem_init(min, max_low);

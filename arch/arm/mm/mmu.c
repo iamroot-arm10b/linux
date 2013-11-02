@@ -677,7 +677,10 @@ static void __init __map_init_section(pmd_t *pmd, unsigned long addr,
 	 * (See arch/arm/include/asm/pgtable-2level.h)
 	 */
 	if (addr & SECTION_SIZE)
-		/*! 20131012 pmd 를 2M 단위로 만들기 위한 것 */
+		/*! 20131102
+		 * addr가 1M로 정렬된 주소(홀수)일 때 해당하는 주소에 맞는 
+		 * pmd를 가리킬 수 있도록 보정하는 부분
+		 */
 		pmd++;
 #endif
 	do {
@@ -945,6 +948,7 @@ void __init vm_reserve_area_early(unsigned long addr, unsigned long size,
 	struct vm_struct *vm;
 	struct static_vm *svm;
 
+	/*! 20131102 svm 에 할당 */
 	svm = early_alloc_aligned(sizeof(*svm), __alignof__(*svm));
 
 	vm = &svm->vm;
@@ -952,6 +956,7 @@ void __init vm_reserve_area_early(unsigned long addr, unsigned long size,
 	vm->size = size;
 	vm->flags = VM_IOREMAP | VM_ARM_EMPTY_MAPPING;
 	vm->caller = caller;
+	/*! 20131102 svm을 static_vmlist(global)의 정렬된 위치에 삽입 */
 	add_static_vm_early(svm);
 }
 
@@ -972,6 +977,10 @@ void __init vm_reserve_area_early(unsigned long addr, unsigned long size,
 
 static void __init pmd_empty_section_gap(unsigned long addr)
 {
+	/*! 20131102
+	 * addr부터 SECTION_SIZE 만큼의 영역을 static_vmlist 에 dummy로 추가하여
+	 * 해당 영역을 사용할 수 없도록 예약
+	 */
 	vm_reserve_area_early(addr, SECTION_SIZE, pmd_empty_section_gap);
 }
 
@@ -982,7 +991,13 @@ static void __init fill_pmd_gaps(void)
 	unsigned long addr, next = 0;
 	pmd_t *pmd;
 
+	/*! 20131102 static_vmlist 가 전역변수 */
 	list_for_each_entry(svm, &static_vmlist, list) {
+	/*! 20131102
+	 * for (pos = list_entry((head)->next, typeof(*pos), member);	\
+	 *	&pos->member != (head); 	\
+	 * 	pos = list_entry(pos->member.next, typeof(*pos), member))
+	 */
 		vm = &svm->vm;
 		addr = (unsigned long)vm->addr;
 		if (addr < next)
@@ -993,10 +1008,19 @@ static void __init fill_pmd_gaps(void)
 		 * If so and the first section entry for this PMD is free
 		 * then we block the corresponding virtual address.
 		 */
+		/*! 20131102 PMD_MASK: (~((1UL << 21)-1)), SECTION_SIZE: 1M */
+		/*! 20131102 va 시작이 홀수인 페이지(0x??100000)인 경우 실행 */
 		if ((addr & ~PMD_MASK) == SECTION_SIZE) {
+			/*! 20131102 pmd를 2M 단위로 가져온다. */
 			pmd = pmd_off_k(addr);
+			/*! 20131102 pmd가 null 이면 실행 */
 			if (pmd_none(*pmd))
 				pmd_empty_section_gap(addr & PMD_MASK);
+				/*! 20131102
+				 * addr부터 SECTION_SIZE 만큼의 영역(0x??000000)을 
+				 * static_vmlist 에 dummy로 추가하여
+				 * 해당 영역을 사용할 수 없도록 예약.
+				 */
 		}
 
 		/*
@@ -1005,15 +1029,22 @@ static void __init fill_pmd_gaps(void)
 		 * then we block the corresponding virtual address.
 		 */
 		addr += vm->size;
+		/*! 20131102 va 시작이 짝수인 페이지(0x??000000)인 경우 실행 */
 		if ((addr & ~PMD_MASK) == SECTION_SIZE) {
 			pmd = pmd_off_k(addr) + 1;
 			if (pmd_none(*pmd))
 				pmd_empty_section_gap(addr);
+				/*! 20131102
+				 * addr부터 SECTION_SIZE 만큼의 영역(0x??100000)을 
+				 * static_vmlist 에 dummy로 추가하여
+				 * 해당 영역을 사용할 수 없도록 예약.
+				 */
 		}
 
 		/* no need to look at any vm entry until we hit the next PMD */
 		next = (addr + PMD_SIZE - 1) & PMD_MASK;
 	}
+	/*! 20131102 pmd가 0 or 1 에 따라, 나머지 영역을 사용할 수 없도록 예약한다. */
 }
 
 #else
@@ -1032,6 +1063,7 @@ static void __init pci_reserve_io(void)
 	vm_reserve_area_early(PCI_IO_VIRT_BASE, SZ_2M, pci_reserve_io);
 }
 #else
+/*! 20131102 ARM은 PCI BUS를 쓰지 않음 */
 #define pci_reserve_io() do { } while (0)
 #endif
 
@@ -1489,9 +1521,11 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 		debug_ll_io_init();
 	/*! 20131026 2013.10.26 여기까지 */
 	fill_pmd_gaps();
+	/*! 20131102 pmd에 나머지 1M 영역을 사용할 수 없도록 표시 */
 
 	/* Reserve fixed i/o space in VMALLOC region */
 	pci_reserve_io();
+	/*! 20131102 ARM은 PCI 버스를 쓰지 않아서 아무일도 하지 않음 */
 
 	/*
 	 * Finally flush the caches and tlb to ensure that we're in a
@@ -1499,13 +1533,16 @@ static void __init devicemaps_init(struct machine_desc *mdesc)
 	 * any write-allocated cache lines in the vector page are written
 	 * back.  After this point, we can start to touch devices again.
 	 */
+	/*! 20131102 TLB flush */
 	local_flush_tlb_all();
+	/*! 20131102 cache flush */
 	flush_cache_all();
 }
 
 static void __init kmap_init(void)
 {
 #ifdef CONFIG_HIGHMEM
+	/*! 20131102 Module 영역의 마지막 2M를 PKMAP으로 할당(페이지테이블 초기화) */
 	pkmap_page_table = early_pte_alloc(pmd_off_k(PKMAP_BASE),
 		PKMAP_BASE, _PAGE_KERNEL_TABLE);
 #endif
@@ -1568,14 +1605,25 @@ void __init paging_init(struct machine_desc *mdesc)
 	map_lowmem();
 	/*! 20131019 CMA 관련 define 이 없으므로 아무일도 안함 */
 	dma_contiguous_remap();
+	/*! 20131102
+	 * vector, stub 페이지 매핑
+	 * vmalloc start ~ 0xFFFFFFFF 까지 페이지테이블 clear
+	 * machine 관련된 reg.들을 vmalloc 영역에 매핑
+	 */
 	devicemaps_init(mdesc);
+	/*! 20131102 pkmap_page_table 초기화 */
 	kmap_init();
+	/*! 20131102 TCM 사용안하므로 실행안함 */
 	tcm_init();
 
+	/*! 20131102 top_pmd: 첫번째 pmd table의 pmd 
+	 * high vector 영역에 대한 pmd table offset 계산
+	 */
 	top_pmd = pmd_off_k(0xffff0000);
 
 	/* allocate the zero page. */
 	zero_page = early_alloc(PAGE_SIZE);
+	/*! 20131102 4k 메모리 할당 */
 
 	bootmem_init();
 

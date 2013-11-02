@@ -12,4 +12,5 @@
 #include "bitops.h"
 		.text
 
+/*! 20131102 atomic하게 orr 을 한다. */
 bitop	_set_bit, orr

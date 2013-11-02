@@ -533,22 +533,14 @@ asmlinkage void __init start_kernel(void)
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
  */
+	/*! 현재 CPU의 online, active, present, possible bit를 set */
 	boot_cpu_init();
-	/*!
-	 * 현재 CPU의 online, active, present, possible bit를 set
-	 */
+	/*! 20130803 페이지 address를 위한 배열과 spin lock 초기화 */
 	page_address_init();
-	/*! 20130803
-	 * 페이지 address를 위한 배열과 spin lock 초기화
-	 */
+	/*! 20130803 리눅스 버전 출력 */
 	pr_notice("%s", linux_banner);
-	/*! 20130803
-	 * 리눅스 버전 출력
-	 */
+	/*! 20130803 setup_arch 시작 */
 	setup_arch(&command_line);
-	/*! 20130803
-	 * 여기 시작
-	 */
 	mm_init_owner(&init_mm, &init_task);
 	mm_init_cpumask(&init_mm);
 	setup_command_line(command_line);
