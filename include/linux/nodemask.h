@@ -101,8 +101,9 @@ extern nodemask_t _unused_nodemask_arg_;
 #define node_set(node, dst) __node_set((node), &(dst))
 static inline void __node_set(int node, volatile nodemask_t *dstp)
 {
-	/*! 20131102 atomic하게 bit를 셋팅한다.  */
+	/*! 20131102 node의 bit를 atomic하게 셋팅한다.  */
 	set_bit(node, dstp->bits);
+	/*! 2013/11/02 여기까지 */
 }
 
 #define node_clear(node, dst) __node_clear((node), &(dst))
