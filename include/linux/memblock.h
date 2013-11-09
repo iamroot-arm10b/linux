@@ -197,8 +197,8 @@ void memblock_set_current_limit(phys_addr_t limit);
  */
 static inline unsigned long memblock_region_memory_base_pfn(const struct memblock_region *reg)
 {
+	/*! 20131109 pfn을 올림으로 align */
 	return PFN_UP(reg->base);
-	/*! 20131109 */
 }
 
 /**
@@ -207,6 +207,7 @@ static inline unsigned long memblock_region_memory_base_pfn(const struct membloc
  */
 static inline unsigned long memblock_region_memory_end_pfn(const struct memblock_region *reg)
 {
+	/*! 20131109 pfn을 내림으로 align */
 	return PFN_DOWN(reg->base + reg->size);
 	/*! 20131109 memblock의 end 주소의 page frame number를 구함 */
 }

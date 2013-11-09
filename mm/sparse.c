@@ -144,6 +144,7 @@ void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 						unsigned long *end_pfn)
 {
 	unsigned long max_sparsemem_pfn = 1UL << (MAX_PHYSMEM_BITS-PAGE_SHIFT);
+	/*! 20131109 max_sparsemem_pfn: 0x100000 (1M) */
 
 	/*
 	 * Sanity checks - do not allow an architecture to pass
@@ -151,6 +152,7 @@ void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 	 */
 	/*! 20131109 phys 시작주소가 32비트를 넘어가면 WARNING 출력
 	 * 32비트를 넘어서는 invalid한 값이면 max로 제한한다.
+	 * start_pfn : 0x20000 = 0x2000 0000 / 0x1000 (4k)
 	 */
 	if (*start_pfn > max_sparsemem_pfn) {
 		mminit_dprintk(MMINIT_WARNING, "pfnvalidation",
@@ -164,6 +166,7 @@ void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 			"End of range %lu -> %lu exceeds SPARSEMEM max %lu\n",
 			*start_pfn, *end_pfn, max_sparsemem_pfn);
 		WARN_ON_ONCE(1);
+		/*! 20131109 end_pfn 이 max를 넘어서면 end_pfn을 최대값으로 셋팅 */
 		*end_pfn = max_sparsemem_pfn;
 	}
 }
