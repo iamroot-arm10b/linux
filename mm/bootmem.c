@@ -81,6 +81,8 @@ static void __init link_bootmem(bootmem_data_t *bdata)
 {
 	bootmem_data_t *ent;
 
+	/*! 20131109 bdata_list를 검색하여 bdata를
+	 * 오름차순으로 정렬된 위치에 추가 */
 	list_for_each_entry(ent, &bdata_list, list) {
 		if (bdata->node_min_pfn < ent->node_min_pfn) {
 			list_add_tail(&bdata->list, &ent->list);
@@ -100,9 +102,12 @@ static unsigned long __init init_bootmem_core(bootmem_data_t *bdata,
 	unsigned long mapsize;
 
 	mminit_validate_memmodel_limits(&start, &end);
+	/*! 20131109 start와 end가 32비트 안에 속하는지 확인 */
 	bdata->node_bootmem_map = phys_to_virt(PFN_PHYS(mapstart));
+	/*! 20131109 bitmap 시작주소(mapstart)를 bootmem_map에 대입한다. */
 	bdata->node_min_pfn = start;
 	bdata->node_low_pfn = end;
+	/*! 20131109 bdata를 bdata_list에 추가 */
 	link_bootmem(bdata);
 
 	/*
@@ -110,12 +115,15 @@ static unsigned long __init init_bootmem_core(bootmem_data_t *bdata,
 	 * register free RAM areas explicitly.
 	 */
 	mapsize = bootmap_bytes(end - start);
+	/*! 20131109 bitmap bytes를 구한다.  */
 	memset(bdata->node_bootmem_map, 0xff, mapsize);
+	/*! 20131109 모든 page에 대한 bitmap을 1로 초기화 */
 
 	bdebug("nid=%td start=%lx map=%lx end=%lx mapsize=%lx\n",
 		bdata - bootmem_node_data, start, mapstart, end, mapsize);
 
 	return mapsize;
+	/*! 20131109 크기를 리턴 */
 }
 
 /**
@@ -127,10 +135,12 @@ static unsigned long __init init_bootmem_core(bootmem_data_t *bdata,
  *
  * Returns the number of bytes needed to hold the bitmap for this node.
  */
+
 unsigned long __init init_bootmem_node(pg_data_t *pgdat, unsigned long freepfn,
 				unsigned long startpfn, unsigned long endpfn)
 {
 	return init_bootmem_core(pgdat->bdata, freepfn, startpfn, endpfn);
+	/*! 20131109 입력받은 부트 메모리 노드 추가, bitmap(freepfn) 초기화 */
 }
 
 /**
@@ -294,14 +304,23 @@ static void __init __free(bootmem_data_t *bdata,
 		sidx + bdata->node_min_pfn,
 		eidx + bdata->node_min_pfn);
 
+	/*! 20131109
+	 * hint_idx는아직 초기화 되지 않은 것으로 보이며, 추후 확인 필요.
+	 */
 	if (bdata->hint_idx > sidx)
 		bdata->hint_idx = sidx;
 
+	/*! 20131109
+	 * node_bootmem_map의 sidx부터 eidx까지 bit를 clear
+	 */
 	for (idx = sidx; idx < eidx; idx++)
 		if (!test_and_clear_bit(idx, bdata->node_bootmem_map))
 			BUG();
 }
 
+/*! 20131109
+ * 해당 page의 bitmap을 reserve(1)으로 만든다.
+ */
 static int __init __reserve(bootmem_data_t *bdata, unsigned long sidx,
 			unsigned long eidx, int flags)
 {
@@ -314,9 +333,15 @@ static int __init __reserve(bootmem_data_t *bdata, unsigned long sidx,
 		eidx + bdata->node_min_pfn,
 		flags);
 
+	/*! 20131109
+	 * node_bootmem_map의 sidx부터 eidx까지 bit를 set
+	 */
 	for (idx = sidx; idx < eidx; idx++)
 		if (test_and_set_bit(idx, bdata->node_bootmem_map)) {
 			if (exclusive) {
+				/*! 20131109
+				 *  exclusive가 set 되어있으면 충돌시 rollback한다.
+				 */
 				__free(bdata, sidx, idx);
 				return -EBUSY;
 			}
@@ -326,24 +351,36 @@ static int __init __reserve(bootmem_data_t *bdata, unsigned long sidx,
 	return 0;
 }
 
+/*! 20131109
+ * start부터 end까지를 reserve 값으로 reserve(1) 또는 free(0) 한다.
+ */
 static int __init mark_bootmem_node(bootmem_data_t *bdata,
 				unsigned long start, unsigned long end,
 				int reserve, int flags)
 {
 	unsigned long sidx, eidx;
 
+	/*! 20131109
+	 * %td는 memory point값을 type offset처럼 출력 
+	 * ex) int a[5]; printf("%td",a[3]-a[0]);//3이 출력.
+	 */
 	bdebug("nid=%td start=%lx end=%lx reserve=%d flags=%x\n",
 		bdata - bootmem_node_data, start, end, reserve, flags);
 
+	/*! 20131109 lowmem 범위를 벗어나면 panic */
 	BUG_ON(start < bdata->node_min_pfn);
 	BUG_ON(end > bdata->node_low_pfn);
 
+	/*! 20131109 lowmem 시작부터의 start, end index */
 	sidx = start - bdata->node_min_pfn;
 	eidx = end - bdata->node_min_pfn;
 
 	if (reserve)
 		return __reserve(bdata, sidx, eidx, flags);
 	else
+		/*! 20131109
+		 * bdata(bitmap)의 node_bootmem_map의 sidx~eidx bit clear. 
+		 */
 		__free(bdata, sidx, eidx);
 	return 0;
 }
@@ -359,12 +396,14 @@ static int __init mark_bootmem(unsigned long start, unsigned long end,
 		int err;
 		unsigned long max;
 
+		/*! 20131109 min~ low 영역을 벗어날 때 panic */
 		if (pos < bdata->node_min_pfn ||
 		    pos >= bdata->node_low_pfn) {
 			BUG_ON(pos != start);
 			continue;
 		}
 
+		/*! 20131109 max는 lowmem을 넘어설수 없다. 결코 */
 		max = min(bdata->node_low_pfn, end);
 
 		err = mark_bootmem_node(bdata, pos, max, reserve, flags);
@@ -416,6 +455,7 @@ void __init free_bootmem(unsigned long physaddr, unsigned long size)
 {
 	unsigned long start, end;
 
+	/*! 20131109 debug feature enable 되었을 때만 실행되는 함수다.  */
 	kmemleak_free_part(__va(physaddr), size);
 
 	start = PFN_UP(physaddr);
@@ -456,6 +496,10 @@ int __init reserve_bootmem_node(pg_data_t *pgdat, unsigned long physaddr,
  *
  * The range must be contiguous but may span node boundaries.
  */
+
+/*! 20131109
+ * 해당 bootmem을 reserve
+ */
 int __init reserve_bootmem(unsigned long addr, unsigned long size,
 			    int flags)
 {
@@ -465,6 +509,9 @@ int __init reserve_bootmem(unsigned long addr, unsigned long size,
 	end = PFN_UP(addr + size);
 
 	return mark_bootmem(start, end, 1, flags);
+	/*! 20131109
+	 * bdata_list의 bootmem을 reserve한다.
+	 */
 }
 
 static unsigned long __init align_idx(struct bootmem_data *bdata,

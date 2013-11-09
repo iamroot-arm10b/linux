@@ -157,6 +157,9 @@ static void __init find_limits(unsigned long *min, unsigned long *max_low,
 	*max_high = bank_pfn_end(&mi->bank[mi->nr_banks - 1]);
 }
 
+/*! 20131109
+ * boot memory에 대한 bitmap과 pgdata->bdata 자료구조를 초기화한다.
+ */
 static void __init arm_bootmem_init(unsigned long start_pfn,
 	unsigned long end_pfn)
 {
@@ -180,14 +183,20 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 	 * memory banks over to bootmem.
 	 */
 	node_set_online(0);
+	/*! 20131109 NUMA가 아니기 때문에 아무런 역할을 하지 않는다. */
 	pgdat = NODE_DATA(0);
+	/*! 20131109 &contig_page_data  */
 	init_bootmem_node(pgdat, __phys_to_pfn(bitmap), start_pfn, end_pfn);
+	/*! 20131109 lowmem 영역을 bootmem 영역에 등록 및 초기화 */
 
 	/* Free the lowmem regions from memblock into bootmem. */
 	for_each_memblock(memory, reg) {
 		unsigned long start = memblock_region_memory_base_pfn(reg);
 		unsigned long end = memblock_region_memory_end_pfn(reg);
 
+		/*! 20131109 전체 memblock을 가져와서
+		  * lowmem을 초과하면 end를 lowmem으로 가리킨다.
+		  */
 		if (end >= end_pfn)
 			end = end_pfn;
 		if (start >= end)

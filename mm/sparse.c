@@ -139,6 +139,7 @@ static inline int sparse_early_nid(struct mem_section *section)
 }
 
 /* Validate the physical addressing limitations of the model */
+/*! 20131109 start 주소의 range check (우리는 32bits) */
 void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 						unsigned long *end_pfn)
 {
@@ -147,6 +148,9 @@ void __meminit mminit_validate_memmodel_limits(unsigned long *start_pfn,
 	/*
 	 * Sanity checks - do not allow an architecture to pass
 	 * in larger pfns than the maximum scope of sparsemem:
+	 */
+	/*! 20131109 phys 시작주소가 32비트를 넘어가면 WARNING 출력
+	 * 32비트를 넘어서는 invalid한 값이면 max로 제한한다.
 	 */
 	if (*start_pfn > max_sparsemem_pfn) {
 		mminit_dprintk(MMINIT_WARNING, "pfnvalidation",

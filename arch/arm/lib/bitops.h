@@ -44,24 +44,46 @@ ENDPROC(\name		)
 	.macro	testop, name, instr, store
 ENTRY(	\name		)
 UNWIND(	.fnstart	)
+	/*! 20131109
+	 * #define test_and_clear_bit(nr,p)
+	 */
 	ands	ip, r1, #3
 	strneb	r1, [ip]		@ assert word-aligned
+	/*! 20131109
+	 *  for checking 4bytes align of p
+	 */
 	mov	r2, #1
 	and	r3, r0, #31		@ Get bit offset
 	mov	r0, r0, lsr #5
 	add	r1, r1, r0, lsl #2	@ Get word offset
 	mov	r3, r2, lsl r3		@ create mask
+	/*!
+	 * p의 하위 5bit를 받아서 long단위로 쪼갠다.(
+	 * bitmap % 32 = r3
+	 * bitmap / 32 = r1
+	 * r1의  100번째 비트라면, r1=r1+3, r3=0x10
+	 */
 	smp_dmb
 1:	ldrex	r2, [r1]
 	ands	r0, r2, r3		@ save old value of bit
 	\instr	r2, r2, r3		@ toggle bit
 	strex	ip, r2, [r1]
+	/*! 20131109
+	 * 워드 오프셋 위치에서 4bytes읽어와서, 해당비트 체크.
+	 * 해당비트가 1인경우에 clear한후, 워드 오프셋에 다시 저장.
+	 */
 	cmp	ip, #0
 	bne	1b
 	smp_dmb
+	/*! 20131109
+	 *  워드오프셋위치의 데이터가 변경된 경우, 다시실행(1번 레이블로 점프)
+	 */
 	cmp	r0, #0
 	movne	r0, #1
 2:	bx	lr
+	/*! 20131109
+	 * 해당비트의 원래 값을 리턴.
+	 */
 UNWIND(	.fnend		)
 ENDPROC(\name		)
 	.endm
