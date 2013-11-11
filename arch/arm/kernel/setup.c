@@ -1097,6 +1097,7 @@ void __init setup_arch(char **cmdline_p)
 	sanity_check_meminfo();
 	/*! 20131005 커널 memblock 자료구조 초기화 (memory, reserved) */
 	arm_memblock_init(&meminfo, mdesc);
+	/*! 20131109 boot memory에 대한 bitmap과 pgdata->bdata 자료구조를 초기화한다. */
 	/*! 20131109 오늘 여기까지 */
 
 	paging_init(mdesc);

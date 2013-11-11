@@ -462,6 +462,7 @@ void __init free_bootmem(unsigned long physaddr, unsigned long size)
 	end = PFN_DOWN(physaddr + size);
 
 	mark_bootmem(start, end, 0, 0);
+	/*! 20131109 start ~ end 의 모든 페이지 메모리를 free시킨다. */
 }
 
 /**

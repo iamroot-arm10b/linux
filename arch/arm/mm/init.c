@@ -219,6 +219,7 @@ static void __init arm_bootmem_init(unsigned long start_pfn,
 		if (start >= end)
 			break;
 
+		/*! 20131109 해당 bootmem을 reserve */
 		reserve_bootmem(__pfn_to_phys(start),
 			        (end - start) << PAGE_SHIFT, BOOTMEM_DEFAULT);
 	}
@@ -355,7 +356,7 @@ phys_addr_t __init arm_memblock_steal(phys_addr_t size, phys_addr_t align)
 	return phys;
 }
 
-//arm_memblock_init(&meminfo, mdesc);
+/*! 20131109 arm_memblock_init(&meminfo, mdesc); */
 void __init arm_memblock_init(struct meminfo *mi, struct machine_desc *mdesc)
 {
 	int i;
