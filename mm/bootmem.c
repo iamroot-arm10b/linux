@@ -375,9 +375,8 @@ static int __init mark_bootmem_node(bootmem_data_t *bdata,
 	if (reserve)
 		return __reserve(bdata, sidx, eidx, flags);
 	else
-		/*! 20131109 bdata(bitmap)의 node_bootmem_map의 sidx~eidx bit clear. */
 		__free(bdata, sidx, eidx);
-		/*! 20131109 bdata의 node_bootmem_map의 sidx ~ eidx까지의 bit를 clear */
+		/*! 20131109 bdata(bitmap)의 node_bootmem_map의 sidx ~ eidx까지의 bit를 clear */
 	return 0;
 }
 
@@ -522,6 +521,7 @@ static unsigned long __init align_idx(struct bootmem_data *bdata,
 	 */
 
 	return ALIGN(base + idx, step) - base;
+	/*! 20131116 ((base + idx) + (step-1)) & ~(step-1) */
 }
 
 static unsigned long __init align_off(struct bootmem_data *bdata,
@@ -532,8 +532,10 @@ static unsigned long __init align_off(struct bootmem_data *bdata,
 	/* Same as align_idx for byte offsets */
 
 	return ALIGN(base + off, align) - base;
+	/*! 20131116 PHYS PFN 으로 변환한 후 align */
 }
 
+/*! 20131116 __init alloc_bootmem_bdata(pgdat->bdata, x, 64, 0x60000000, 0) */
 static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 					unsigned long size, unsigned long align,
 					unsigned long goal, unsigned long limit)
@@ -555,24 +557,31 @@ static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 	min = bdata->node_min_pfn;
 	max = bdata->node_low_pfn;
 
+	/*! 20131116 pfn 기준으로 맞추기 위해 PAGE_SHIFT */
 	goal >>= PAGE_SHIFT;
 	limit >>= PAGE_SHIFT;
 
+	/*! 20131116 limit: 0, 주소의 유효성 검사 */
 	if (limit && max > limit)
 		max = limit;
 	if (max <= min)
 		return NULL;
 
 	step = max(align >> PAGE_SHIFT, 1UL);
+	/*! 20131116 step: 1 */
 
 	if (goal && min < goal && goal < max)
+		/*! 20131116 goal이 min ~ max 사이에 있으면 goal에서 시작 */
 		start = ALIGN(goal, step);
 	else
 		start = ALIGN(min, step);
+	/*! 20131116 goal(0x60000000)이 min ~ max 사이에 있지 않으면 min에서 시작 */
 
 	sidx = start - bdata->node_min_pfn;
 	midx = max - bdata->node_min_pfn;
+	/*! 20131116 sidx: 0x20000 - 0x20000 = 0, midx: 0x4f800 - 0x20000 =  0x2f800 */
 
+	/*! 20131116 hint_idx: 현재 alloc할 수 있는 최소 위치 */
 	if (bdata->hint_idx > sidx) {
 		/*
 		 * Handle the valid case of sidx being zero and still
@@ -588,37 +597,56 @@ static void * __init alloc_bootmem_bdata(struct bootmem_data *bdata,
 		unsigned long eidx, i, start_off, end_off;
 find_block:
 		sidx = find_next_zero_bit(bdata->node_bootmem_map, midx, sidx);
+		/*! 20131116
+		 * sidx ~ midx 사이에서 첫번째 free page의 index를 리턴
+		 * 못찾으면 midx 를 리턴한다.
+		 */
 		sidx = align_idx(bdata, sidx, step);
+		/*! 20131116 ((bdata + sidx) + (step-1)) & ~(step-1) */
 		eidx = sidx + PFN_UP(size);
 
 		if (sidx >= midx || eidx > midx)
+			/*! 20131116 address range를 벗어나면 정지 */
 			break;
 
 		for (i = sidx; i < eidx; i++)
 			if (test_bit(i, bdata->node_bootmem_map)) {
+			/*! 20131116 addr로부터 nr번째의 bit가 1 인 경우 */
 				sidx = align_idx(bdata, i, step);
 				if (sidx == i)
 					sidx += step;
 				goto find_block;
+				/*! 20131116
+				 * 연속된 공간을 사용하지 못하는 경우 다음 index부터 다시 찾는다.
+				 */
 			}
 
 		if (bdata->last_end_off & (PAGE_SIZE - 1) &&
 				PFN_DOWN(bdata->last_end_off) + 1 == sidx)
 			start_off = align_off(bdata, bdata->last_end_off, align);
+			/*! 20131116 bdata를 PHYS_PFN 으로 변환한 후 align */
 		else
+			/*! 20131116 last_end_off: 0 이므로 이곳 실행 */
 			start_off = PFN_PHYS(sidx);
 
 		merge = PFN_DOWN(start_off) < sidx;
+		/*! 20131116 4k보다 작은 단위로 start_off가 오는 경우 merge는 1 */
 		end_off = start_off + size;
 
 		bdata->last_end_off = end_off;
 		bdata->hint_idx = PFN_UP(end_off);
+		/*! 20131116
+		 * last_end_off: 마지막으로 사용한 주소
+		 * hint_idx: last_end_off가 속한 PFN의 다음 번호
+		 */
 
 		/*
 		 * Reserve the area now:
 		 */
 		if (__reserve(bdata, PFN_DOWN(start_off) + merge,
 				PFN_UP(end_off), BOOTMEM_EXCLUSIVE))
+		/*! 20131116 해당 page의 bitmap을 reserve(1)으로 만든다. */
+		/*! 20131116 merge: 한페이지 안에서 또 메모리를 할당한다는 의미 */
 			BUG();
 
 		region = phys_to_virt(PFN_PHYS(bdata->node_min_pfn) +
@@ -653,6 +681,11 @@ static void * __init alloc_bootmem_core(unsigned long size,
 		return kzalloc(size, GFP_NOWAIT);
 
 	list_for_each_entry(bdata, &bdata_list, list) {
+	/*! 20131116
+	 * for (pos = list_entry((head)->next, typeof(*pos), member);	\
+	 *      &pos->member != (head); 	\
+	 *      pos = list_entry(pos->member.next, typeof(*pos), member))
+	 */
 		if (goal && bdata->node_low_pfn <= PFN_DOWN(goal))
 			continue;
 		if (limit && bdata->node_min_pfn >= PFN_DOWN(limit))
@@ -742,6 +775,7 @@ void * __init __alloc_bootmem(unsigned long size, unsigned long align,
 	return ___alloc_bootmem(size, align, goal, limit);
 }
 
+/*! 20131116 ___alloc_bootmem_node_nopanic((&contig_page_data), array_size, 64, 0x60000000, 0) */
 void * __init ___alloc_bootmem_node_nopanic(pg_data_t *pgdat,
 				unsigned long size, unsigned long align,
 				unsigned long goal, unsigned long limit)
@@ -756,14 +790,17 @@ again:
 	if (limit && goal + size > limit)
 		limit = 0;
 
+	/*! 20131116 alloc_bootmem_bdata((&contig_page_data)->bdata, array_size, 64, 0x60000000, 0) */
 	ptr = alloc_bootmem_bdata(pgdat->bdata, size, align, goal, limit);
 	if (ptr)
 		return ptr;
 
+	/*! 20131116 메모리를 할당받지 못했을 경우 다음 실행 */
 	ptr = alloc_bootmem_core(size, align, goal, limit);
 	if (ptr)
 		return ptr;
 
+	/*! 20131116 메모리를 할당받지 못했을 경우 goal을 0으로 바꾸어 다시 시도 */
 	if (goal) {
 		goal = 0;
 		goto again;
@@ -781,6 +818,7 @@ void * __init __alloc_bootmem_node_nopanic(pg_data_t *pgdat, unsigned long size,
 	return ___alloc_bootmem_node_nopanic(pgdat, size, align, goal, 0);
 }
 
+/*! 20131116 ___alloc_bootmem_node((&contig_page_data), array_size, 64, 0x60000000, 0) */
 void * __init ___alloc_bootmem_node(pg_data_t *pgdat, unsigned long size,
 				    unsigned long align, unsigned long goal,
 				    unsigned long limit)
@@ -788,6 +826,7 @@ void * __init ___alloc_bootmem_node(pg_data_t *pgdat, unsigned long size,
 	void *ptr;
 
 	ptr = ___alloc_bootmem_node_nopanic(pgdat, size, align, goal, 0);
+	/*! 20131116 bootmem_node에서 size만큼의 memory 할당받는다. */
 	if (ptr)
 		return ptr;
 
@@ -811,6 +850,7 @@ void * __init ___alloc_bootmem_node(pg_data_t *pgdat, unsigned long size,
  *
  * The function panics if the request can not be satisfied.
  */
+/*! 20131116 __alloc_bootmem_node((&contig_page_data), array_size, 64, 0x60000000) */
 void * __init __alloc_bootmem_node(pg_data_t *pgdat, unsigned long size,
 				   unsigned long align, unsigned long goal)
 {
@@ -818,6 +858,7 @@ void * __init __alloc_bootmem_node(pg_data_t *pgdat, unsigned long size,
 		return kzalloc_node(size, GFP_NOWAIT, pgdat->node_id);
 
 	return  ___alloc_bootmem_node(pgdat, size, align, goal, 0);
+	/*! 20131116 bootmem_node에서 size만큼의 memory 할당 */
 }
 
 void * __init __alloc_bootmem_node_high(pg_data_t *pgdat, unsigned long size,

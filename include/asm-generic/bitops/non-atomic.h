@@ -103,6 +103,10 @@ static inline int __test_and_change_bit(int nr,
 static inline int test_bit(int nr, const volatile unsigned long *addr)
 {
 	return 1UL & (addr[BIT_WORD(nr)] >> (nr & (BITS_PER_LONG-1)));
+	/*! 20131116
+	 * BITS_PER_LONG: 32, BIT_WORD(nr): nr 주소의 index
+	 * addr로부터 nr번째의 bit가 0 or 1 인지를 리턴
+	 */
 }
 
 #endif /* _ASM_GENERIC_BITOPS_NON_ATOMIC_H_ */

@@ -21,6 +21,7 @@
  */
 #ifdef CONFIG_SPARSEMEM_EXTREME
 struct mem_section *mem_section[NR_SECTION_ROOTS]
+	/*! 20131116 NR_SECTION_ROOTS: 1 */
 	____cacheline_internodealigned_in_smp;
 #else
 struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT]
@@ -62,28 +63,42 @@ static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
 	struct mem_section *section = NULL;
 	unsigned long array_size = SECTIONS_PER_ROOT *
 				   sizeof(struct mem_section);
+	/*! 20131116 array_size = 512 * 8 = 4096 */
 
+	/*! 20131116 현재 slab이 사용가능하지 않다. */
 	if (slab_is_available()) {
+		/*! 20131116 slab이 사용가능하다면 할당 */
 		if (node_state(nid, N_HIGH_MEMORY))
 			section = kzalloc_node(array_size, GFP_KERNEL, nid);
 		else
 			section = kzalloc(array_size, GFP_KERNEL);
 	} else {
 		section = alloc_bootmem_node(NODE_DATA(nid), array_size);
+		/*! 20131116 
+		 * bootmem영역에서 mem_section 포인터 배열이 가리키는 
+		 * mem_section배열의 8byte짜리 512개의 공간을 할당받는다.(8 * 512 = 4k)
+		 */
 	}
 
 	return section;
+	/*! 20131116 할당받은 메모리공간의 가상주소를 리턴 */
 }
 
 static int __meminit sparse_index_init(unsigned long section_nr, int nid)
 {
 	unsigned long root = SECTION_NR_TO_ROOT(section_nr);
+	/*! 20131116
+	 * root는 section_nr이 512개까지는 0,
+	 * 우리가 분석하는 아키텍처에서는 section이 16개이므로 항상 0
+	 */
 	struct mem_section *section;
 
 	if (mem_section[root])
 		return -EEXIST;
 
 	section = sparse_index_alloc(nid);
+	/*! 20131116 할당받은 메모리공간의 가상주소를 할당받음 */
+	/*! 2013/11/16 여기까지 */
 	if (!section)
 		return -ENOMEM;
 
@@ -177,9 +192,12 @@ void __init memory_present(int nid, unsigned long start, unsigned long end)
 	unsigned long pfn;
 
 	start &= PAGE_SECTION_MASK;
+	/*! 20131116 PAGE_SECTION_MASK: 0xffff0000 , 64k align */ 
 	mminit_validate_memmodel_limits(&start, &end);
+	/*! 20131116 start 주소의 range check */
 	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) {
 		unsigned long section = pfn_to_section_nr(pfn);
+		/*! 20131116 pfn에 대한 section 번호 (0~15 중 하나), 2~A까지 8개 */
 		struct mem_section *ms;
 
 		sparse_index_init(section, nid);

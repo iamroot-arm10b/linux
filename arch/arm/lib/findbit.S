@@ -42,10 +42,13 @@ ENDPROC(_find_first_zero_bit_le)
  * Purpose  : Find next 'zero' bit
  * Prototype: int find_next_zero_bit(void *addr, unsigned int maxbit, int offset)
  */
+/*! 20131116 find_next_zero_bit(bdata->node_bootmem_map, midx, sidx); */
 ENTRY(_find_next_zero_bit_le)
 		teq	r1, #0
 		beq	3b
+		/*! 20131116 r1(bitmap) 이 0이면 return */
 		ands	ip, r2, #7
+		/*! 20131116 0, 8, 16 인 경우에는 위쪽으로 jump */
 		beq	1b			@ If new byte, goto old routine
  ARM(		ldrb	r3, [r0, r2, lsr #3]	)
  THUMB(		lsr	r3, r2, #3		)
@@ -53,6 +56,7 @@ ENTRY(_find_next_zero_bit_le)
 		eor	r3, r3, #0xff		@ now looking for a 1 bit
 		movs	r3, r3, lsr ip		@ shift off unused bits
 		bne	.L_found
+		/*! 20131116 0이 나타나는 첫번째 위치offset 리턴 */
 		orr	r2, r2, #7		@ if zero, then no bits here
 		add	r2, r2, #1		@ align bit pointer
 		b	2b			@ loop for next bit
@@ -175,9 +179,13 @@ ENDPROC(_find_next_bit_be)
 .L_found:
 #if __LINUX_ARM_ARCH__ >= 5
 		rsb	r0, r3, #0
+		/*! 20131116 r0 = 0 - r3 */
 		and	r3, r3, r0
+		/*! 20131116 r3: r3의 bit 중에서 가장 오른쪽에 있는 bit위치의 값이 1인 값 */
 		clz	r3, r3
+		/*! 20131116 r3: 31bit에서 시작하여 첫번째로 1을 만나는 위치값 */
 		rsb	r3, r3, #31
+		/*! 20131116 r3 = 31 - r3 */
 		add	r0, r2, r3
 #else
 		tst	r3, #0x0f

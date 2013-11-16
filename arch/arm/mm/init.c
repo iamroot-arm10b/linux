@@ -473,7 +473,9 @@ void __init bootmem_init(void)
 	 */
 	find_limits(&min, &max_low, &max_high);
 
+	/*! 20131109 boot memory에 대한 bitmap과 pgdata->bdata 자료구조를 초기화한다. */
 	arm_bootmem_init(min, max_low);
+	/*! 20131109 오늘 여기까지 */
 
 	/*
 	 * Sparsemem tries to allocate bootmem in memory_present(),

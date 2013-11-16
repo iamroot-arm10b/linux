@@ -1063,11 +1063,15 @@ static inline unsigned long early_pfn_to_nid(unsigned long pfn)
  */
 #define PA_SECTION_SHIFT	(SECTION_SIZE_BITS)
 #define PFN_SECTION_SHIFT	(SECTION_SIZE_BITS - PAGE_SHIFT)
+/*! 20131116 SECTION_SIZE_BITS: 28, PAGE_SHIFT: 12 */ 
+/*! 20131116 여기서의 section은 커널이 관리하는 것 */
 
 #define NR_MEM_SECTIONS		(1UL << SECTIONS_SHIFT)
 
+/*! 20131116 PFN_SECTION_SHIFT: 16 */ 
 #define PAGES_PER_SECTION       (1UL << PFN_SECTION_SHIFT)
 #define PAGE_SECTION_MASK	(~(PAGES_PER_SECTION-1))
+/*! 20131116 PAGE_SECTION_MASK: ~(0x0000ffff) = 0xffff0000 */ 
 
 #define SECTION_BLOCKFLAGS_BITS \
 	((1UL << (PFN_SECTION_SHIFT - pageblock_order)) * NR_PAGEBLOCK_BITS)
@@ -1077,7 +1081,9 @@ static inline unsigned long early_pfn_to_nid(unsigned long pfn)
 #endif
 
 #define pfn_to_section_nr(pfn) ((pfn) >> PFN_SECTION_SHIFT)
+/*! 20131116 pfn에 대한 section 번호 */
 #define section_nr_to_pfn(sec) ((sec) << PFN_SECTION_SHIFT)
+/*! 20131116 section 번호에 대한 pfn */
 
 #define SECTION_ALIGN_UP(pfn)	(((pfn) + PAGES_PER_SECTION - 1) & PAGE_SECTION_MASK)
 #define SECTION_ALIGN_DOWN(pfn)	((pfn) & PAGE_SECTION_MASK)
@@ -1117,12 +1123,15 @@ struct mem_section {
 
 #ifdef CONFIG_SPARSEMEM_EXTREME
 #define SECTIONS_PER_ROOT       (PAGE_SIZE / sizeof (struct mem_section))
+/*! 20131116 SECTIONS_PER_ROOT: 4096 / 8 = 512 = 0x200 */
 #else
 #define SECTIONS_PER_ROOT	1
 #endif
 
 #define SECTION_NR_TO_ROOT(sec)	((sec) / SECTIONS_PER_ROOT)
+/*! 20131116 SECTION_NR_TO_ROOT(sec) = (sec) / 512 */
 #define NR_SECTION_ROOTS	DIV_ROUND_UP(NR_MEM_SECTIONS, SECTIONS_PER_ROOT)
+/*! 20131116 NR_SECTION_ROOTS: DIV_ROUND_UP(16, 512) = 1 */
 #define SECTION_ROOT_MASK	(SECTIONS_PER_ROOT - 1)
 
 #ifdef CONFIG_SPARSEMEM_EXTREME
