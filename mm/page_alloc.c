@@ -4616,6 +4616,7 @@ void __init set_pageblock_order(void)
  */
 void __init set_pageblock_order(void)
 {
+	/*! 20131123 여기 실행. 아무것도 안한다. */
 }
 
 #endif /* CONFIG_HUGETLB_PAGE_SIZE_VARIABLE */

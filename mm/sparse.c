@@ -84,6 +84,7 @@ static struct mem_section noinline __init_refok *sparse_index_alloc(int nid)
 	/*! 20131116 할당받은 메모리공간의 가상주소를 리턴 */
 }
 
+/*! 20131123 http://www.iamroot.org/xe/QnA/13649 참고 */
 static int __meminit sparse_index_init(unsigned long section_nr, int nid)
 {
 	unsigned long root = SECTION_NR_TO_ROOT(section_nr);
@@ -103,6 +104,7 @@ static int __meminit sparse_index_init(unsigned long section_nr, int nid)
 		return -ENOMEM;
 
 	mem_section[root] = section;
+	/*! 20131123 section = 할당받은 메모리공간의 시작주소 */
 
 	return 0;
 }
@@ -146,11 +148,13 @@ int __section_nr(struct mem_section* ms)
 static inline unsigned long sparse_encode_early_nid(int nid)
 {
 	return (nid << SECTION_NID_SHIFT);
+	/*! 20131123 SECTION_NID_SHIFT: 2 */
 }
 
 static inline int sparse_early_nid(struct mem_section *section)
 {
 	return (section->section_mem_map >> SECTION_NID_SHIFT);
+	/*! 20131123 SECTION_NID_SHIFT = 2 */
 }
 
 /* Validate the physical addressing limitations of the model */
@@ -196,17 +200,22 @@ void __init memory_present(int nid, unsigned long start, unsigned long end)
 	mminit_validate_memmodel_limits(&start, &end);
 	/*! 20131116 start 주소의 range check */
 	for (pfn = start; pfn < end; pfn += PAGES_PER_SECTION) {
+		/*! 20131123 start: 2, end: 0xA */
 		unsigned long section = pfn_to_section_nr(pfn);
 		/*! 20131116 pfn에 대한 section 번호 (0~15 중 하나), 2~A까지 8개 */
 		struct mem_section *ms;
 
 		sparse_index_init(section, nid);
+		/*! 20131123 nid: 0, section에 대한 mem_section[index] 메모리를 할당받음 */
 		set_section_nid(section, nid);
+		/*! 20131123 NODE_NOT_IN_PAGE_FLAGS 가 정의되지 않았으므로 아무일도 하지 않음 */
 
 		ms = __nr_to_section(section);
+		/*! 20131123 section에 해당하는 mem_section 배열의 시작주소를 찾는다. */
 		if (!ms->section_mem_map)
 			ms->section_mem_map = sparse_encode_early_nid(nid) |
 							SECTION_MARKED_PRESENT;
+			/*! 20131123 ms_section_mem_map = 0 | 1 = 1 */
 	}
 }
 
@@ -240,6 +249,9 @@ unsigned long __init node_memmap_size_bytes(int nid, unsigned long start_pfn,
 static unsigned long sparse_encode_mem_map(struct page *mem_map, unsigned long pnum)
 {
 	return (unsigned long)(mem_map - (section_nr_to_pfn(pnum)));
+	/*! 20131123
+	 * to do.. mem_map-(section_nr_to_pfn(pnum)인지..
+	 */
 }
 
 /*
@@ -260,8 +272,15 @@ static int __meminit sparse_init_one_section(struct mem_section *ms,
 		return -EINVAL;
 
 	ms->section_mem_map &= ~SECTION_MAP_MASK;
+	/*! 20131123
+	 * ~SECTION_MAP_MASK는 0x03이고, section_mem_map에서 nid를 삭제 
+	 */
 	ms->section_mem_map |= sparse_encode_mem_map(mem_map, pnum) |
 							SECTION_HAS_MEM_MAP;
+	/*! 20131123
+	 *  section_mem_map에 mem_map주소를 할당하고, section_has_mem_map의 flag를 설정한다.
+	 * 2013/11/23 여기까지
+	 */
  	ms->pageblock_flags = pageblock_bitmap;
 
 	return 1;
@@ -271,6 +290,7 @@ unsigned long usemap_size(void)
 {
 	unsigned long size_bytes;
 	size_bytes = roundup(SECTION_BLOCKFLAGS_BITS, 8) / 8;
+	/*! 20131123 size_bytes = 256 / 8 = 32 */
 	size_bytes = roundup(size_bytes, sizeof(unsigned long));
 	return size_bytes;
 }
@@ -357,10 +377,12 @@ sparse_early_usemaps_alloc_pgdat_section(struct pglist_data *pgdat,
 					 unsigned long size)
 {
 	return alloc_bootmem_node_nopanic(pgdat, size);
+	/*! 20131123 bootmem에서 size만큼 할당한다. */
 }
 
 static void __init check_usemap_section_nr(int nid, unsigned long *usemap)
 {
+	/*! 20131123 여기 실행. 아무것도 안함 */
 }
 #endif /* CONFIG_MEMORY_HOTREMOVE */
 
@@ -372,9 +394,11 @@ static void __init sparse_early_usemaps_alloc_node(unsigned long**usemap_map,
 	void *usemap;
 	unsigned long pnum;
 	int size = usemap_size();
+	/*! 20131123 size: 32 */
 
 	usemap = sparse_early_usemaps_alloc_pgdat_section(NODE_DATA(nodeid),
 							  size * usemap_count);
+	/*! 20131123 bootmem에서 32 * usemap_count 만큼 할당한다. */
 	if (!usemap) {
 		printk(KERN_WARNING "%s: allocation failed\n", __func__);
 		return;
@@ -383,9 +407,14 @@ static void __init sparse_early_usemaps_alloc_node(unsigned long**usemap_map,
 	for (pnum = pnum_begin; pnum < pnum_end; pnum++) {
 		if (!present_section_nr(pnum))
 			continue;
+		/*! 20131123
+		 * pnum_begin ~ pnum_end에서 present bit 가 설정되어 있는 mem_section에 대해
+		 * 각각의 usemap_map별로 사용하기 위해 할당된 32byte의 시작주소를 넣어준다.
+		 */
 		usemap_map[pnum] = usemap;
 		usemap += size;
 		check_usemap_section_nr(nodeid, usemap_map[pnum]);
+		/*! 20131123 아무것도 안함 */
 	}
 }
 
@@ -396,12 +425,15 @@ struct page __init *sparse_mem_map_populate(unsigned long pnum, int nid)
 	unsigned long size;
 
 	map = alloc_remap(nid, sizeof(struct page) * PAGES_PER_SECTION);
+	/*! 20131123 map: NULL */
 	if (map)
 		return map;
 
 	size = PAGE_ALIGN(sizeof(struct page) * PAGES_PER_SECTION);
+	/*! 20131123 page크기 * 0x10000(64k), 이 크기를 page 단위로 align */
 	map = __alloc_bootmem_node_high(NODE_DATA(nid), size,
 					 PAGE_SIZE, __pa(MAX_DMA_ADDRESS));
+	/*! 20131123 할당 받은 주소를 return 한다. */
 	return map;
 }
 void __init sparse_mem_maps_populate_node(struct page **map_map,
@@ -469,14 +501,17 @@ static struct page __init *sparse_early_mem_map_alloc(unsigned long pnum)
 	struct page *map;
 	struct mem_section *ms = __nr_to_section(pnum);
 	int nid = sparse_early_nid(ms);
+	/*! 20131123 nid(node id): 0 */
 
 	map = sparse_mem_map_populate(pnum, nid);
+	/*! 20131123 할당을 받지 못하면 물리 공간이 없는 경우. */
 	if (map)
 		return map;
 
 	printk(KERN_ERR "%s: sparsemem memory map backing failed "
 			"some memory will not be available.\n", __func__);
 	ms->section_mem_map = 0;
+	/*! 20131123 mem_map공간을 할당 받지 못할 경우, 해당 섹션을 not present로 설정. */
 	return NULL;
 }
 #endif
@@ -507,9 +542,11 @@ void __init sparse_init(void)
 
 	/* see include/linux/mmzone.h 'struct mem_section' definition */
 	BUILD_BUG_ON(!is_power_of_2(sizeof(struct mem_section)));
+	/*! 20131123 mem_section 구조체의 크기가 2의 배수인지 확인 */
 
 	/* Setup pageblock_order for HUGETLB_PAGE_SIZE_VARIABLE */
 	set_pageblock_order();
+	/*! 20131123 아무것도 안함 */
 
 	/*
 	 * map is using big page (aka 2M in x86 64 bit)
@@ -523,20 +560,29 @@ void __init sparse_init(void)
 	 * sparse_early_mem_map_alloc, so allocate usemap_map at first.
 	 */
 	size = sizeof(unsigned long *) * NR_MEM_SECTIONS;
+	/*! 20131123 size: 64 = 4 * 16 */
 	usemap_map = alloc_bootmem(size);
 	if (!usemap_map)
 		panic("can not allocate usemap_map\n");
+	/*! 20131123 size만큼의 메모리를 bootmem으로부터 할당받음, 실패시 panic 발생 */
 
 	for (pnum = 0; pnum < NR_MEM_SECTIONS; pnum++) {
 		struct mem_section *ms;
 
 		if (!present_section_nr(pnum))
+		/*! 20131123 mem_section[pnum] 에 해당하는 section이 없으면 continue */
 			continue;
 		ms = __nr_to_section(pnum);
+		/*! 20131123 mem_section[pnum]에 해당하는 주소 리턴 */
 		nodeid_begin = sparse_early_nid(ms);
+		/*! 20131123 mem_section[pnum]의 node id를 가져온다. */
 		pnum_begin = pnum;
 		break;
 	}
+	/*! 20131123
+	 * 위 for문은 mem_section 배열에서 present flag가 셋팅되어 있는
+	 * 첫번째 mem_sction 의 nodeid와 mem_section number를 찾는다.
+	 */
 	usemap_count = 1;
 	for (pnum = pnum_begin + 1; pnum < NR_MEM_SECTIONS; pnum++) {
 		struct mem_section *ms;
@@ -558,9 +604,17 @@ void __init sparse_init(void)
 		pnum_begin = pnum;
 		usemap_count = 1;
 	}
+	/*! 20131123
+	 * 현재 nodeid는 모두 0으로 동일하기 때문에 573~579라인은 생략된다.
+	 * usemap_count = 8, nodeid_begin = 0, pnum_begin = 2
+	 */
 	/* ok, last chunk */
 	sparse_early_usemaps_alloc_node(usemap_map, pnum_begin, NR_MEM_SECTIONS,
 					 usemap_count, nodeid_begin);
+	/*! 20131123
+	 * pnum_begin ~ pnum_end에서 present bit 가 설정되어 있는 mem_section 에 대해
+	 * 각각의 usemap_map별로 사용하기 위해 할당된 32byte의 시작주소를 usemap_map에 넣어준다.
+	 */
 
 #ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER
 	size2 = sizeof(struct page *) * NR_MEM_SECTIONS;
@@ -616,6 +670,8 @@ void __init sparse_init(void)
 		map = map_map[pnum];
 #else
 		map = sparse_early_mem_map_alloc(pnum);
+		/*! 20131123 pnum: 2 ~ 9 */
+		/*! 20131123 pnum섹션별로 사용할 map메모리 공간을 bootmem에서 할당받는다. */
 #endif
 		if (!map)
 			continue;

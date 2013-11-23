@@ -54,6 +54,7 @@ extern int pageblock_order;
 
 /* If huge pages are not used, group by MAX_ORDER_NR_PAGES */
 #define pageblock_order		(MAX_ORDER-1)
+/*! 20131123 pageblock_order: 11 - 1 = 10 */
 
 #endif /* CONFIG_HUGETLB_PAGE */
 

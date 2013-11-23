@@ -192,9 +192,8 @@ extern unsigned long __pv_phys_offset;
 	 * 명령어에 대한 주소값을 테이블에 추가한다.
 	 */
 
-/*! 20130810
- * 0xc0000000(virt) -> 0x40000000(phys) 이런식으로 변환
- */
+/*! 20130810 0xc0000000(virt) -> 0x40000000(phys) 이런식으로 변환 */
+/*! 20131123 0xc0000000(virt) -> 0x20000000(phys) (Exynos5420) */
 static inline unsigned long __virt_to_phys(unsigned long x)
 {
 	unsigned long t;

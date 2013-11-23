@@ -743,6 +743,7 @@ static void * __init ___alloc_bootmem(unsigned long size, unsigned long align,
 					unsigned long goal, unsigned long limit)
 {
 	void *mem = ___alloc_bootmem_nopanic(size, align, goal, limit);
+	/*! 20131123 boot_mem 에서 넘어온 크기만큼의 메모리를 할당한다 */
 
 	if (mem)
 		return mem;
@@ -773,6 +774,7 @@ void * __init __alloc_bootmem(unsigned long size, unsigned long align,
 	unsigned long limit = 0;
 
 	return ___alloc_bootmem(size, align, goal, limit);
+	/*! 20131123 boot_mem 에서 넘어온 크기만큼의 메모리를 할당한다 */
 }
 
 /*! 20131116 ___alloc_bootmem_node_nopanic((&contig_page_data), array_size, 64, 0x60000000, 0) */
@@ -816,6 +818,7 @@ void * __init __alloc_bootmem_node_nopanic(pg_data_t *pgdat, unsigned long size,
 		return kzalloc_node(size, GFP_NOWAIT, pgdat->node_id);
 
 	return ___alloc_bootmem_node_nopanic(pgdat, size, align, goal, 0);
+	/*! 20131123 slab이 사용가능하지 않으면 bootmem에서 size만큼 align에 맞춰서 할당한다. */
 }
 
 /*! 20131116 ___alloc_bootmem_node((&contig_page_data), array_size, 64, 0x60000000, 0) */
@@ -885,8 +888,12 @@ void * __init __alloc_bootmem_node_high(pg_data_t *pgdat, unsigned long size,
 			return ptr;
 	}
 #endif
+/*! 20131123 MAX_DMA32_PFN 가 정의되지 않아서 여기가 실행된다. */
 
 	return __alloc_bootmem_node(pgdat, size, align, goal);
+	/*! 20131123
+	 * bootmem에서 size만큼 할당 받는다.
+	 */
 
 }
 

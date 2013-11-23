@@ -1067,6 +1067,7 @@ static inline unsigned long early_pfn_to_nid(unsigned long pfn)
 /*! 20131116 여기서의 section은 커널이 관리하는 것 */
 
 #define NR_MEM_SECTIONS		(1UL << SECTIONS_SHIFT)
+/*! 20131123 NR_MEM_SECTIONS: 16 */
 
 /*! 20131116 PFN_SECTION_SHIFT: 16 */ 
 #define PAGES_PER_SECTION       (1UL << PFN_SECTION_SHIFT)
@@ -1075,6 +1076,7 @@ static inline unsigned long early_pfn_to_nid(unsigned long pfn)
 
 #define SECTION_BLOCKFLAGS_BITS \
 	((1UL << (PFN_SECTION_SHIFT - pageblock_order)) * NR_PAGEBLOCK_BITS)
+/*! 20131123 PFN_SECTION_SHIFT: (1UL << (16 - 10)) * 4 = 256 */
 
 #if (MAX_ORDER - 1 + PAGE_SHIFT) > SECTION_SIZE_BITS
 #error Allocator MAX_ORDER exceeds SECTION_SIZE
@@ -1133,6 +1135,7 @@ struct mem_section {
 #define NR_SECTION_ROOTS	DIV_ROUND_UP(NR_MEM_SECTIONS, SECTIONS_PER_ROOT)
 /*! 20131116 NR_SECTION_ROOTS: DIV_ROUND_UP(16, 512) = 1 */
 #define SECTION_ROOT_MASK	(SECTIONS_PER_ROOT - 1)
+/*! 20131123 SECTIONS_PER_ROOT: 511 */
 
 #ifdef CONFIG_SPARSEMEM_EXTREME
 extern struct mem_section *mem_section[NR_SECTION_ROOTS];
@@ -1143,8 +1146,13 @@ extern struct mem_section mem_section[NR_SECTION_ROOTS][SECTIONS_PER_ROOT];
 static inline struct mem_section *__nr_to_section(unsigned long nr)
 {
 	if (!mem_section[SECTION_NR_TO_ROOT(nr)])
+	/*! 20131123 mem_section[(nr)/512] */
 		return NULL;
 	return &mem_section[SECTION_NR_TO_ROOT(nr)][nr & SECTION_ROOT_MASK];
+	/*! 20131123
+	 * nr에 의해 mem_section의 주소를 찾는 것.
+	 * ex) nr: 2 인 경우, &mem_section[0][2] 로 리턴
+	 */
 }
 extern int __section_nr(struct mem_section* ms);
 extern unsigned long usemap_size(void);
@@ -1170,11 +1178,13 @@ static inline struct page *__section_mem_map_addr(struct mem_section *section)
 static inline int present_section(struct mem_section *section)
 {
 	return (section && (section->section_mem_map & SECTION_MARKED_PRESENT));
+	/*! 20131123 mem_section 구조체의 section_mem_map의 present bit를 체크해서 리턴 */
 }
 
 static inline int present_section_nr(unsigned long nr)
 {
 	return present_section(__nr_to_section(nr));
+	/*! 20131123 mem_section[nr] 구조체의 section_mem_map의 present bit를 체크해서 리턴 */
 }
 
 static inline int valid_section(struct mem_section *section)
