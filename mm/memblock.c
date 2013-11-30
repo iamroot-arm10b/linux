@@ -134,7 +134,7 @@ phys_addr_t __init_memblock memblock_find_in_range_node(phys_addr_t start,
 	if (end == MEMBLOCK_ALLOC_ACCESSIBLE)
 		/*! 20130914
 		 * MEMBLOCK_ALLOC_ACCESSIBLE = 0
-		 * end = 0xffffffff (메모리 사이즈 마지막 값)
+		 * end = arm_lowmem_limit = 0xEF800000
 		 */
 		end = memblock.current_limit;
 

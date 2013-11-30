@@ -102,6 +102,7 @@ do {								\
 #else
 # define raw_spin_lock_init(lock)				\
 	do { *(lock) = __RAW_SPIN_LOCK_UNLOCKED(lock); } while (0)
+/*! 20131130 DEBUG 안보기로 했으므로 여기 실행 */
 #endif
 
 #define raw_spin_is_locked(lock)	arch_spin_is_locked(&(lock)->raw_lock)
@@ -289,7 +290,7 @@ do {							\
 } while (0)
 /*! 20130803
  * spinlock_check: spinlock 타입이 맞는지 체크한다.
- * raw_spin_lock_init: 
+ * raw_spin_lock_init: spinlock 초기화
  */
 
 static inline void spin_lock(spinlock_t *lock)

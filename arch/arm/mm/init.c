@@ -265,7 +265,13 @@ void __init setup_dma_zone(struct machine_desc *mdesc)
 static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 	unsigned long max_high)
 {
+	/*! 20131130
+	 * min: memory 시작주소의 PFN(0x20000)
+	 * max_low: lowmem의 끝주소의 PFN, 0x4F800 (size:760M)
+	 * max_high: highmem의 끝주소의 PFN, 0xA0000
+	 */
 	unsigned long zone_size[MAX_NR_ZONES], zhole_size[MAX_NR_ZONES];
+	/*! 20131130 MAX_NR_ZONES: 3 */
 	struct memblock_region *reg;
 
 	/*
@@ -281,6 +287,7 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 	zone_size[0] = max_low - min;
 #ifdef CONFIG_HIGHMEM
 	zone_size[ZONE_HIGHMEM] = max_high - max_low;
+	/*! 20131130 highmem을 위한 zone 영역 나눔. ZONE_HIGHMEM: 1 */
 #endif
 
 	/*
@@ -289,19 +296,33 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 	 */
 	memcpy(zhole_size, zone_size, sizeof(zhole_size));
 	for_each_memblock(memory, reg) {
+	/*! 20131130
+	 * for (reg = memory.reg;			\
+	 *      reg < (memory.reg + memory.cnt);	\
+	 *      reg++)
+	 */
 		unsigned long start = memblock_region_memory_base_pfn(reg);
 		unsigned long end = memblock_region_memory_end_pfn(reg);
+		/*! 20131130 현재 가능한 공간의 시작과 끝 PFN을 start, end 에 할당 */
+		/*! 20131130
+		 * start: 0x20000, end: 0xA0000
+		 */
 
 		if (start < max_low) {
 			unsigned long low_end = min(end, max_low);
+			/*! 20131130 low_end: low_mem 의 끝주소 (0x4f800) */
 			zhole_size[0] -= low_end - start;
+			/*! 20131130 zhole_size[0]: max_low - min - (low_end - start) = 0 */
 		}
 #ifdef CONFIG_HIGHMEM
 		if (end > max_low) {
 			unsigned long high_start = max(start, max_low);
+			/*! 20131130 high_start: 0x4f800 */
 			zhole_size[ZONE_HIGHMEM] -= end - high_start;
+			/*! 20131130 zhole_size[1]: max_high - max_low - (end - high_start) = 0 */
 		}
 #endif
+		/*! 20131130 memblock 이 여러개일 경우에 for문 돌면서 hole을 찾는 것*/
 	}
 
 #ifdef CONFIG_ZONE_DMA
@@ -502,6 +523,7 @@ void __init bootmem_init(void)
 	 * sparse_init() needs the bootmem allocator up and running.
 	 */
 	sparse_init();
+	/*! 20131130 전체 메모리 공간을 section 단위로 나누어서 존재하는 section 별 메모리존재 여부 & usemap 초기화 */
 
 	/*
 	 * Now free the memory - free_area_init_node needs

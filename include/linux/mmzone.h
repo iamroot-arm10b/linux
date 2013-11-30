@@ -293,6 +293,7 @@ enum zone_type {
 	 * transfers to all addressable memory.
 	 */
 	ZONE_NORMAL,
+	/*! 20131130 ZONE_NORMAL: 0 */
 #ifdef CONFIG_HIGHMEM
 	/*
 	 * A memory area that is only addressable by the kernel through
@@ -303,9 +304,11 @@ enum zone_type {
 	 * access.
 	 */
 	ZONE_HIGHMEM,
+	/*! 20131130 ZONE_HIGHMEM: 1 */
 #endif
 	ZONE_MOVABLE,
 	__MAX_NR_ZONES
+	/*! 20131130 ZONE_MOVABLE: 2, __MAX_NR_ZONES: 3 */
 };
 
 #ifndef __GENERATING_BOUNDS_H

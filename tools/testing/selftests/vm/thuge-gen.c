@@ -47,6 +47,7 @@
 unsigned long page_sizes[NUM_PAGESIZES];
 int num_page_sizes;
 
+/*! 20131130 log2n 을 구함 */
 int ilog2(unsigned long v)
 {
 	int l = 0;

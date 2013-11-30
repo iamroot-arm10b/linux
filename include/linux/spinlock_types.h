@@ -37,11 +37,10 @@ typedef struct raw_spinlock {
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC
 # define SPIN_DEP_MAP_INIT(lockname)	.dep_map = { .name = #lockname }
-/*! 20130803
- * SPIN_DEP_MAP_INIT이 정의되어 있는 경우 초기화
- */
+/*! 20130803 SPIN_DEP_MAP_INIT이 정의되어 있는 경우 초기화 */
 #else
 # define SPIN_DEP_MAP_INIT(lockname)
+/*! 20131130 아무것도 하지 않는 것! */
 #endif
 
 #ifdef CONFIG_DEBUG_SPINLOCK

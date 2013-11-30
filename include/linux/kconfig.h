@@ -19,8 +19,11 @@
 #define __ARG_PLACEHOLDER_1 0,
 #define config_enabled(cfg) _config_enabled(cfg)
 #define _config_enabled(value) __config_enabled(__ARG_PLACEHOLDER_##value)
+/*! 20131130 value가 1인 경우: __config_enabled(0,) */
+/*! 20131130 value가 string인 경우: __config_enabled(__ARG_PLACEHOLDER_##string) */
 #define __config_enabled(arg1_or_junk) ___config_enabled(arg1_or_junk 1, 0)
 #define ___config_enabled(__ignored, val, ...) val
+/*! 20131130 val:1 */
 
 /*
  * IS_ENABLED(CONFIG_FOO) evaluates to 1 if CONFIG_FOO is set to 'y' or 'm',
@@ -29,6 +32,7 @@
  */
 #define IS_ENABLED(option) \
 	(config_enabled(option) || config_enabled(option##_MODULE))
+/*! 20131130 option이 1이므로 1 (option이 1이 아닌 경우에는 0) */
 
 /*
  * IS_BUILTIN(CONFIG_FOO) evaluates to 1 if CONFIG_FOO is set to 'y', 0

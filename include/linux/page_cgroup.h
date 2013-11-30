@@ -87,6 +87,7 @@ struct page_cgroup;
 
 static inline void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat)
 {
+	/*! 20131130 여기 실행 */
 }
 
 static inline struct page_cgroup *lookup_page_cgroup(struct page *page)

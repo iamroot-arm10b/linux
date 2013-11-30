@@ -13,8 +13,11 @@
 void __init_waitqueue_head(wait_queue_head_t *q, const char *name, struct lock_class_key *key)
 {
 	spin_lock_init(&q->lock);
+	/*! 20131130 wait_queue_head_t 의 lock변수 초기화 */
 	lockdep_set_class_and_name(&q->lock, key, name);
+	/*! 20131130 아무일도 안함 */
 	INIT_LIST_HEAD(&q->task_list);
+	/*! 20131130 list head 초기화 */
 }
 
 EXPORT_SYMBOL(__init_waitqueue_head);

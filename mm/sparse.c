@@ -249,8 +249,9 @@ unsigned long __init node_memmap_size_bytes(int nid, unsigned long start_pfn,
 static unsigned long sparse_encode_mem_map(struct page *mem_map, unsigned long pnum)
 {
 	return (unsigned long)(mem_map - (section_nr_to_pfn(pnum)));
-	/*! 20131123
-	 * to do.. mem_map-(section_nr_to_pfn(pnum)인지..
+	/*! 20131130
+	 * section_nr_to_pfn(pnum): pnum 에 대한 pfn
+	 * 0번 section을 위한 struct page의 시작주소를 구한다.
 	 */
 }
 
@@ -518,6 +519,7 @@ static struct page __init *sparse_early_mem_map_alloc(unsigned long pnum)
 
 void __attribute__((weak)) __meminit vmemmap_populate_print_last(void)
 {
+	/*! 20131130 특정 아키텍처에서 같은 이름의 함수가 있다면 이 함수를 덮어쓴다. */
 }
 
 /*
@@ -671,21 +673,24 @@ void __init sparse_init(void)
 #else
 		map = sparse_early_mem_map_alloc(pnum);
 		/*! 20131123 pnum: 2 ~ 9 */
-		/*! 20131123 pnum섹션별로 사용할 map메모리 공간을 bootmem에서 할당받는다. */
+		/*! 20131123 pnum 섹션별로 사용할 map메모리 공간을 bootmem에서 할당받는다. */
 #endif
 		if (!map)
 			continue;
 
 		sparse_init_one_section(__nr_to_section(pnum), pnum, map,
 								usemap);
+		/*! 20131130 pnum에 해당하는 mem_section 구조체의 변수값 할당 */
 	}
 
 	vmemmap_populate_print_last();
+	/*! 20131130 아무일도 안함 */
 
 #ifdef CONFIG_SPARSEMEM_ALLOC_MEM_MAP_TOGETHER
 	free_bootmem(__pa(map_map), size2);
 #endif
 	free_bootmem(__pa(usemap_map), size);
+	/*! 20131130 이중포인터로 할당된 공간을 해제한다. */
 }
 
 #ifdef CONFIG_MEMORY_HOTPLUG

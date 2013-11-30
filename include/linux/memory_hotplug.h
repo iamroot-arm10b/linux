@@ -201,6 +201,7 @@ void unlock_memory_hotplug(void);
 static inline void pgdat_resize_lock(struct pglist_data *p, unsigned long *f) {}
 static inline void pgdat_resize_unlock(struct pglist_data *p, unsigned long *f) {}
 static inline void pgdat_resize_init(struct pglist_data *pgdat) {}
+/*! 20131130 CONFIG_MEMORY_HOTPLUG=n이므로 아무일 안함 */
 
 static inline unsigned zone_span_seqbegin(struct zone *zone)
 {

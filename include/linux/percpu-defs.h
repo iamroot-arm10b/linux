@@ -79,6 +79,7 @@
 	__PCPU_ATTRS(sec) PER_CPU_DEF_ATTRIBUTES			\
 	__typeof__(type) name
 #endif
+/*! 20131130 __typeof__(type) name 를 PER CPU section에 선언한다 */
 
 /*
  * Variant on the per-CPU variable declaration/definition theme used for
@@ -89,6 +90,7 @@
 
 #define DEFINE_PER_CPU(type, name)					\
 	DEFINE_PER_CPU_SECTION(type, name, "")
+/*! 20131130 __typeof__(type) name 를 PER CPU section에 선언한다 */
 
 /*
  * Declaration/definition used for per-CPU variables that must come first in

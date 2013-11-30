@@ -1836,6 +1836,7 @@ static bool zone_allows_reclaim(struct zone *local_zone, struct zone *zone)
 
 static inline void init_zone_allows_reclaim(int nid)
 {
+	/*! 20131130 여기 실행됨 */
 }
 #endif	/* CONFIG_NUMA */
 
@@ -3634,6 +3635,7 @@ static void build_zonelist_cache(pg_data_t *pgdat)
  */
 static void setup_pageset(struct per_cpu_pageset *p, unsigned long batch);
 static DEFINE_PER_CPU(struct per_cpu_pageset, boot_pageset);
+/*! 20131130 struct per_cpu_pageset boot_pageset 이 선언됨 */
 static void setup_zone_pageset(struct zone *zone);
 
 /*
@@ -4000,11 +4002,14 @@ static int __meminit zone_batchsize(struct zone *zone)
 	 * OK, so we don't know how big the cache is.  So guess.
 	 */
 	batch = zone->managed_pages / 1024;
+	/*! 20131130 관리 페이지가 512K를 넘으면 512K로 고정 (page 단위) */
 	if (batch * PAGE_SIZE > 512 * 1024)
 		batch = (512 * 1024) / PAGE_SIZE;
 	batch /= 4;		/* We effectively *= 4 below */
+	/*! 20131130 우리는 batch가 32가 된다. */
 	if (batch < 1)
 		batch = 1;
+	/*! 20131130 최소 크기는 1 page */
 
 	/*
 	 * Clamp the batch to a 2^n - 1 value. Having a power
@@ -4017,6 +4022,7 @@ static int __meminit zone_batchsize(struct zone *zone)
 	 * and the other with pages of the other colors.
 	 */
 	batch = rounddown_pow_of_two(batch + batch/2) - 1;
+	/*! 20131130 log2n -1 의 batch 값을 구한다. */
 
 	return batch;
 
@@ -4502,7 +4508,9 @@ static inline unsigned long __meminit zone_spanned_pages_in_node(int nid,
 					unsigned long node_end_pfn,
 					unsigned long *zones_size)
 {
+	/*! 20131130 여기 실행됨 */
 	return zones_size[zone_type];
+	/*! 20131130 zone의 크기 리턴 */
 }
 
 static inline unsigned long __meminit zone_absent_pages_in_node(int nid,
@@ -4515,6 +4523,7 @@ static inline unsigned long __meminit zone_absent_pages_in_node(int nid,
 		return 0;
 
 	return zholes_size[zone_type];
+	/*! 20131130 zone hole의 크기 리턴 */
 }
 
 #endif /* CONFIG_HAVE_MEMBLOCK_NODE_MAP */
@@ -4533,6 +4542,7 @@ static void __meminit calculate_node_totalpages(struct pglist_data *pgdat,
 							 node_start_pfn,
 							 node_end_pfn,
 							 zones_size);
+	/*! 20131130 zones_size[0] + zones_size[1] = 0x2f800 + 0x50800 = 0x80000 */
 	pgdat->node_spanned_pages = totalpages;
 
 	realtotalpages = totalpages;
@@ -4541,6 +4551,7 @@ static void __meminit calculate_node_totalpages(struct pglist_data *pgdat,
 			zone_absent_pages_in_node(pgdat->node_id, i,
 						  node_start_pfn, node_end_pfn,
 						  zholes_size);
+		/*! 20131130 실제 사용가능한 page 구하기 위해 zhole의 크기를 뺀다. */
 	pgdat->node_present_pages = realtotalpages;
 	printk(KERN_DEBUG "On node %d totalpages: %lu\n", pgdat->node_id,
 							realtotalpages);
@@ -4636,9 +4647,15 @@ static unsigned long __paginginit calc_memmap_size(unsigned long spanned_pages,
 	 */
 	if (spanned_pages > present_pages + (present_pages >> 4) &&
 	    IS_ENABLED(CONFIG_SPARSEMEM))
+		/*! 20131130 IS_ENABLED(1)= 1 */
 		pages = present_pages;
 
 	return PAGE_ALIGN(pages * sizeof(struct page)) >> PAGE_SHIFT;
+	/*! 20131130
+	 * struct page 는 include/linux/mm_types.h 참고
+	 * struct page는 위에서 계산된 pages 갯수만큼 존재한다.
+	 * 계산된 pages 갯수만큼의 struct page를 만들기 위한 page 갯수를 리턴
+	 */
 }
 
 /*
@@ -4665,8 +4682,11 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 	pgdat->numabalancing_migrate_next_window = jiffies;
 #endif
 	init_waitqueue_head(&pgdat->kswapd_wait);
+	/*! 20131130 pgdat->kswapd_wait의 waitqueue 초기화 */
 	init_waitqueue_head(&pgdat->pfmemalloc_wait);
+	/*! 20131130 pgdat->pfmemalloc_wait의 waitqueue 초기화 */
 	pgdat_page_cgroup_init(pgdat);
+	/*! 20131130 CONFIG_MEMCG=n 이므로 아무일 안함 */
 
 	for (j = 0; j < MAX_NR_ZONES; j++) {
 		struct zone *zone = pgdat->node_zones + j;
@@ -4674,10 +4694,12 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 
 		size = zone_spanned_pages_in_node(nid, j, node_start_pfn,
 						  node_end_pfn, zones_size);
+		/*! 20131130 size: 현재 zone의 page의 갯수 */
 		realsize = freesize = size - zone_absent_pages_in_node(nid, j,
 								node_start_pfn,
 								node_end_pfn,
 								zholes_size);
+		/*! 20131130 현재 zone 의 실제 사용가능한 size 계산(hole 뺀 page 갯수) */
 
 		/*
 		 * Adjust freesize so that it accounts for how much memory
@@ -4685,8 +4707,10 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		 * and per-cpu initialisations
 		 */
 		memmap_pages = calc_memmap_size(size, realsize);
+		/*! 20131130 struct page를 만들기 위한 page 갯수 계산 */
 		if (freesize >= memmap_pages) {
 			freesize -= memmap_pages;
+			/*! 20131130 freesize에서 할당할 크기만큼 감소한다. */
 			if (memmap_pages)
 				printk(KERN_DEBUG
 				       "  %s zone: %lu pages used for memmap\n",
@@ -4699,15 +4723,18 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		/* Account for reserved pages */
 		if (j == 0 && freesize > dma_reserve) {
 			freesize -= dma_reserve;
+			/*! 20131130 dma_reserve: 0 */
 			printk(KERN_DEBUG "  %s zone: %lu pages reserved\n",
 					zone_names[0], dma_reserve);
 		}
 
+		/*! 20131130 nr_kernel_pages: normal zone 의 page 갯수 */
 		if (!is_highmem_idx(j))
 			nr_kernel_pages += freesize;
 		/* Charge for highmem memmap if there are enough kernel pages */
 		else if (nr_kernel_pages > memmap_pages * 2)
 			nr_kernel_pages -= memmap_pages;
+		/*! 20131130 normal zone 의 page 갯수가 memmap_pages의 2배보다 크면 normal zone에서 할당하도록 한다. */
 		nr_all_pages += freesize;
 
 		zone->spanned_pages = size;
@@ -4718,6 +4745,9 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		 * And all highmem pages will be managed by the buddy system.
 		 */
 		zone->managed_pages = is_highmem_idx(j) ? realsize : freesize;
+		/*! 20131130
+		 * highmem이면 memmap_pages를 빼지 않은 크기인 realsize를 managed_pages에 할당
+		 */
 #ifdef CONFIG_NUMA
 		zone->node = nid;
 		zone->min_unmapped_pages = (freesize*sysctl_min_unmapped_ratio)
@@ -4728,6 +4758,7 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		spin_lock_init(&zone->lock);
 		spin_lock_init(&zone->lru_lock);
 		zone_seqlock_init(zone);
+		/*! 20131130 CONFIG_MEMORY_HOTPLUG=n 이므로 아무일 안함 */
 		zone->zone_pgdat = pgdat;
 
 		zone_pcp_init(zone);
@@ -4750,6 +4781,7 @@ static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 	/* Skip empty nodes */
 	if (!pgdat->node_spanned_pages)
 		return;
+	/*! 20131130 node_spanned_pages 가 초기화 안된 경우 리턴, 설정에 따라 아무일도 안함 */
 
 #ifdef CONFIG_FLAT_NODE_MEM_MAP
 	/* ia64 gets its own node_mem_map, before this, without bootmem */
@@ -4789,7 +4821,25 @@ static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
 void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 		unsigned long node_start_pfn, unsigned long *zholes_size)
 {
+	/*! 20131130
+	 * typedef struct pglist_data {
+	 * 	struct zone node_zones[MAX_NR_ZONES];
+	 * 	struct zonelist node_zonelists[MAX_ZONELISTS];
+	 * 	int nr_zones;
+	 * 	unsigned long node_start_pfn;
+	 * 	unsigned long node_present_pages;
+	 * 	unsigned long node_spanned_pages;
+	 * 	int node_id;
+	 * 	nodemask_t reclaim_nodes;
+	 * 	wait_queue_head_t kswapd_wait;
+	 * 	wait_queue_head_t pfmemalloc_wait;
+	 * 	struct task_struct *kswapd;
+	 * 	int kswapd_max_order;
+	 * 	enum zone_type classzone_idx;
+	 * } pg_data_t;
+	 */
 	pg_data_t *pgdat = NODE_DATA(nid);
+	/*! 20131130 NODE_DATA(nid): (&contig_page_data) */
 	unsigned long start_pfn = 0;
 	unsigned long end_pfn = 0;
 
@@ -4799,13 +4849,16 @@ void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 	pgdat->node_id = nid;
 	pgdat->node_start_pfn = node_start_pfn;
 	init_zone_allows_reclaim(nid);
+	/*! 20131130 NUMA 에서만 작동함 */
 #ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP
 	get_pfn_range_for_nid(nid, &start_pfn, &end_pfn);
 #endif
 	calculate_node_totalpages(pgdat, start_pfn, end_pfn,
 				  zones_size, zholes_size);
+	/*! 20131130 사용가능한 총 page 계산 */
 
 	alloc_node_mem_map(pgdat);
+	/*! 20131130 설정에 따라 아무일도 안함 */
 #ifdef CONFIG_FLAT_NODE_MEM_MAP
 	printk(KERN_DEBUG "free_area_init_node: node %d, pgdat %08lx, node_mem_map %08lx\n",
 		nid, (unsigned long)pgdat,
