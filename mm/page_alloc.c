@@ -4759,6 +4759,7 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		spin_lock_init(&zone->lru_lock);
 		zone_seqlock_init(zone);
 		/*! 20131130 CONFIG_MEMORY_HOTPLUG=n 이므로 아무일 안함 */
+		/*! 20131130 여기까지 스터디 함 */
 		zone->zone_pgdat = pgdat;
 
 		zone_pcp_init(zone);

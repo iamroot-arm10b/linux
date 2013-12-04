@@ -1091,12 +1091,12 @@ void __init setup_arch(char **cmdline_p)
 	 * parameter에 대한 것을 처리됨( ex loglevel)
 	 */
 
-	/*! 20130907 meminfo 구조체를 memory 주소 순서대로 정렬한다. */
 	sort(&meminfo.bank, meminfo.nr_banks, sizeof(meminfo.bank[0]), meminfo_cmp, NULL);
-	/*! 20130907 memory info 영역에서 bank를 나누어 highmem 영역을 분리한다.  */
+	/*! 20130907 meminfo 구조체를 memory 주소 순서대로 정렬한다. */
 	sanity_check_meminfo();
-	/*! 20131005 커널 memblock 자료구조 초기화 (memory, reserved) */
+	/*! 20130907 memory info 영역에서 bank를 나누어 highmem 영역을 분리한다.  */
 	arm_memblock_init(&meminfo, mdesc);
+	/*! 20131005 커널 memblock 자료구조 초기화 (memory, reserved) */
 
 	paging_init(mdesc);
 	request_standard_resources(mdesc);
