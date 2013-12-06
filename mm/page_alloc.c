@@ -4021,6 +4021,7 @@ static int __meminit zone_batchsize(struct zone *zone)
 	 * of pages of one half of the possible page colors
 	 * and the other with pages of the other colors.
 	 */
+	/*! 20131130 여기 할 차례 */
 	batch = rounddown_pow_of_two(batch + batch/2) - 1;
 	/*! 20131130 log2n -1 의 batch 값을 구한다. */
 
@@ -4759,7 +4760,6 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		spin_lock_init(&zone->lru_lock);
 		zone_seqlock_init(zone);
 		/*! 20131130 CONFIG_MEMORY_HOTPLUG=n 이므로 아무일 안함 */
-		/*! 20131130 여기까지 스터디 함 */
 		zone->zone_pgdat = pgdat;
 
 		zone_pcp_init(zone);
