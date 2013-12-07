@@ -65,9 +65,11 @@
  * Hugetlb definitions.
  */
 #define HPAGE_SHIFT		PMD_SHIFT
+/*! 20131207 PHPAGE_SHIFT = MD_SHIFT = 21 */
 #define HPAGE_SIZE		(_AC(1, UL) << HPAGE_SHIFT)
 #define HPAGE_MASK		(~(HPAGE_SIZE - 1))
 #define HUGETLB_PAGE_ORDER	(HPAGE_SHIFT - PAGE_SHIFT)
+/*! 20131207 HUGETLB_PAGE_ORDER = 9 (HPAGE_SHIFT = 21, PAGE_SHIFT = 12) */
 
 /*
  * "Linux" PTE definitions for LPAE.

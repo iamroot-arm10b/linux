@@ -342,6 +342,9 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 int pfn_valid(unsigned long pfn)
 {
 	return memblock_is_memory(__pfn_to_phys(pfn));
+	/*! 20131207
+	 * pfn이 유효한지 확인
+	 */
 }
 EXPORT_SYMBOL(pfn_valid);
 #endif

@@ -92,9 +92,12 @@ void lruvec_init(struct lruvec *lruvec)
 	enum lru_list lru;
 
 	memset(lruvec, 0, sizeof(struct lruvec));
+	/*! 20131207 lruvec 초기화 */
 
+	/*! 20131207 for (lru = 0; lru < NR_LRU_LISTS; lru++) */
 	for_each_lru(lru)
 		INIT_LIST_HEAD(&lruvec->lists[lru]);
+	/*! 20131207 struct lruvec 의 list_head 초기화 */
 }
 
 #if defined(CONFIG_NUMA_BALANCING) && !defined(LAST_NID_NOT_IN_PAGE_FLAGS)

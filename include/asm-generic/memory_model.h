@@ -61,16 +61,23 @@
 	int __sec = page_to_section(__pg);			\
 	(unsigned long)(__pg - __section_mem_map_addr(__nr_to_section(__sec)));	\
 })
+/*! 20131207 page에 대한 pfn을 구한다. */
 
+/*! 20131207 여기가 실행된다.*/
 #define __pfn_to_page(pfn)				\
 ({	unsigned long __pfn = (pfn);			\
 	struct mem_section *__sec = __pfn_to_section(__pfn);	\
 	__section_mem_map_addr(__sec) + __pfn;		\
 })
+/*! 20131207
+ * __sec에 현재 pfn의 mem_section 주소가 담긴다.
+ * __sec에 해당하는 struct page 배열의 시작 주소를 return
+ */
 #endif /* CONFIG_FLATMEM/DISCONTIGMEM/SPARSEMEM */
 
 #define page_to_pfn __page_to_pfn
 #define pfn_to_page __pfn_to_page
+/*! 20131207 여기 수행*/
 
 #endif /* __ASSEMBLY__ */
 

@@ -133,6 +133,7 @@ void __init mminit_verify_pageflags_layout(void)
 void __meminit mminit_verify_page_links(struct page *page, enum zone_type zone,
 			unsigned long nid, unsigned long pfn)
 {
+	/*! 20131207 page에 설정한 nid, zone, pfn의 값을 검증. */
 	BUG_ON(page_to_nid(page) != nid);
 	BUG_ON(page_zonenum(page) != zone);
 	BUG_ON(page_to_pfn(page) != pfn);

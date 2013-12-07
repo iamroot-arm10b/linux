@@ -16,6 +16,7 @@
 #elif MAX_NR_ZONES <= 2
 #define ZONES_SHIFT 1
 #elif MAX_NR_ZONES <= 4
+/*! 20131207 MAX_NR_ZONES=3이기 때문에 ZONE_SHIFT=2이다.*/
 #define ZONES_SHIFT 2
 #else
 #error ZONES_SHIFT -- too many zones configured adjust calculation
@@ -47,14 +48,18 @@
  */
 #if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
 #define SECTIONS_WIDTH		SECTIONS_SHIFT
+/*! 20131207 SECTIONS_WIDTH = 4 */
 #else
 #define SECTIONS_WIDTH		0
 #endif
 
 #define ZONES_WIDTH		ZONES_SHIFT
+/*! 20131207 ZONES_WIDTH = 2 */
 
 #if SECTIONS_WIDTH+ZONES_WIDTH+NODES_SHIFT <= BITS_PER_LONG - NR_PAGEFLAGS
+/*! 20131207 4 + 2 + 0 <= 32 - 21 */
 #define NODES_WIDTH		NODES_SHIFT
+/*! 20131207 NODES_WIDTH = 0 */
 #else
 #ifdef CONFIG_SPARSEMEM_VMEMMAP
 #error "Vmemmap: No space for nodes field in page flags"

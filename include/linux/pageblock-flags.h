@@ -47,6 +47,7 @@ extern int pageblock_order;
 
 /* Huge pages are a constant size */
 #define pageblock_order		HUGETLB_PAGE_ORDER
+/*! 20131207 pageblock_order = 9 */
 
 #endif /* CONFIG_HUGETLB_PAGE_SIZE_VARIABLE */
 
@@ -59,6 +60,7 @@ extern int pageblock_order;
 #endif /* CONFIG_HUGETLB_PAGE */
 
 #define pageblock_nr_pages	(1UL << pageblock_order)
+/*! 20131207 pageblock_nr_pages = 512 = 1 << 9 */
 
 /* Forward declaration */
 struct page;

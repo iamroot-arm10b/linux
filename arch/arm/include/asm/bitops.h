@@ -267,14 +267,35 @@ static inline int fls(int x)
 	       return constant_fls(x);
 
 	asm("clz\t%0, %1" : "=r" (ret) : "r" (x));
+	/*! 20131207
+	 * [0 <= (clz 는 count leading zero) <= 32]
+	 * Note clz(0) = 32, clz(1) = 31, clz(0x80000000) = 0
+	 */
        	ret = 32 - ret;
 	return ret;
+	/*! 20131207
+	 * fls - find last (most-significant) bit set
+	 * Note fls(0) = 0, fls(1) = 1, fls(0x80000000) = 32.
+	 * 0번 bit(lsb)부터 찾아가며 첫번째 1이 나오는 bit
+	 */
 }
 
+/*! 20131207
+ * __ffs __fls 는 range: 0~31 이 된다.
+ * ffz = find first zero bit  (어떤 값 중 최초로 0이 되는 bit 번호를 찾음 range: 0~31)
+ * ffs = find first bit set (어떤 값 중 최초로 1이 되는 bit 번호를 찾음 range: 1~32)
+ * fls = find last bit set (어떤 값 중 최후로 1이 되는 bit 번호를 찾음 range: 1~32)
+ * ex) 0b 1000 0000 0001 0000 0000 = 0x0008 0100 (ffz = 0, ffs = 9, fls = 20)
+ */
 #define __fls(x) (fls(x) - 1)
 #define ffs(x) ({ unsigned long __t = (x); fls(__t & -__t); })
 #define __ffs(x) (ffs(x) - 1)
 #define ffz(x) __ffs( ~(x) )
+/*! 20131207
+ * ffz(x) 는 아래와 같이 치환된다.
+ * unsigned long __t = ((~x) - 1);
+ * fls(__t & -__t);
+ */
 
 #endif
 

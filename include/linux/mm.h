@@ -594,9 +594,13 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
 
 /* Page flags: | [SECTION] | [NODE] | ZONE | [LAST_NID] | ... | FLAGS | */
 #define SECTIONS_PGOFF		((sizeof(unsigned long)*8) - SECTIONS_WIDTH)
+/*! 20131207 SECTIONS_PGOFF = 32-4=28 */
 #define NODES_PGOFF		(SECTIONS_PGOFF - NODES_WIDTH)
+/*! 20131207 NODES_PGOFF = 28 - 0 = 28 */
 #define ZONES_PGOFF		(NODES_PGOFF - ZONES_WIDTH)
+/*! 20131207 ZONES_PGOFF = 28 - 2 = 26 */
 #define LAST_NID_PGOFF		(ZONES_PGOFF - LAST_NID_WIDTH)
+/*! 20131207 LAST_NID_PGOFF = 26 - 0 = 26 */
 
 /*
  * Define the bit shifts to access each section.  For non-existent
@@ -606,6 +610,7 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
 #define SECTIONS_PGSHIFT	(SECTIONS_PGOFF * (SECTIONS_WIDTH != 0))
 #define NODES_PGSHIFT		(NODES_PGOFF * (NODES_WIDTH != 0))
 #define ZONES_PGSHIFT		(ZONES_PGOFF * (ZONES_WIDTH != 0))
+/*! 20131207 ZONES_PGSHIFT = 26 * (2 != 0) = 26 * 1 = 26 */
 #define LAST_NID_PGSHIFT	(LAST_NID_PGOFF * (LAST_NID_WIDTH != 0))
 
 /* NODE:ZONE or SECTION:ZONE is used to ID a zone for the buddy allocator */
@@ -626,6 +631,7 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
 #endif
 
 #define ZONES_MASK		((1UL << ZONES_WIDTH) - 1)
+/*! 20131207 ZONES_MASK=3 (ZONES_WIDTH=2) */
 #define NODES_MASK		((1UL << NODES_WIDTH) - 1)
 #define SECTIONS_MASK		((1UL << SECTIONS_WIDTH) - 1)
 #define LAST_NID_MASK		((1UL << LAST_NID_WIDTH) - 1)
@@ -633,6 +639,7 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
 
 static inline enum zone_type page_zonenum(const struct page *page)
 {
+	/*! 20131207 page flag에서 zone 값을 가지고 와서 return */
 	return (page->flags >> ZONES_PGSHIFT) & ZONES_MASK;
 }
 
@@ -667,6 +674,7 @@ extern int page_to_nid(const struct page *page);
 #else
 static inline int page_to_nid(const struct page *page)
 {
+	/*! 20131207 page flags에서 nid값을 return */
 	return (page->flags >> NODES_PGSHIFT) & NODES_MASK;
 }
 #endif
@@ -726,24 +734,29 @@ static inline struct zone *page_zone(const struct page *page)
 #ifdef SECTION_IN_PAGE_FLAGS
 static inline void set_page_section(struct page *page, unsigned long section)
 {
+	/*! 20131207 struct page의 flags 변수에 section 값 setting */
 	page->flags &= ~(SECTIONS_MASK << SECTIONS_PGSHIFT);
 	page->flags |= (section & SECTIONS_MASK) << SECTIONS_PGSHIFT;
 }
 
 static inline unsigned long page_to_section(const struct page *page)
 {
+	/*! 20131207 struct page의 flags 변수에 section 값을 가져와서 return */
 	return (page->flags >> SECTIONS_PGSHIFT) & SECTIONS_MASK;
 }
 #endif
 
 static inline void set_page_zone(struct page *page, enum zone_type zone)
 {
+	/*! 20131207 struct page의 flags 변수에 zone 값 setting */
+	/* ZONES_MASK = 3, ZONES_PGSHIFT = 26 */
 	page->flags &= ~(ZONES_MASK << ZONES_PGSHIFT);
 	page->flags |= (zone & ZONES_MASK) << ZONES_PGSHIFT;
 }
 
 static inline void set_page_node(struct page *page, unsigned long node)
 {
+	/*! 20131207 struct page의 flags 변수에 node 값 setting */
 	page->flags &= ~(NODES_MASK << NODES_PGSHIFT);
 	page->flags |= (node & NODES_MASK) << NODES_PGSHIFT;
 }
@@ -751,6 +764,7 @@ static inline void set_page_node(struct page *page, unsigned long node)
 static inline void set_page_links(struct page *page, enum zone_type zone,
 	unsigned long node, unsigned long pfn)
 {
+	/*! 20131207 struct page의 flags 변수에 zone, node, section 값 setting */
 	set_page_zone(page, zone);
 	set_page_node(page, node);
 #ifdef SECTION_IN_PAGE_FLAGS

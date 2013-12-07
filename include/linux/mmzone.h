@@ -159,12 +159,16 @@ enum zone_stat_item {
 #define LRU_FILE 2
 
 enum lru_list {
-	LRU_INACTIVE_ANON = LRU_BASE,
-	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE,
-	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE,
-	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE,
+	LRU_INACTIVE_ANON = LRU_BASE, /*! 0 */
+	LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE, /*! 0 + 1 */
+	LRU_INACTIVE_FILE = LRU_BASE + LRU_FILE, /*! 0 + 2 */
+	LRU_ACTIVE_FILE = LRU_BASE + LRU_FILE + LRU_ACTIVE, /*! 0 + 1 + 2 */
 	LRU_UNEVICTABLE,
 	NR_LRU_LISTS
+	/*! 20131207
+	 * ANON - 익명 페이지 heap, stack 물리 메모리 영역에 할당된 page
+	 * FILE - 파일 페이지 code, data 물리 메모리 영역에 할당된 page
+	 */
 };
 
 #define for_each_lru(lru) for (lru = 0; lru < NR_LRU_LISTS; lru++)
@@ -845,6 +849,7 @@ unsigned long __init node_memmap_size_bytes(int, unsigned long, unsigned long);
  * zone_idx() returns 0 for the ZONE_DMA zone, 1 for the ZONE_NORMAL zone, etc.
  */
 #define zone_idx(zone)		((zone) - (zone)->zone_pgdat->node_zones)
+/*! 20131207 zone - zone->zone_pgdat->node_zones = 현재 zone - 처음 zone = index 나옴 */
 
 static inline int populated_zone(struct zone *zone)
 {
@@ -1176,6 +1181,7 @@ static inline struct page *__section_mem_map_addr(struct mem_section *section)
 	unsigned long map = section->section_mem_map;
 	map &= SECTION_MAP_MASK;
 	return (struct page *)map;
+	/*! 20131207 section_mem_map에 들어있는 page 구조체의 시작주소를 반환 */
 }
 
 static inline int present_section(struct mem_section *section)
@@ -1203,6 +1209,7 @@ static inline int valid_section_nr(unsigned long nr)
 static inline struct mem_section *__pfn_to_section(unsigned long pfn)
 {
 	return __nr_to_section(pfn_to_section_nr(pfn));
+	/*! 20131207 pfn이 속한 mem section 구조체 주소를 반환*/
 }
 
 #ifndef CONFIG_HAVE_ARCH_PFN_VALID
@@ -1237,6 +1244,7 @@ static inline int pfn_present(unsigned long pfn)
 #endif
 
 #define early_pfn_valid(pfn)	pfn_valid(pfn)
+/*! 20131207 pfn이 유효한지 검사 */
 void sparse_init(void);
 #else
 #define sparse_init()	do {} while (0)
@@ -1247,6 +1255,7 @@ void sparse_init(void);
 bool early_pfn_in_nid(unsigned long pfn, int nid);
 #else
 #define early_pfn_in_nid(pfn, nid)	(1)
+/*! 20131207 여기가 실행된다.*/
 #endif
 
 #ifndef early_pfn_valid

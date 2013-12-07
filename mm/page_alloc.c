@@ -3765,9 +3765,11 @@ static inline unsigned long wait_table_hash_nr_entries(unsigned long pages)
 	unsigned long size = 1;
 
 	pages /= PAGES_PER_WAITQUEUE;
+	/*! 20131207 page = page / 256 */
 
 	while (size < pages)
 		size <<= 1;
+	/*! 20131207 size = pages보다 큰 2^n 값 */
 
 	/*
 	 * Once we have dozens or even hundreds of threads sleeping
@@ -3775,8 +3777,10 @@ static inline unsigned long wait_table_hash_nr_entries(unsigned long pages)
 	 * Limit the size of the wait table to a reasonable size.
 	 */
 	size = min(size, 4096UL);
+	/*! 20131207 size는 4096 을 넘을 수 없음. */
 
 	return max(size, 4UL);
+	/*! 20131207 (4 < size < 4096) 이고 2^n 을 만족하는 size 리턴 */
 }
 #else
 /*
@@ -3810,6 +3814,11 @@ static inline unsigned long wait_table_hash_nr_entries(unsigned long pages)
 static inline unsigned long wait_table_bits(unsigned long size)
 {
 	return ffz(~size);
+	/*! 20131207
+	 * ~size 값에서 최초로 0이 되는 bit 번호를 찾음 
+	 * 즉, size 값의 0번 bit부터 최초로 1이 되는 bit 번호를 찾음
+	 * size = 0x8 0100이면 8이 return 됨.
+	 */
 }
 
 #define LONG_ALIGN(x) (((x)+(sizeof(long))-1)&~((sizeof(long))-1))
@@ -3927,8 +3936,13 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 
 	if (highest_memmap_pfn < end_pfn - 1)
 		highest_memmap_pfn = end_pfn - 1;
-
+	/*! 20131207
+	 * highest_memmap_pfn의 최대값을 갱신
+	 */
 	z = &NODE_DATA(nid)->node_zones[zone];
+	/*! 20131207
+	 * z의 현재 zone struct를 가지고 온다.
+	 */
 	for (pfn = start_pfn; pfn < end_pfn; pfn++) {
 		/*
 		 * There can be holes in boot-time mem_map[]s
@@ -3942,6 +3956,7 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 				continue;
 		}
 		page = pfn_to_page(pfn);
+		/*! 20131207 현재 pfn의 page struct의 주소를 가지고 온다.*/
 		set_page_links(page, zone, nid, pfn);
 		mminit_verify_page_links(page, zone, nid, pfn);
 		init_page_count(page);
@@ -3979,10 +3994,23 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 static void __meminit zone_init_free_lists(struct zone *zone)
 {
 	int order, t;
+	/*! 20131207
+	 * for_each_migratetype_order(order, t) 는 다음과 같이 치환된다.
+	 * MAX_ORDER = 11, MIGRATE_TYPES = 5
+	 * for (order = 0; order < MAX_ORDER; order++)
+	 *  for (type = 0; type < MIGRATE_TYPES; type++)
+	 */
 	for_each_migratetype_order(order, t) {
 		INIT_LIST_HEAD(&zone->free_area[order].free_list[t]);
 		zone->free_area[order].nr_free = 0;
 	}
+	/*! 20131207
+	 * struct free_area {
+	 *	struct list_head	free_list[MIGRATE_TYPES];
+	 *	unsigned long		nr_free;
+	 * };
+	 * 위 구조체 초기화
+	 */
 }
 
 #ifndef __HAVE_ARCH_MEMMAP_INIT
@@ -4025,6 +4053,7 @@ static int __meminit zone_batchsize(struct zone *zone)
 	batch = rounddown_pow_of_two(batch + batch/2) - 1;
 	/*! 20131130 log2n -1 의 batch 값을 구한다. */
 
+	/*! 20131207  여기부터 시작. 넘어감 */
 	return batch;
 
 #else
@@ -4163,14 +4192,21 @@ int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 	 */
 	zone->wait_table_hash_nr_entries =
 		 wait_table_hash_nr_entries(zone_size_pages);
+	/*! 20131207
+	 * (4 < size < 4096) 이고 2^n 을 만족하는 size 를 wait_table_hash_nr_entries 에 대입
+	 * waitqueue의 개수를 구함
+	 */
 	zone->wait_table_bits =
 		wait_table_bits(zone->wait_table_hash_nr_entries);
+	/*! 20131207 wait_table_hash_nr_entries 에서 1로 설정된 bit의 번호를 가져옴 */
 	alloc_size = zone->wait_table_hash_nr_entries
 					* sizeof(wait_queue_head_t);
+	/*! 20131207 각 zone에서 사용할 waitqueue를 위해 할당해야 할 memory size 계산 */
 
 	if (!slab_is_available()) {
 		zone->wait_table = (wait_queue_head_t *)
 			alloc_bootmem_node_nopanic(pgdat, alloc_size);
+		/*! 20131207 bootmem으로부터 alloc_size 만큼의 memory를 할당받는다. */
 	} else {
 		/*
 		 * This case means that a zone whose size was 0 gets new memory
@@ -4191,6 +4227,12 @@ int zone_wait_table_init(struct zone *zone, unsigned long zone_size_pages)
 		init_waitqueue_head(zone->wait_table + i);
 
 	return 0;
+	/*! 20131207
+	 * 아래 값들을 초기화한다.
+	 * zone->wait_table_hash_nr_entries : waitqueue 개수
+	 * zone->wait_table_bits : waitqueue 개수에 대응하는 bit
+	 * zone->wait_table : waitqueue 구조체들 
+	 */
 }
 
 static __meminit void zone_pcp_init(struct zone *zone)
@@ -4206,6 +4248,11 @@ static __meminit void zone_pcp_init(struct zone *zone)
 		printk(KERN_DEBUG "  %s zone: %lu pages, LIFO batch:%u\n",
 			zone->name, zone->present_pages,
 					 zone_batchsize(zone));
+	/*! 20131207
+	 * per cpu - pcp
+	 * zone->pageset 에 boot_pageset 할당 및 
+	 * batchsize 출력하고 넘어감
+	 */
 }
 
 int __meminit init_currently_empty_zone(struct zone *zone,
@@ -4216,9 +4263,11 @@ int __meminit init_currently_empty_zone(struct zone *zone,
 	struct pglist_data *pgdat = zone->zone_pgdat;
 	int ret;
 	ret = zone_wait_table_init(zone, size);
+	/*! 20131207 zone의 wait_table를 초기화한다. 초기화 성공적하면 이뤄지면 0을 리턴 */
 	if (ret)
 		return ret;
 	pgdat->nr_zones = zone_idx(zone) + 1;
+	/*! 20131207 현재 zone의 index + 1 의 값이 들어간다. */
 
 	zone->zone_start_pfn = zone_start_pfn;
 
@@ -4229,6 +4278,7 @@ int __meminit init_currently_empty_zone(struct zone *zone,
 			zone_start_pfn, (zone_start_pfn + size));
 
 	zone_init_free_lists(zone);
+	/*! 20131207 zone->free_area 배열 초기화한다. */
 
 	return 0;
 }
@@ -4593,6 +4643,7 @@ static void __init setup_usemap(struct pglist_data *pgdat,
 #else
 static inline void setup_usemap(struct pglist_data *pgdat, struct zone *zone,
 				unsigned long zone_start_pfn, unsigned long zonesize) {}
+/*! 20131207 여기실행됨 */
 #endif /* CONFIG_SPARSEMEM */
 
 #ifdef CONFIG_HUGETLB_PAGE_SIZE_VARIABLE
@@ -4763,14 +4814,23 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		zone->zone_pgdat = pgdat;
 
 		zone_pcp_init(zone);
+		/*! 20131207 batch 출력 및 zone->pageset 할당 */
 		lruvec_init(&zone->lruvec);
+		/*! 20131207 lruvec의 list_head 초기화 */
 		if (!size)
 			continue;
+		/*! 20131207
+		 * size = 현재 zone에 할당된 모든 page 개수 
+		 * 현재 zone에 page가 없다면 다음 zone을 위해 continue;
+		 */
 
 		set_pageblock_order();
+		/*! 20131207 아무것도 실행안함 */
 		setup_usemap(pgdat, zone, zone_start_pfn, size);
+		/*! 20131207 sparse config 가 y 이므로 기존에 생성한 usemap 을 그대로 사용 */
 		ret = init_currently_empty_zone(zone, zone_start_pfn,
 						size, MEMMAP_EARLY);
+		/*! 20131207 zone의 각종 변수를 초기화한다 */
 		BUG_ON(ret);
 		memmap_init(size, nid, j, zone_start_pfn);
 		zone_start_pfn += size;
