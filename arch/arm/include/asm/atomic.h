@@ -39,9 +39,7 @@
  * store exclusive to ensure that these are atomic.  We may loop
  * to ensure that the update happens.
  */
-/*!
- * ldrex, strex 명령으로 원자성을 보장한다.
- */
+/*! ldrex, strex 명령으로 원자성을 보장한다. */
 static inline void atomic_add(int i, atomic_t *v)
 {
 	unsigned long tmp;

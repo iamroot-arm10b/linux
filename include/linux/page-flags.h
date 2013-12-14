@@ -207,6 +207,12 @@ PAGEFLAG(Checked, checked)		/* Used by some filesystems */
 PAGEFLAG(Pinned, pinned) TESTSCFLAG(Pinned, pinned)	/* Xen */
 PAGEFLAG(SavePinned, savepinned);			/* Xen */
 PAGEFLAG(Reserved, reserved) __CLEARPAGEFLAG(Reserved, reserved)
+/*! 20131214
+ * static inline int PageReserved(const struct page *page){ return test_bit(PG_reserved, &page->flags); }
+ * static inline void SetPageReserved(struct page *page)  { set_bit(PG_reserved, &page->flags); }
+ * static inline void ClearPageReserved(struct page *page)	{ clear_bit(PG_reserved, &page->flags); }
+ * static inline void __ClearPageReserved(struct page *page)	{ __clear_bit(PG_reserved, &page->flags); }
+ */
 PAGEFLAG(SwapBacked, swapbacked) __CLEARPAGEFLAG(SwapBacked, swapbacked)
 
 __PAGEFLAG(SlobFree, slob_free)

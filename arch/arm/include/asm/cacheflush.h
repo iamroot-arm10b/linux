@@ -101,6 +101,20 @@
  *		- end    - virtual end address
  */
 
+ /*! 20131214 
+  * v7_flush_icache_all
+  * v7_flush_kern_cache_all
+  * v7_flush_kern_cache_louis
+  * v7_flush_user_cache_all
+  * v7_flush_user_cache_range
+  * v7_coherent_kern_range
+  * v7_coherent_user_range
+  * v7_flush_kern_dcache_area
+  * v7_dma_map_area
+  * v7_dma_unmap_area
+  * v7_dma_flush_range
+  * v7_cache_fns, . - v7_cache_fns
+  */
 struct cpu_cache_fns {
 	void (*flush_icache_all)(void);
 	void (*flush_kern_all)(void);

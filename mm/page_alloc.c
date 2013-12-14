@@ -235,6 +235,7 @@ void set_pageblock_migratetype(struct page *page, int migratetype)
 {
 
 	if (unlikely(page_group_by_mobility_disabled))
+	/*! 20131214 page_group_by_mobility_disabled 가 대부분 0 이어서 unlinkely 사용 */
 		migratetype = MIGRATE_UNMOVABLE;
 
 	set_pageblock_flags_group(page, (unsigned long)migratetype,
@@ -3950,18 +3951,29 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		 */
 		if (context == MEMMAP_EARLY) {
 			if (!early_pfn_valid(pfn))
+			/*! 20131214 pfn이 유효하지 않으면 continue */
 				continue;
 			if (!early_pfn_in_nid(pfn, nid))
+			/*! 20131214 NUMA 환경이 아니므로 early_pfn_in_nid(pfn, nid)의 define이 1 */
 				continue;
 		}
 		page = pfn_to_page(pfn);
 		/*! 20131207 현재 pfn의 page struct의 주소를 가지고 온다.*/
 		set_page_links(page, zone, nid, pfn);
+		/*! 20131214 현재 pfn의 page->flags에 zone, node, section 플래그 셋팅 */
 		mminit_verify_page_links(page, zone, nid, pfn);
+		/*! 20131214 page에 설정한 nid, zone, pfn의 값 검증 */
 		init_page_count(page);
+		/*! 20131214 page->_count 값 초기화 */
 		page_mapcount_reset(page);
+		/*! 20131214 page->_mapcount 값 초기화 */
 		page_nid_reset_last(page);
+		/*! 20131214 아무것도 하지 않음 */
 		SetPageReserved(page);
+		/*! 20131214 
+		 * void SetPageReserved(struct page *page)  { set_bit(PG_reserved, &page->flags); }
+		 * page->flags에 PG_reserved를 셋팅한다.
+		 */
 		/*
 		 * Mark the block movable so that blocks are reserved for
 		 * movable at startup. This will force kernel allocations
@@ -3979,6 +3991,13 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		if ((z->zone_start_pfn <= pfn)
 		    && (pfn < zone_end_pfn(z))
 		    && !(pfn & (pageblock_nr_pages - 1)))
+		/*! 20131214
+		 * zone_end_pfn(z): 현재 zone의 마지막 pfn번호
+		 * pfn이 현재 zone에 속하는지 && page order 안에 속해야하는 것
+		 * pageblock_nr_pages: 512
+		 * pfn이 pageblock_nr_pages로 정렬된 경우만 실행된다.
+		 * ex) pfn: 0x0, 0x200, 0x400, 0x600, .... 인 경우에 true
+		 */
 			set_pageblock_migratetype(page, MIGRATE_MOVABLE);
 		/*! 20131214
 		 * pageblock_flags에서 주어진 page에 해당하는 bit field의 MIGRATE_MOVABLE를 셋팅

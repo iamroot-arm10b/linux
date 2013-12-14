@@ -500,7 +500,7 @@ void __init bootmem_init(void)
 	max_low = max_high = 0;
 
 	/*! 20131102 
-	 * min: memory 시작주소, max_low: lowmem의 끝주소, 
+	 * min: memory 시작주소, max_low: lowmem의 끝주소에 해당하는 pfn, 
 	 * max_high: highmem의 끝주소 설정
 	 */
 	find_limits(&min, &max_low, &max_high);
@@ -543,7 +543,10 @@ void __init bootmem_init(void)
 	 * the system, not the maximum PFN.
 	 */
 	max_low_pfn = max_low - PHYS_PFN_OFFSET;
+	/*! 20131214 PHYS_PFN_OFFSET: 0x00020000 */
+	/*! 20131214 max_low_pfn: low mem에 해당하는 page의 갯수 */
 	max_pfn = max_high - PHYS_PFN_OFFSET;
+	/*! 20131214 max_pfn: highmem을 포함한 전체 page의 갯수 */
 }
 
 /*

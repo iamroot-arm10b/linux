@@ -1099,6 +1099,8 @@ void __init setup_arch(char **cmdline_p)
 	/*! 20131005 커널 memblock 자료구조 초기화 (memory, reserved) */
 
 	paging_init(mdesc);
+	/*! 20131214 lowmem, high_vector, device map, kmap_page의 page table 초기화 및 bootmem 초기화 */
+	/*! 2013/12/14 여기까지 스터디 */
 	request_standard_resources(mdesc);
 
 	if (mdesc->restart)

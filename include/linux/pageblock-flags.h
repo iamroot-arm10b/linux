@@ -47,7 +47,6 @@ extern int pageblock_order;
 
 /* Huge pages are a constant size */
 #define pageblock_order		HUGETLB_PAGE_ORDER
-/*! 20131207 pageblock_order = 9 */
 
 #endif /* CONFIG_HUGETLB_PAGE_SIZE_VARIABLE */
 

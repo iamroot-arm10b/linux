@@ -163,6 +163,7 @@ void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
 
 void __flush_dcache_page(struct address_space *mapping, struct page *page)
 {
+	/*! 20131214 다음 기회에 보기로 하고 넘어가거나 다음주에 하기로 함 */
 	/*
 	 * Writeback any data associated with the kernel mapping of this
 	 * page.  This ensures that data in the physical page is mutually
@@ -171,6 +172,9 @@ void __flush_dcache_page(struct address_space *mapping, struct page *page)
 	if (!PageHighMem(page)) {
 		size_t page_size = PAGE_SIZE << compound_order(page);
 		__cpuc_flush_dcache_area(page_address(page), page_size);
+		/*! 20131214
+		 * __cpuc_flush_dcache_area: cpu_cache.flush_kern_dcache_area -> v7_flush_kern_dcache_area
+		 */
 	} else {
 		unsigned long i;
 		if (cache_is_vipt_nonaliasing()) {

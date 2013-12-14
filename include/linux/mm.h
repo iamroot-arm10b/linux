@@ -381,6 +381,7 @@ static inline struct page *compound_head(struct page *page)
 static inline void page_mapcount_reset(struct page *page)
 {
 	atomic_set(&(page)->_mapcount, -1);
+	/*! 20131214 page->_mapcount 값을 -1로 초기화. 원자성 보장 */
 }
 
 static inline int page_mapcount(struct page *page)
@@ -432,6 +433,7 @@ static inline struct page *virt_to_head_page(const void *x)
 static inline void init_page_count(struct page *page)
 {
 	atomic_set(&page->_count, 1);
+	/*! 20131214 _count변수(사용가능 여부)를 1로 초기화. 원자성 보장 */
 }
 
 /*
@@ -608,6 +610,7 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
  * the compiler will optimise away reference to them.
  */
 #define SECTIONS_PGSHIFT	(SECTIONS_PGOFF * (SECTIONS_WIDTH != 0))
+/*! 20131214 SECTIONS_PGSHIFT:28, SECTIONS_WIDTH: 4, SECTIONS_PGOFF: 28 */
 #define NODES_PGSHIFT		(NODES_PGOFF * (NODES_WIDTH != 0))
 #define ZONES_PGSHIFT		(ZONES_PGOFF * (ZONES_WIDTH != 0))
 /*! 20131207 ZONES_PGSHIFT = 26 * (2 != 0) = 26 * 1 = 26 */
@@ -644,6 +647,7 @@ static inline enum zone_type page_zonenum(const struct page *page)
 }
 
 #if defined(CONFIG_SPARSEMEM) && !defined(CONFIG_SPARSEMEM_VMEMMAP)
+/*! 20131214 CONFIG_SPARSEMEM=y, CONFIG_SPARSEMEM_VMEMMAP=n 이므로 define 됨 */
 #define SECTION_IN_PAGE_FLAGS
 #endif
 
@@ -723,6 +727,7 @@ static inline int page_nid_last(struct page *page)
 
 static inline void page_nid_reset_last(struct page *page)
 {
+	/*! 20131214 여기실행됨 */
 }
 #endif
 
@@ -737,7 +742,10 @@ static inline void set_page_section(struct page *page, unsigned long section)
 {
 	/*! 20131207 struct page의 flags 변수에 section 값 setting */
 	page->flags &= ~(SECTIONS_MASK << SECTIONS_PGSHIFT);
+	/*! 20131214 SECTIONS_MASK: 0xF, SECTIONS_PGSHIFT: 28 => 최상위 4bit가 1 */
+	/*! 20131214 최상위 4bit를 지운다.  */
 	page->flags |= (section & SECTIONS_MASK) << SECTIONS_PGSHIFT;
+	/*! 20131214 section 의 범위를 체크해서 28bit 쉬프트하여 page->flags 에 넣어줌 */
 }
 
 static inline unsigned long page_to_section(const struct page *page)
@@ -757,7 +765,7 @@ static inline void set_page_zone(struct page *page, enum zone_type zone)
 
 static inline void set_page_node(struct page *page, unsigned long node)
 {
-	/*! 20131207 struct page의 flags 변수에 node 값 setting */
+	/*! 20131207 struct page의 flags 변수에 node 값 setting, 값은 나중에 찾기로 함 */
 	page->flags &= ~(NODES_MASK << NODES_PGSHIFT);
 	page->flags |= (node & NODES_MASK) << NODES_PGSHIFT;
 }
@@ -769,8 +777,10 @@ static inline void set_page_links(struct page *page, enum zone_type zone,
 	set_page_zone(page, zone);
 	set_page_node(page, node);
 #ifdef SECTION_IN_PAGE_FLAGS
+	/*! 20131214 여기 실행됨 */
 	set_page_section(page, pfn_to_section_nr(pfn));
 #endif
+	/*! 20131214 zone, node, section의 flag 값 셋팅 */
 }
 
 /*

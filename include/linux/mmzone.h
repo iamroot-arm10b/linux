@@ -560,6 +560,7 @@ static inline int zone_is_oom_locked(const struct zone *zone)
 static inline unsigned long zone_end_pfn(const struct zone *zone)
 {
 	return zone->zone_start_pfn + zone->spanned_pages;
+	/*! 20131214 zone->spanned_pages: zone 영역의 page 갯수. hole을 고려하지 않은 전체 갯수 */
 }
 
 static inline bool zone_spans_pfn(const struct zone *zone, unsigned long pfn)

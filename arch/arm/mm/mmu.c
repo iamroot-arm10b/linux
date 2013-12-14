@@ -1626,7 +1626,10 @@ void __init paging_init(struct machine_desc *mdesc)
 	/*! 20131102 4k 메모리 할당 */
 
 	bootmem_init();
+	/*! 20131214 bootmem, sparse, zone 초기화 */
 
 	empty_zero_page = virt_to_page(zero_page);
+	/*! 20131214 zero_page에 해당하는 page 구조체 주소를 empty_zero_page에 할당 */
 	__flush_dcache_page(NULL, empty_zero_page);
+	/*! 20131214 할당받은 영역에 대한 page data cache를 flush 한다. */
 }
