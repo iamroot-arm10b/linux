@@ -729,6 +729,7 @@ static inline void page_nid_reset_last(struct page *page)
 static inline struct zone *page_zone(const struct page *page)
 {
 	return &NODE_DATA(page_to_nid(page))->node_zones[page_zonenum(page)];
+	/*! 20131214 page 에 해당하는 zone 구조체 포인터를 반환한다. */
 }
 
 #ifdef SECTION_IN_PAGE_FLAGS

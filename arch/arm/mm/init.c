@@ -342,9 +342,7 @@ static void __init arm_bootmem_free(unsigned long min, unsigned long max_low,
 int pfn_valid(unsigned long pfn)
 {
 	return memblock_is_memory(__pfn_to_phys(pfn));
-	/*! 20131207
-	 * pfn이 유효한지 확인
-	 */
+	/*! 20131207 pfn이 유효한지 확인 */
 }
 EXPORT_SYMBOL(pfn_valid);
 #endif
@@ -534,6 +532,7 @@ void __init bootmem_init(void)
 	 * for memmap_init_zone(), otherwise all PFNs are invalid.
 	 */
 	arm_bootmem_free(min, max_low, max_high);
+	/*! 20131214 zone 구조체 초기화, zone별 page 초기화 및 사용가능으로 셋팅 */
 
 	/*
 	 * This doesn't seem to be used by the Linux memory manager any

@@ -565,6 +565,7 @@ static inline unsigned long zone_end_pfn(const struct zone *zone)
 static inline bool zone_spans_pfn(const struct zone *zone, unsigned long pfn)
 {
 	return zone->zone_start_pfn <= pfn && pfn < zone_end_pfn(zone);
+	/*! 20131214 pfn 이 zone의 시작 ~ 끝 위치에 있는지 확인한다. */
 }
 
 static inline bool zone_is_initialized(struct zone *zone)

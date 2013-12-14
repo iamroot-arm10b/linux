@@ -61,7 +61,7 @@
 	int __sec = page_to_section(__pg);			\
 	(unsigned long)(__pg - __section_mem_map_addr(__nr_to_section(__sec)));	\
 })
-/*! 20131207 page에 대한 pfn을 구한다. */
+/*! 20131207 page에 대한 pfn을 구한다. 현재위치(__pg) - 시작위치(page 구조체의 시작주소) */
 
 /*! 20131207 여기가 실행된다.*/
 #define __pfn_to_page(pfn)				\

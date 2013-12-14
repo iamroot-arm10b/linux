@@ -239,6 +239,9 @@ void set_pageblock_migratetype(struct page *page, int migratetype)
 
 	set_pageblock_flags_group(page, (unsigned long)migratetype,
 					PB_migrate, PB_migrate_end);
+	/*! 20131214
+	 * mem_section->pageblock_flags에서 주어진 page에 해당하는 bit에 대해 migratetype bit를 셋팅
+	 */
 }
 
 bool oom_killer_disabled __read_mostly;
@@ -3936,13 +3939,9 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 
 	if (highest_memmap_pfn < end_pfn - 1)
 		highest_memmap_pfn = end_pfn - 1;
-	/*! 20131207
-	 * highest_memmap_pfn의 최대값을 갱신
-	 */
+	/*! 20131207 highest_memmap_pfn의 최대값을 갱신 */
 	z = &NODE_DATA(nid)->node_zones[zone];
-	/*! 20131207
-	 * z의 현재 zone struct를 가지고 온다.
-	 */
+	/*! 20131207 z의 현재 zone struct를 가지고 온다. */
 	for (pfn = start_pfn; pfn < end_pfn; pfn++) {
 		/*
 		 * There can be holes in boot-time mem_map[]s
@@ -3981,9 +3980,14 @@ void __meminit memmap_init_zone(unsigned long size, int nid, unsigned long zone,
 		    && (pfn < zone_end_pfn(z))
 		    && !(pfn & (pageblock_nr_pages - 1)))
 			set_pageblock_migratetype(page, MIGRATE_MOVABLE);
+		/*! 20131214
+		 * pageblock_flags에서 주어진 page에 해당하는 bit field의 MIGRATE_MOVABLE를 셋팅
+		 */
 
 		INIT_LIST_HEAD(&page->lru);
+		/*! 20131214 page의 lru변수 list를 초기화한다. */
 #ifdef WANT_PAGE_VIRTUAL
+		/*! 20131214 특정 아키텍처(ARC)에서 사용한다.  */
 		/* The shift won't overflow because ZONE_NORMAL is below 4G. */
 		if (!is_highmem_idx(zone))
 			set_page_address(page, __va(pfn << PAGE_SHIFT));
@@ -4016,6 +4020,7 @@ static void __meminit zone_init_free_lists(struct zone *zone)
 #ifndef __HAVE_ARCH_MEMMAP_INIT
 #define memmap_init(size, nid, zone, start_pfn) \
 	memmap_init_zone((size), (nid), (zone), (start_pfn), MEMMAP_EARLY)
+/*! 20131214 현재zone에 속한 모든 page의 속성 설정 */
 #endif
 
 static int __meminit zone_batchsize(struct zone *zone)
@@ -4833,8 +4838,10 @@ static void __paginginit free_area_init_core(struct pglist_data *pgdat,
 		/*! 20131207 zone의 각종 변수를 초기화한다 */
 		BUG_ON(ret);
 		memmap_init(size, nid, j, zone_start_pfn);
+		/*! 20131214 현재zone에 속한 모든 page의 속성 설정 */
 		zone_start_pfn += size;
 	}
+	/*! 20131214 zone struct와 page struct 값 초기화 */
 }
 
 static void __init_refok alloc_node_mem_map(struct pglist_data *pgdat)
@@ -4928,6 +4935,7 @@ void __paginginit free_area_init_node(int nid, unsigned long *zones_size,
 
 	free_area_init_core(pgdat, start_pfn, end_pfn,
 			    zones_size, zholes_size);
+	/*! 20131214 pgdat의 zone struct와 page struct 값 초기화 */
 }
 
 #ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP
@@ -5939,6 +5947,7 @@ static inline unsigned long *get_pageblock_bitmap(struct zone *zone,
 {
 #ifdef CONFIG_SPARSEMEM
 	return __pfn_to_section(pfn)->pageblock_flags;
+	/*! 20131214 mem_section->pageblock_flags를 반환한다. */
 #else
 	return zone->pageblock_flags;
 #endif /* CONFIG_SPARSEMEM */
@@ -5948,7 +5957,10 @@ static inline int pfn_to_bitidx(struct zone *zone, unsigned long pfn)
 {
 #ifdef CONFIG_SPARSEMEM
 	pfn &= (PAGES_PER_SECTION-1);
+	/*! 20131214 하위 16bit 남김. section 내의 page 번호를 남김. */
 	return (pfn >> pageblock_order) * NR_PAGEBLOCK_BITS;
+	/*! 20131214 pageblock_order: 10, NR_PAGEBLOCK_BITS: 4 */
+	/*! 20131214 남긴 page 번호에서 pageblock 번호를 추출하여 4를 곱한다.  */
 #else
 	pfn = pfn - round_down(zone->zone_start_pfn, pageblock_nr_pages);
 	return (pfn >> pageblock_order) * NR_PAGEBLOCK_BITS;
@@ -5997,18 +6009,25 @@ void set_pageblock_flags_group(struct page *page, unsigned long flags,
 	unsigned long *bitmap;
 	unsigned long pfn, bitidx;
 	unsigned long value = 1;
+	/*! 20131214 start_bit: 0, end_bitidx: 1, flags: 2 */
 
 	zone = page_zone(page);
+	/*! 20131214 page 에 해당하는 zone 구조체 포인터를 zone에 셋팅 */
 	pfn = page_to_pfn(page);
+	/*! 20131214 page의 pfn을 가져온다. */
 	bitmap = get_pageblock_bitmap(zone, pfn);
+	/*! 20131214 mem_section->pageblock_flags를 bitmap에 셋팅 */
 	bitidx = pfn_to_bitidx(zone, pfn);
+	/*! 20131214 pfn에서 pageblock을 찾아 해당 pageblock의 usemap bit index를 가져온다. */
 	VM_BUG_ON(!zone_spans_pfn(zone, pfn));
+	/*! 20131214 pfn 이 zone의 시작 ~ 끝 위치에 있는지 검증 */
 
 	for (; start_bitidx <= end_bitidx; start_bitidx++, value <<= 1)
 		if (flags & value)
 			__set_bit(bitidx + start_bitidx, bitmap);
 		else
 			__clear_bit(bitidx + start_bitidx, bitmap);
+	/*! 20131214 1bit씩 shift하면서 bitmap을 flags에 맞추어 set/clear 한다. */
 }
 
 /*

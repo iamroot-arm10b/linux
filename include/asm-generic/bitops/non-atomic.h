@@ -14,6 +14,7 @@
  */
 static inline void __set_bit(int nr, volatile unsigned long *addr)
 {
+	/*! 20131214 __는 atomic하지 않다. */
 	unsigned long mask = BIT_MASK(nr);
 	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
 
