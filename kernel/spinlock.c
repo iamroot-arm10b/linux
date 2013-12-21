@@ -275,6 +275,7 @@ int __lockfunc _raw_write_trylock(rwlock_t *lock)
 EXPORT_SYMBOL(_raw_write_trylock);
 #endif
 
+/*! 20131221 쓰기 락(0x80000000)을 얻는다.  */
 #ifndef CONFIG_INLINE_WRITE_LOCK
 void __lockfunc _raw_write_lock(rwlock_t *lock)
 {
@@ -307,6 +308,7 @@ void __lockfunc _raw_write_lock_bh(rwlock_t *lock)
 EXPORT_SYMBOL(_raw_write_lock_bh);
 #endif
 
+/*! 20131221 write lock을 unlock 한다.  */
 #ifndef CONFIG_INLINE_WRITE_UNLOCK
 void __lockfunc _raw_write_unlock(rwlock_t *lock)
 {

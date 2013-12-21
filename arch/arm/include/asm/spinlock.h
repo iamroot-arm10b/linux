@@ -31,6 +31,7 @@
  * the assembler won't change IT instructions which are explicitly present
  * in the input.
  */
+/*! 20131221 WFE는 인터럽트 등의 이벤트 또는 sev 명령어가 실행될 때 까지 정지한다. */
 #define WFE(cond)	ALT_SMP(		\
 	"it " cond "\n\t"			\
 	"wfe" cond ".n",			\
@@ -147,11 +148,17 @@ static inline int arch_spin_is_contended(arch_spinlock_t *lock)
  * Write locks are easy - we just set bit 31.  When unlocking, we can
  * just write zero since the lock is exclusively held.
  */
-
+/*! 20131221 쓰기 락을 얻을 때까지 대기한다.
+ * 쓰기 lock을 얻으면 0x80000000 으로 lock을 획득하였다고 표시한다.
+ */
 static inline void arch_write_lock(arch_rwlock_t *rw)
 {
 	unsigned long tmp;
-
+	/* 처음 lock을 실행하는 경우 WFE는 실행되지 않고
+	 * 누군가 lock을 잡고 있으면 WFE가 실행되고
+	 * lock을 잡았던 프로세서가 sev를 날리면 실행이 재개되며
+	 * lock 획득을 시도한다.
+	 */
 	__asm__ __volatile__(
 "1:	ldrex	%0, [%1]\n"
 "	teq	%0, #0\n"
@@ -163,6 +170,7 @@ static inline void arch_write_lock(arch_rwlock_t *rw)
 	: "r" (&rw->lock), "r" (0x80000000)
 	: "cc");
 
+	/*! 20131221 메모리 읽기 쓰기 순서를 보장함  */
 	smp_mb();
 }
 
@@ -189,6 +197,7 @@ static inline int arch_write_trylock(arch_rwlock_t *rw)
 	}
 }
 
+/*! 20131221 0을 대입해 unlock한다. */
 static inline void arch_write_unlock(arch_rwlock_t *rw)
 {
 	smp_mb();
@@ -199,6 +208,9 @@ static inline void arch_write_unlock(arch_rwlock_t *rw)
 	: "r" (&rw->lock), "r" (0)
 	: "cc");
 
+	/*! 20131221 WFE로 기다리던 프로세서들을 깨어주기 위해
+	 * sev 명령어로 signal 날린다.
+	 */
 	dsb_sev();
 }
 

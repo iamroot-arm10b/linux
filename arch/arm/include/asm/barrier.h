@@ -49,6 +49,7 @@
 #define wmb()		barrier()
 #endif
 
+/*! 20131221 메모리 barrier를 친다. smp가 아니면 컴파일러 최적화만 막는다. */
 #ifndef CONFIG_SMP
 #define smp_mb()	barrier()
 #define smp_rmb()	barrier()

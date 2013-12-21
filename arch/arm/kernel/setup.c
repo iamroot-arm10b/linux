@@ -894,11 +894,25 @@ static int __init early_mem(char *p)
 	return 0;
 }
 early_param("mem", early_mem);
+/*! 20131221
+ * 일반적인 메모리 자원들을 등록한다.
+ * cat /proc/iomem 명령어로 모든 memory 리소스를 확인할수 있다.
+ */
 
 static void __init request_standard_resources(struct machine_desc *mdesc)
 {
 	struct memblock_region *region;
+	/*! 20131221 ioport.h
+	 struct resource {
+	  resource_size_t start;
+	  resource_size_t end;
+	  const char *name;
+	  unsigned long flags;
+	  struct resource *parent, *sibling, *child;
+	  };
+	 */
 	struct resource *res;
+	/*! 20131221 커널의 code, data 섹션을 m_res 배열(kernel_code)에 저장한다.  */
 
 	kernel_code.start   = virt_to_phys(_text);
 	kernel_code.end     = virt_to_phys(_etext - 1);
@@ -906,14 +920,19 @@ static void __init request_standard_resources(struct machine_desc *mdesc)
 	kernel_data.end     = virt_to_phys(_end - 1);
 
 	for_each_memblock(memory, region) {
+		/*! 20131221 io 자원 관리를 위한 메모리를 할당해서 주소와 속성을 입력한다. */
 		res = alloc_bootmem_low(sizeof(*res));
 		res->name  = "System RAM";
 		res->start = __pfn_to_phys(memblock_region_memory_base_pfn(region));
 		res->end = __pfn_to_phys(memblock_region_memory_end_pfn(region)) - 1;
 		res->flags = IORESOURCE_MEM | IORESOURCE_BUSY;
 
+		/*! 20131221 iomem_resource에 자식으로 res를 등록한다. */
 		request_resource(&iomem_resource, res);
 
+		/*! 20131221 해당 memory block에 kernel code, data 영역이 포함되면
+		 * 자식으로 추가한다.
+		 */
 		if (kernel_code.start >= res->start &&
 		    kernel_code.end <= res->end)
 			request_resource(res, &kernel_code);
@@ -921,7 +940,7 @@ static void __init request_standard_resources(struct machine_desc *mdesc)
 		    kernel_data.end <= res->end)
 			request_resource(res, &kernel_data);
 	}
-
+	/*! 20131221 video 영역이 있는경우 iomem_resource의 자식으로 등록한다. */
 	if (mdesc->video_start) {
 		video_ram.start = mdesc->video_start;
 		video_ram.end   = mdesc->video_end;
@@ -932,6 +951,7 @@ static void __init request_standard_resources(struct machine_desc *mdesc)
 	 * Some machines don't have the possibility of ever
 	 * possessing lp0, lp1 or lp2
 	 */
+	/*! 20131221 프린터(lp) 영역이 있으면 등록 */
 	if (mdesc->reserve_lp0)
 		request_resource(&ioport_resource, &lp0);
 	if (mdesc->reserve_lp1)
@@ -1100,7 +1120,7 @@ void __init setup_arch(char **cmdline_p)
 
 	paging_init(mdesc);
 	/*! 20131214 lowmem, high_vector, device map, kmap_page의 page table 초기화 및 bootmem 초기화 */
-	/*! 2013/12/14 여기까지 스터디 */
+	/*! 2013/12/14 memblock 기반으로 메모리 자원들을 등록 */
 	request_standard_resources(mdesc);
 
 	if (mdesc->restart)

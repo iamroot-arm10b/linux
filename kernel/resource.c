@@ -194,6 +194,9 @@ static struct resource *alloc_resource(gfp_t flags)
 	return res;
 }
 
+/*! 20131221 resource를 알맞은 위치에 대입하고 성공시 NULL을 반환한다.
+ * child 들은 주소의 오름차순대로 정렬된다.
+ */
 /* Return the conflict entry if you can't request it */
 static struct resource * __request_resource(struct resource *root, struct resource *new)
 {
@@ -201,24 +204,34 @@ static struct resource * __request_resource(struct resource *root, struct resour
 	resource_size_t end = new->end;
 	struct resource *tmp, **p;
 
+	/*! 20131221 root의 영역 안에 속하지 않거나 영역이 잘못된 경우
+	 * conflict 되었다는 표시로 root를 반환한다.
+	 */
 	if (end < start)
 		return root;
 	if (start < root->start)
 		return root;
 	if (end > root->end)
 		return root;
+	/*! 20131221 resource의 자식들을 탐색하기 위해 첫번째 자식을 대입  */
 	p = &root->child;
 	for (;;) {
 		tmp = *p;
+		/*! 20131221 끝(NULL)이거나 삽입할 영역을 지나쳤으면 */
 		if (!tmp || tmp->start > end) {
+			/*! 20131221 적절한 위치를 만났으면 대입한다.  */
 			new->sibling = tmp;
 			*p = new;
 			new->parent = root;
+			/*! 20131221 성공시 NULL */
 			return NULL;
 		}
+		/*! 20131221 다음 sibling node를 탐색 시도 */
 		p = &tmp->sibling;
+		/*! 20131221 아직 지나치지 않은 경우 계속 탐색  */
 		if (tmp->end < start)
 			continue;
+		/*! 20131221 주소가 겹치면 conflict로 tmp를 반환  */
 		return tmp;
 	}
 }
@@ -279,11 +292,13 @@ void release_child_resources(struct resource *r)
  *
  * Returns 0 for success, conflict resource on error.
  */
+/*! 20131221 root에 자식으로 new를 추가 시도. 성공시 0. 쓰기 lock으로 보호 */
 struct resource *request_resource_conflict(struct resource *root, struct resource *new)
 {
 	struct resource *conflict;
 
 	write_lock(&resource_lock);
+	/*! 20131221 root에 자식으로 new를 삽입 시도  */
 	conflict = __request_resource(root, new);
 	write_unlock(&resource_lock);
 	return conflict;
@@ -300,7 +315,9 @@ int request_resource(struct resource *root, struct resource *new)
 {
 	struct resource *conflict;
 
+	/*! 20131221 resource를 삽입  */
 	conflict = request_resource_conflict(root, new);
+	/*! 20131221 new 추가가 실패한 경우 -EBUSY 리턴 */
 	return conflict ? -EBUSY : 0;
 }
 

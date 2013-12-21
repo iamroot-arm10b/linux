@@ -150,15 +150,24 @@ int of_fdt_match(struct boot_param_header *blob, unsigned long node,
 	return score;
 }
 
+/*! 20131221
+ * mem을 align한 주소를 반환하고 mem을 size만큼 증가시킨다.
+ */
 static void *unflatten_dt_alloc(unsigned long *mem, unsigned long size,
 				       unsigned long align)
 {
 	void *res;
 
+	/*! 20131221 시작 주소를 align 한다.
+	 * (mem + (align-1)) & ~(align-1)
+	 */
 	*mem = ALIGN(*mem, align);
+	/*! 20131221 res는 정렬된 시작주소를 의미한다.  */
 	res = (void *)*mem;
+	/*! 20131221 mem을 크기만큼 증가시킨다. */
 	*mem += size;
 
+	/*! 20131221 시작주소 반환 */
 	return res;
 }
 
@@ -171,6 +180,25 @@ static void *unflatten_dt_alloc(unsigned long *mem, unsigned long size,
  * @allnextpp: pointer to ->allnext from last allocated device_node
  * @fpsize: Size of the node path up at the current depth.
  */
+/*! 20131221 booting-without-of.txt 의 DTB structure block 참조
+    Here's the basic structure of a single node:
+
+     * token OF_DT_BEGIN_NODE (that is 0x00000001)
+     * for version 1 to 3, this is the node full path as a zero
+       terminated string, starting with "/". For version 16 and later,
+       this is the node unit name only (or an empty string for the
+       root node)
+     * [align gap to next 4 bytes boundary]
+     * for each property:  
+        * token OF_DT_PROP (that is 0x00000003)
+        * 32-bit value of property value size in bytes (or 0 if no
+          value)
+        * 32-bit value of offset in string block of property name
+        * property value data if any
+        * [align gap to next 4 bytes boundary]
+     * [child nodes if any]
+     * token OF_DT_END_NODE (that is 0x00000002)
+     */
 static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 				unsigned long mem,
 				unsigned long *p,
@@ -201,6 +229,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 	 * it later. We detect this because the first character of the name is
 	 * not '/'.
 	 */
+	/*! 20131221 full path size를 구하기 위한 루틴 */
 	if ((*pathp) != '/') {
 		new_format = 1;
 		if (fpsize == 0) {
@@ -221,18 +250,23 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			allocl = fpsize;
 		}
 	}
+	/*! 20131221 name 크기(allocl)는 가변적이라 device node 크기에 더해준다.  */
 
 	np = unflatten_dt_alloc(&mem, sizeof(struct device_node) + allocl,
 				__alignof__(struct device_node));
 	if (allnextpp) {
 		char *fn;
 		memset(np, 0, sizeof(*np));
+		/*! 20131221 device_node 뒤쪽에 위치할 fullname string의 위치  */
 		np->full_name = fn = ((char *)np) + sizeof(*np);
+		/*! 20131221 기존에 full path가 없는 경우 만들어준다. */
 		if (new_format) {
 			/* rebuild full path for new format */
 			if (dad && dad->parent) {
+				/*! 20131221 부모의 full name을 먼저 복사한다. */
 				strcpy(fn, dad->full_name);
 #ifdef DEBUG
+				/*! 20131221 디버깅용, 이름 크기가 일치하지 않으면 출력 */
 				if ((strlen(fn) + l + 1) != allocl) {
 					pr_debug("%s: p: %d, l: %d, a: %d\n",
 						pathp, (int)strlen(fn),
@@ -241,20 +275,26 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 #endif
 				fn += strlen(fn);
 			}
+			/*! 20131221 마지막에는 구분자 '/'를 더해준다. */
 			*(fn++) = '/';
 		}
+		/*! 20131221 부모의 full name에 현재 path를 복사  */
 		memcpy(fn, pathp, l);
 
 		prev_pp = &np->properties;
 		**allnextpp = np;
 		*allnextpp = &np->allnext;
 		if (dad != NULL) {
+			/*! 20131221 부모가 있으면 연결  */
 			np->parent = dad;
 			/* we temporarily use the next field as `last_child'*/
+			/*! 20131221 child는 첫번째 자식을 가리킨다. */
 			if (dad->next == NULL)
 				dad->child = np;
 			else
+				/*! 20131221 child가 있을 경우 child끼리 sibling으로 연결  */
 				dad->next->sibling = np;
+			/*! 20131221 마지막 child?? */
 			dad->next = np;
 		}
 		kref_init(&np->kref);
@@ -269,15 +309,19 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			*p += 4;
 			continue;
 		}
+		/*! 20131221 DTB의 structure block은 처음에 properties가 온다.  */
 		if (tag != OF_DT_PROP)
 			break;
 		*p += 4;
+		/*! 20131221 사이즈와 string offset을 얻어옴  */
 		sz = be32_to_cpup((__be32 *)(*p));
 		noff = be32_to_cpup((__be32 *)((*p) + 4));
 		*p += 8;
+		/*! 20131221 version이 16미만이면 pointer를 8 또는 4로 align한다. */
 		if (be32_to_cpu(blob->version) < 0x10)
 			*p = ALIGN(*p, sz >= 8 ? 8 : 4);
 
+		/*! 20131221 path string의 주소를 얻는다.  */
 		pname = of_fdt_get_string(blob, noff);
 		if (pname == NULL) {
 			pr_info("Can't find property name in list !\n");
@@ -286,6 +330,10 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 		if (strcmp(pname, "name") == 0)
 			has_name = 1;
 		l = strlen(pname) + 1;
+		/*! 20131221 mem의 시작주소를 property로 align해 pp에 할당하고
+		 * mem을 property 크기만큼 증가시킨다.
+		 * 정보를 저장할 property 구조체 공간을 확보한다.
+		 */
 		pp = unflatten_dt_alloc(&mem, sizeof(struct property),
 					__alignof__(struct property));
 		if (allnextpp) {
@@ -294,6 +342,7 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			 * legacy "linux,phandle" properties.  If both
 			 * appear and have different values, things
 			 * will get weird.  Don't do that. */
+			/*! 20131221 phandle이 존재하면 해당 device node 블럭에 대입한다.  */
 			if ((strcmp(pname, "phandle") == 0) ||
 			    (strcmp(pname, "linux,phandle") == 0)) {
 				if (np->phandle == 0)
@@ -304,10 +353,13 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 			 * stuff */
 			if (strcmp(pname, "ibm,phandle") == 0)
 				np->phandle = be32_to_cpup((__be32 *)*p);
+			/*! 20131221 property 구조체의 정보들을 대입 */
 			pp->name = pname;
 			pp->length = sz;
 			pp->value = (void *)*p;
+			/*! 20131221 device node에 property 구조체를 연결한다. */
 			*prev_pp = pp;
+			/*! 20131221 다음 property를 연결할 주소  */
 			prev_pp = &pp->next;
 		}
 		*p = ALIGN((*p) + sz, 4);
@@ -315,10 +367,12 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 	/* with version 0x10 we may not have the name property, recreate
 	 * it here from the unit name if absent
 	 */
+	/*! 20131221 DTB에 "name" property가 없을 경우 만들어준다.  */
 	if (!has_name) {
 		char *p1 = pathp, *ps = pathp, *pa = NULL;
 		int sz;
 
+		/*! 20131221 '@' '/'의 마지막 위치를 저장해둔다.  */
 		while (*p1) {
 			if ((*p1) == '@')
 				pa = p1;
@@ -326,18 +380,23 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 				ps = p1 + 1;
 			p1++;
 		}
+		/*! 20131221 @ 위치가 /보다 앞에 있으면 끝 주소를 대입 (예외처리) */
 		if (pa < ps)
 			pa = p1;
+		/*! 20131221 sz = 마지막 /와 @ 사이의 크기  */
 		sz = (pa - ps) + 1;
 		pp = unflatten_dt_alloc(&mem, sizeof(struct property) + sz,
 					__alignof__(struct property));
 		if (allnextpp) {
 			pp->name = "name";
 			pp->length = sz;
+			/*! 20131221 pp->value는 string 위치를 가리킨다. */
 			pp->value = pp + 1;
 			*prev_pp = pp;
 			prev_pp = &pp->next;
+			/*! 20131221 '/', '@' 제외한 이름만 복사  */
 			memcpy(pp->value, ps, sz - 1);
+			/*! 20131221 string의 끝은 null로 끝는다. */
 			((char *)pp->value)[sz - 1] = 0;
 			pr_debug("fixed up name for %s -> %s\n", pathp,
 				(char *)pp->value);
@@ -345,9 +404,11 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 	}
 	if (allnextpp) {
 		*prev_pp = NULL;
+		/*! 20131221 name과 device_type 속성의 value(주소)를 가져와 device node에 대입 */
 		np->name = of_get_property(np, "name", NULL);
 		np->type = of_get_property(np, "device_type", NULL);
 
+		/*! 20131221 없으면 "<NULL>" 문자열을 대입 */
 		if (!np->name)
 			np->name = "<NULL>";
 		if (!np->type)
@@ -357,10 +418,12 @@ static unsigned long unflatten_dt_node(struct boot_param_header *blob,
 		if (tag == OF_DT_NOP)
 			*p += 4;
 		else
+			/*! 20131221 block 내부에 BEGIN NODE가 있을 경우 재귀적으로 호출  */
 			mem = unflatten_dt_node(blob, mem, p, np, allnextpp,
 						fpsize);
 		tag = be32_to_cpup((__be32 *)(*p));
 	}
+	/*! 20131221 END NODE 확인  */
 	if (tag != OF_DT_END_NODE) {
 		pr_err("Weird tag at end of node: %x\n", tag);
 		return mem;
@@ -408,22 +471,31 @@ static void __unflatten_device_tree(struct boot_param_header *blob,
 	/* First pass, scan for size */
 	start = ((unsigned long)blob) +
 		be32_to_cpu(blob->off_dt_struct);
+	/*! 20131221 DTB를 위한 구조체 크기를 얻는다.  */
 	size = unflatten_dt_node(blob, 0, &start, NULL, NULL, 0);
+	/*! 20131221 4-bytes align  */
 	size = (size | 3) + 1;
 
 	pr_debug("  size is %lx, allocating...\n", size);
 
 	/* Allocate memory for the expanded device tree */
+	/*! 20131221 얻어온 크기+4 만큼 메모리 alloc 함수를 통해 공간 확보
+	 * magic number(deadbeef)를 넣기 위해 크기에 4를 더한다.
+	 */
 	mem = (unsigned long)
 		dt_alloc(size + 4, __alignof__(struct device_node));
 
 	memset((void *)mem, 0, size);
 
+	/*! 20131221 mem의 끝에 매직넘버 삽입  */
 	((__be32 *)mem)[size / 4] = cpu_to_be32(0xdeadbeef);
 
 	pr_debug("  unflattening %lx...\n", mem);
 
 	/* Second pass, do actual unflattening */
+	/*! 20131221 첫번째는 크기만 얻어오고
+	 * 두번째 실행으로 실제로 DTB를 파싱해 넣는다.
+	 */
 	start = ((unsigned long)blob) +
 		be32_to_cpu(blob->off_dt_struct);
 	unflatten_dt_node(blob, mem, &start, NULL, &allnextp, 0);
@@ -432,6 +504,7 @@ static void __unflatten_device_tree(struct boot_param_header *blob,
 	if (be32_to_cpu(((__be32 *)mem)[size / 4]) != 0xdeadbeef)
 		pr_warning("End of tree marker overwritten: %08x\n",
 			   be32_to_cpu(((__be32 *)mem)[size / 4]));
+	/*! 20131221 선형적으로 연결된 allnext의 마지막 device node->allnext는 NULL이다. */
 	*allnextp = NULL;
 
 	pr_debug(" <- unflatten_device_tree()\n");
@@ -817,9 +890,11 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
  */
 void __init unflatten_device_tree(void)
 {
+	/*! 20131221 DTB를 파싱해서 of_allnodes에 device node들을 저장한다.  */
 	__unflatten_device_tree(initial_boot_params, &of_allnodes,
 				early_init_dt_alloc_memory_arch);
 
+	/*! 20131221 오늘은 여기까지  */
 	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */
 	of_alias_scan(early_init_dt_alloc_memory_arch);
 }

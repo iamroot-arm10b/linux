@@ -230,6 +230,7 @@ static inline unsigned long memblock_region_reserved_end_pfn(const struct memblo
 	return PFN_UP(reg->base + reg->size);
 }
 
+/*! 20131221 memblock type(reserved, memory)에서 블럭들을 region에 하나씩 읽어온다.  */
 #define for_each_memblock(memblock_type, region)					\
 	for (region = memblock.memblock_type.regions;				\
 	     region < (memblock.memblock_type.regions + memblock.memblock_type.cnt);	\

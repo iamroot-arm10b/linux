@@ -17,10 +17,11 @@
 # define add_preempt_count(val)	do { preempt_count() += (val); } while (0)
 # define sub_preempt_count(val)	do { preempt_count() -= (val); } while (0)
 #endif
-
+/* preempt count를 1 증가 */
 #define inc_preempt_count() add_preempt_count(1)
 #define dec_preempt_count() sub_preempt_count(1)
 
+/*! 20131221 현재 thread_info의 preempt_count 변수를 반환  */
 #define preempt_count()	(current_thread_info()->preempt_count)
 
 #ifdef CONFIG_PREEMPT
@@ -57,19 +58,21 @@ do { \
 
 
 #ifdef CONFIG_PREEMPT_COUNT
-
+/* 20131221 preempt count를 증가시켜 disable 시킨다. */
 #define preempt_disable() \
 do { \
 	inc_preempt_count(); \
 	barrier(); \
 } while (0)
 
+/*! 20131221 preempt count를 감소시켜 0이 되면 enable 된다.  */
 #define sched_preempt_enable_no_resched() \
 do { \
 	barrier(); \
 	dec_preempt_count(); \
 } while (0)
 
+/*! 20131221 preempt count를 감소한다. */
 #define preempt_enable_no_resched()	sched_preempt_enable_no_resched()
 
 #define preempt_enable() \

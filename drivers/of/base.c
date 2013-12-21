@@ -147,6 +147,7 @@ void of_node_put(struct device_node *node)
 EXPORT_SYMBOL(of_node_put);
 #endif /* CONFIG_OF_DYNAMIC */
 
+/*! 20131221 np property에서 name에 해당하는 속성이 있는지 찾는다. lenp에 크기를 넘긴다.  */
 static struct property *__of_find_property(const struct device_node *np,
 					   const char *name, int *lenp)
 {
@@ -166,6 +167,7 @@ static struct property *__of_find_property(const struct device_node *np,
 	return pp;
 }
 
+/*! 20131221 property를 찾는다.  */
 struct property *of_find_property(const struct device_node *np,
 				  const char *name,
 				  int *lenp)

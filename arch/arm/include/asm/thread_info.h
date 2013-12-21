@@ -74,6 +74,7 @@ struct thread_info {
 	struct restart_block	restart_block;
 };
 
+/*! 20131221 thread info를 초기화 한다. 이 영역은 스택의 낮은 주소에 있다. */
 #define INIT_THREAD_INFO(tsk)						\
 {									\
 	.task		= &tsk,						\
@@ -96,10 +97,11 @@ struct thread_info {
  * how to get the thread information struct from C
  */
 static inline struct thread_info *current_thread_info(void) __attribute_const__;
-
+/* 현재 thread의 thread_info의 주소를 반환한다.  */
 static inline struct thread_info *current_thread_info(void)
 {
 	register unsigned long sp asm ("sp");
+	/*! 20131221 스택의 낮은 주소는 thread_info 사용을 위해 예약되어 있다. */
 	return (struct thread_info *)(sp & ~(THREAD_SIZE - 1));
 }
 

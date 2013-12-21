@@ -205,20 +205,26 @@ static inline void __raw_write_lock_bh(rwlock_t *lock)
 	rwlock_acquire(&lock->dep_map, 0, 0, _RET_IP_);
 	LOCK_CONTENDED(lock, do_raw_write_trylock, do_raw_write_lock);
 }
-
+/* write를 위한 lock을 얻는다. */
 static inline void __raw_write_lock(rwlock_t *lock)
 {
+	/*! 20131221 선점 금지  */
 	preempt_disable();
+	/*! 20131221 lock dependency를 위한 tracing 함수  */
 	rwlock_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+	/*! 20131221 do_raw_write_lock 함수에 의해 lock을 획득 */
 	LOCK_CONTENDED(lock, do_raw_write_trylock, do_raw_write_lock);
 }
 
 #endif /* CONFIG_PREEMPT */
-
+/*! 20131221 쓰기 lock을 unlock한다.  */
 static inline void __raw_write_unlock(rwlock_t *lock)
 {
+	/*! 20131221 lockdep 관련  */
 	rwlock_release(&lock->dep_map, 1, _RET_IP_);
+	/*! 20131221 lock을 release(0) 한다.  */
 	do_raw_write_unlock(lock);
+	/*! 20131221 선점 허용 */
 	preempt_enable();
 }
 
