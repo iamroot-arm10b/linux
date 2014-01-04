@@ -8,8 +8,11 @@
 
 #if __LINUX_ARM_ARCH__ >= 7 ||		\
 	(__LINUX_ARM_ARCH__ == 6 && defined(CONFIG_CPU_32v6K))
+/*! 20140104 sev가 발생하면 wfe로 기다리던 것이 깨어난다. */
 #define sev()	__asm__ __volatile__ ("sev" : : : "memory")
+/*! 20140104 arm 코어가 event를 받을 때까지 sleep됨 irq/frq 포함 sev명령어가 발생하면 깨어남 */
 #define wfe()	__asm__ __volatile__ ("wfe" : : : "memory")
+/*! 20140104 arm 코어가 interrupt를 받을 때까지 sleep됨 irq/frq 받는 경우 깨어남 */
 #define wfi()	__asm__ __volatile__ ("wfi" : : : "memory")
 #endif
 
@@ -55,6 +58,7 @@
 #define smp_rmb()	barrier()
 #define smp_wmb()	barrier()
 #else
+/*! 20140104 data memory barrier:쓰기 순서를 보장함 */
 #define smp_mb()	dmb()
 #define smp_rmb()	dmb()
 #define smp_wmb()	dmb()

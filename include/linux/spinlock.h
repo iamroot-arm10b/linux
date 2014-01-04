@@ -152,7 +152,12 @@ static inline void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock)
 static inline void
 do_raw_spin_lock_flags(raw_spinlock_t *lock, unsigned long *flags) __acquires(lock)
 {
+	/*! 20140104 
+	 * 정적분석을 위한 sparse tool 에서 사용하기 위한 함수. 무시하자.
+	 * http://pinocc.tistory.com/144 참고
+	 */
 	__acquire(lock);
+	/*! 20140104 spinlock 을 획득할때까지 대기하여 spinlock 획득 */
 	arch_spin_lock_flags(&lock->raw_lock, *flags);
 }
 
@@ -194,6 +199,10 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 
 #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 
+/*! 20140104 
+ * typecheck => flag의 type이 첫번째 자료형과 다르면 Error / Compiler에서 체크함
+ * cpsr의 irq 정보를 가져오고 interrupt를 disable하며, spinlock을 획득한다.
+ */
 #define raw_spin_lock_irqsave(lock, flags)			\
 	do {						\
 		typecheck(unsigned long, flags);	\
@@ -232,6 +241,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 #define raw_spin_unlock(lock)		_raw_spin_unlock(lock)
 #define raw_spin_unlock_irq(lock)	_raw_spin_unlock_irq(lock)
 
+/*! 20140104 irq enable / cpsr의 irq info flag 원복 / spinlock 릴리즈 */
 #define raw_spin_unlock_irqrestore(lock, flags)		\
 	do {							\
 		typecheck(unsigned long, flags);		\

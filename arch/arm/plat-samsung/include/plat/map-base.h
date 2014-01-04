@@ -26,6 +26,7 @@
 #define S3C_ADDR_BASE	0xF6000000
 
 #ifndef __ASSEMBLY__
+/*! 20140104 S3C_ADDR(x) = 0xF6000000 + x */
 #define S3C_ADDR(x)	((void __iomem __force *)S3C_ADDR_BASE + (x))
 #else
 #define S3C_ADDR(x)	(S3C_ADDR_BASE + (x))

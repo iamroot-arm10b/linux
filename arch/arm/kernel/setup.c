@@ -602,7 +602,17 @@ static void __init smp_build_mpidr_hash(void)
 	 * Pre-scan the list of MPIDRS and filter out bits that do
 	 * not contribute to affinity levels, ie they never toggle.
 	 */
+	/*! 20140104 for_each_possible_cpu(cpu=i) ->
+	 * for_each_cpu((cpu), cpu_possible_mask)
+	 * cpu_possible_mask = cpu_possible_bits
+	 */
+	/*! 20140104 for_each_cpu(cpu = i, mask = cpu_possible_bits) -> 
+	 * for ((cpu) = -1;
+	 *	(cpu) = cpumask_next((cpu), (mask)),
+	 *	(cpu) < nr_cpu_ids;)
+	 */
 	for_each_possible_cpu(i)
+	/*! 20140104 여기까지 봄 다음부턴 616 Line부터 확인할 것 */
 		mask |= (cpu_logical_map(i) ^ cpu_logical_map(0));
 	pr_debug("mask of set bits 0x%x\n", mask);
 	/*
@@ -1126,18 +1136,43 @@ void __init setup_arch(char **cmdline_p)
 	if (mdesc->restart)
 		arm_pm_restart = mdesc->restart;
 
+	/*! 20140104
+	 * dtb의 내용을 기반으로 device node 자료구조 생성 및 초기화
+	 * 생성된 device node 자료구조를 기반으로 chosen & aliases 프로퍼티에 대한 정보 가공
+	 */
 	unflatten_device_tree();
 
+	/*! 20140104 __cpu_logical_map 초기화 */
 	arm_dt_init_cpu_maps();
+	/*! 20140104 아무 작업 안함 */
 	psci_init();
 #ifdef CONFIG_SMP
 	if (is_smp()) {
+		/*! 20140104 mdesc->smp_init이 없으므로 if문 안쪽으로 진입 */
 		if (!mdesc->smp_init || !mdesc->smp_init()) {
+			/*! 20140104 psci feature disable 되어있음 */
 			if (psci_smp_available())
 				smp_set_ops(&psci_smp_ops);
 			else if (mdesc->smp)
+				/*! 20140104 
+				 * .smp = smp_ops(exynos_smp_ops)
+				 * .smp = &exynos_smp_ops
+				 *
+				 * struct smp_operations exynos_smp_ops __initdata = {
+				 * 	.smp_init_cpus		= exynos_smp_init_cpus,
+				 * 	.smp_prepare_cpus	= exynos_smp_prepare_cpus,
+				 * 	.smp_secondary_init	= exynos_secondary_init,
+				 * 	.smp_boot_secondary	= exynos_boot_secondary,
+				 * 	.cpu_die		= exynos_cpu_die,
+				 * };
+				 *
+				 * arch/arm/mach-exynos/platsmp.c 참고 */
 				smp_set_ops(mdesc->smp);
 		}
+		/*! 20140104 
+		 * exynos_smp_init_cpus 실행됨
+		 * 해당 함수는 ARM_CPU_PART_CORTEX_A9인 경우가 아니면 아무동작안함
+		 */
 		smp_init_cpus();
 		smp_build_mpidr_hash();
 	}

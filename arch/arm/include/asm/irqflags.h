@@ -20,6 +20,7 @@
 
 #if __LINUX_ARM_ARCH__ >= 6
 
+/*! 20140104 cpsr에 interrupt(irq) 관련된 bit를 가져오고 irq disable */
 static inline unsigned long arch_local_irq_save(void)
 {
 	unsigned long flags;
@@ -28,6 +29,7 @@ static inline unsigned long arch_local_irq_save(void)
 		"	mrs	%0, " IRQMASK_REG_NAME_R "	@ arch_local_irq_save\n"
 		"	cpsid	i"
 		: "=r" (flags) : : "memory", "cc");
+	/*! 20140104 cps[id/ie] [i/f/a] = change processor state interrupt enable / disable [irq/frq/abort] */
 	return flags;
 }
 

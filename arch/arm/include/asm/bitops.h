@@ -202,6 +202,10 @@ extern int _find_next_bit_be(const unsigned long *p, int size, int offset);
 #define find_first_zero_bit(p,sz)	_find_first_zero_bit_le(p,sz)
 #define find_next_zero_bit(p,sz,off)	_find_next_zero_bit_le(p,sz,off)
 #define find_first_bit(p,sz)		_find_first_bit_le(p,sz)
+/*! 20140104 
+ * 여기 실행됨 arch/arm/lib/findbit.S 파일 참고
+ * p 주소부터 sz 크기 안에서 p[off] 이후에 1이 되어있는 offset 값을 반환한다.
+ */
 #define find_next_bit(p,sz,off)		_find_next_bit_le(p,sz,off)
 
 #else

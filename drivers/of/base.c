@@ -401,12 +401,16 @@ struct device_node *of_get_next_child(const struct device_node *node,
 	struct device_node *next;
 	unsigned long flags;
 
+	/*! 20140104 spinlock 획득 */
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	next = prev ? prev->sibling : node->child;
+	/*! 20140104 device node에서 같은 level은 sibling으로 되어 있음 */
 	for (; next; next = next->sibling)
 		if (of_node_get(next))
 			break;
+	/*! 20140104 아무일 안함 */
 	of_node_put(prev);
+	/*! 20140104 spinlock 릴리즈 */
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
 	return next;
 }
@@ -475,13 +479,17 @@ struct device_node *of_find_node_by_path(const char *path)
 	struct device_node *np = of_allnodes;
 	unsigned long flags;
 
+	/*! 20140104 irq disable 하고 cpsr 의 flag를 가져오며, spinlock획득 */
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	for (; np; np = np->allnext) {
+		/*! 20140104 현재 np의 full_name이 있고, 인자로 받은 path와 같고, np가 null이 아닌지 확인 */
 		if (np->full_name && (of_node_cmp(np->full_name, path) == 0)
 		    && of_node_get(np))
 			break;
 	}
+	/*! 20140104 irq enable / cpsr의 flag 원복 / spinlock 릴리즈 */
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
+	/*! 20140104 path == full_name인 노드 또는 Null 반환 */
 	return np;
 }
 EXPORT_SYMBOL(of_find_node_by_path);
@@ -773,9 +781,11 @@ static void *of_find_property_value_of_size(const struct device_node *np,
 		return ERR_PTR(-EINVAL);
 	if (!prop->value)
 		return ERR_PTR(-ENODATA);
+	/*! 20140104 읽고자 하는 len가 실제 porperty의 length보다 길면 에러반환 */
 	if (len > prop->length)
 		return ERR_PTR(-EOVERFLOW);
 
+	/*! 20140104 propname에 해당하는 value를 len size에 맞게 찾아 리턴 */
 	return prop->value;
 }
 
@@ -891,16 +901,24 @@ EXPORT_SYMBOL_GPL(of_property_read_u16_array);
  *
  * The out_values is modified only if a valid u32 value can be decoded.
  */
+/*! 20140104 np의 propname에 해당하는 value들을 out_values에 sz개수만큼 값들을 할당하여 반환 */
 int of_property_read_u32_array(const struct device_node *np,
 			       const char *propname, u32 *out_values,
 			       size_t sz)
 {
+	/*! 20140104 propname의 value로 설정되어 있는 값이 저장되어 있는 주소를 읽음 */
 	const __be32 *val = of_find_property_value_of_size(np, propname,
 						(sz * sizeof(*out_values)));
 
+	/*! 20140104 val 이 Error 코드값인지 확인 (0xFFFFF001 ~ 0xFFFFFFFF 이면 Error 코드값임) */
 	if (IS_ERR(val))
 		return PTR_ERR(val);
 
+	/*! 20140104
+	 * sz 값의 개수만큼 값을 읽어들임.
+	 * ex) reg = <0x10010000 0x30000>;
+	 * 위와 같은 경우 out_values[0] = 0x10010000, out_values[1] = 0x30000 이 됨
+	 */
 	while (sz--)
 		*out_values++ = be32_to_cpup(val++);
 	return 0;
@@ -1568,6 +1586,7 @@ int of_detach_node(struct device_node *np)
 }
 #endif /* defined(CONFIG_OF_DYNAMIC) */
 
+/*! 20140104 alias_prop 구조체의 멤버변수들에 값을 할당하고 링크드리스트로 연결하는 함수 */
 static void of_alias_add(struct alias_prop *ap, struct device_node *np,
 			 int id, const char *stem, int stem_len)
 {
@@ -1594,13 +1613,31 @@ void of_alias_scan(void * (*dt_alloc)(u64 size, u64 align))
 {
 	struct property *pp;
 
+	/*! 20140104
+	  ex) dtb 예 
+	 chosen {
+	   bootargs = "console=ttySAC2,115200 init=/linuxrc";
+	 };
+
+	 aliases {
+	   pinctrl0 = "/pinctrl@13400000";
+	   pinctrl1 = "/pinctrl@13410000";
+	   pinctrl2 = "/pinctrl@14000000";
+	   pinctrl3 = "/pinctrl@14010000";
+	   pinctrl4 = "/pinctrl@03860000";
+	  };
+	 */
+
+	/*! 20140104 dtb의 chosen 또는 chosen@ path를 가지는 property를 찾는다. */
 	of_chosen = of_find_node_by_path("/chosen");
 	if (of_chosen == NULL)
 		of_chosen = of_find_node_by_path("/chosen@0");
+	/*! 20140104 dtb의 chosen path를 가지는 property를 찾는다. */
 	of_aliases = of_find_node_by_path("/aliases");
 	if (!of_aliases)
 		return;
 
+	/*! 20140104 for (pp = dn->properties; pp != NULL; pp = pp->next) */
 	for_each_property_of_node(of_aliases, pp) {
 		const char *start = pp->name;
 		const char *end = start + strlen(start);
@@ -1609,21 +1646,29 @@ void of_alias_scan(void * (*dt_alloc)(u64 size, u64 align))
 		int id, len;
 
 		/* Skip those we do not want to proceed */
+		/*! 20140104 property 이름이 name / phnadle / linux,phandle 은 제외 */
 		if (!strcmp(pp->name, "name") ||
 		    !strcmp(pp->name, "phandle") ||
 		    !strcmp(pp->name, "linux,phandle"))
 			continue;
 
+		/*! 20140104 property 이름을 가지는 device node를 찾아 반환 */
 		np = of_find_node_by_path(pp->value);
 		if (!np)
 			continue;
 
 		/* walk the alias backwards to extract the id and work out
 		 * the 'stem' string */
+		/*! 20140104
+		 * property이름의 끝부터 0~9인지 확인하여 len로 숫자를 제외한 문자의 길이와 문자의 끝을 정함 
+		 * end가 숫자의 시작(문자의 끝+1)을 가리키고 있음.
+		 * ex) pinctrl0 = "/pinctrl@13400000"; 이라면 pinctrl 의 길이를 가져옴
+		 */
 		while (isdigit(*(end-1)) && end > start)
 			end--;
 		len = end - start;
 
+		/*! 20140104 end(숫자의 시작) string을 를 10진법으로 변환하여 id에 저장 */
 		if (kstrtoint(end, 10, &id) < 0)
 			continue;
 
@@ -1632,6 +1677,7 @@ void of_alias_scan(void * (*dt_alloc)(u64 size, u64 align))
 		if (!ap)
 			continue;
 		ap->alias = start;
+		/*! 20140104 ap 구조체의 변수 값들을 할당하고 aliases_lookup 링크드리스트 생성 */
 		of_alias_add(ap, np, id, start, len);
 	}
 }

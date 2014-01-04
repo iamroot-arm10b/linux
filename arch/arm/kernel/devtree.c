@@ -36,6 +36,7 @@ void __init early_init_dt_add_memory_arch(u64 base, u64 size)
 	 */
 }
 
+/*! 20140104 bootmem에서 device tree를 위한 memory 할당받음 */
 void * __init early_init_dt_alloc_memory_arch(u64 size, u64 align)
 {
 	return alloc_bootmem_align(size, align);
@@ -84,6 +85,10 @@ void __init arm_dt_memblock_reserve(void)
  *
  * Updates the cpu possible mask with the number of parsed cpu nodes
  */
+/*! 20140104
+ * cpus device node 자식의 cpu device node의 reg property 값을 가지고
+ * dtb 유효성 검사 후 __cpu_logical_map 초기화
+ */
 void __init arm_dt_init_cpu_maps(void)
 {
 	/*
@@ -94,18 +99,57 @@ void __init arm_dt_init_cpu_maps(void)
 	 */
 	struct device_node *cpu, *cpus;
 	u32 i, j, cpuidx = 1;
+	/*! 20140104 mpidr[23:0] 값 추출 / MPIDR_HWID_BITMASK 0xFFFFFF */
 	u32 mpidr = is_smp() ? read_cpuid_mpidr() & MPIDR_HWID_BITMASK : 0;
 
+	/*! 20140104
+	 * 0 ~ NR_CPUS(4)-1 까지의 Index에 MPIDR_INVALID(0xFF000000) 을 삽입
+	 * - gcc manual -
+	 * To initialize a range of elements to the same value, 
+	 * write '[FIRST ...LAST] = VALUE'.  This is a GNU extension.  For example,
+	 * ex) int widths[] = { [0 ... 9] = 1, [10 ... 99] = 2, [100] = 3 };
+	 */
 	u32 tmp_map[NR_CPUS] = { [0 ... NR_CPUS-1] = MPIDR_INVALID };
 	bool bootcpu_valid = false;
+	/*! 20140104 cpus device node를 찾음 */
 	cpus = of_find_node_by_path("/cpus");
 
 	if (!cpus)
 		return;
 
+	/*! 20140104
+	 * 
+	  cpus {
+		#address-cells = <0x1>;
+		#size-cells = <0x0>;
+
+		cpu@0 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a15";
+			reg = <0x0>;
+			clock-frequency = <0x6b49d200>;
+		};
+	
+		cpu@1 {
+			device_type = "cpu";
+			compatible = "arm,cortex-a15";
+			reg = <0x1>;
+			clock-frequency = <0x6b49d200>;
+		};
+		...생략
+	 };
+	 */
+	/*! 20140104
+	 * parent = cpus / child = cpu (child 는 각 cpus device node의 cpu device node를 나타냄)
+	 * of_get_next_child는 parent의 자식에 대한 device node 또는 자식의 sibling들을 반환 
+	 * - for_each_child_of_node -
+	 * for (child = of_get_next_child(parent, NULL); child != NULL; 
+	 *    child = of_get_next_child(parent, child))
+	 */
 	for_each_child_of_node(cpus, cpu) {
 		u32 hwid;
 
+		/*! 20140104 cpu device node의 type이 'cpu'인지 확인 */
 		if (of_node_cmp(cpu->type, "cpu"))
 			continue;
 
@@ -115,6 +159,7 @@ void __init arm_dt_init_cpu_maps(void)
 		 * properties is considered invalid to build the
 		 * cpu_logical_map.
 		 */
+		/*! 20140104 cpu device node의 reg property의 값을 hwid에 할당 */
 		if (of_property_read_u32(cpu, "reg", &hwid)) {
 			pr_debug(" * %s missing reg property\n",
 				     cpu->full_name);
@@ -124,6 +169,10 @@ void __init arm_dt_init_cpu_maps(void)
 		/*
 		 * 8 MSBs must be set to 0 in the DT since the reg property
 		 * defines the MPIDR[23:0].
+		 */
+		/*! 20140104
+		 * hwid & ~MPIDR_HWID_BITMASK(0xFF000000)
+		 * 상위 8bit가 설정되어 있으면 return
 		 */
 		if (hwid & ~MPIDR_HWID_BITMASK)
 			return;
@@ -135,6 +184,7 @@ void __init arm_dt_init_cpu_maps(void)
 		 * temp values were initialized to UINT_MAX
 		 * to avoid matching valid MPIDR[23:0] values.
 		 */
+		/*! 20140104 동일한 reg 값이 존재하면 중복됫다고 하고 return */
 		for (j = 0; j < cpuidx; j++)
 			if (WARN(tmp_map[j] == hwid, "Duplicate /cpu reg "
 						     "properties in the DT\n"))
@@ -149,6 +199,7 @@ void __init arm_dt_init_cpu_maps(void)
 		 * logical map built from DT is validated and can be used
 		 * to override the map created in smp_setup_processor_id().
 		 */
+		/*! 20140104 hwid == mpidr 과 같으면 booting cpu 보통 첫번째 cpu, i = cpuidx */
 		if (hwid == mpidr) {
 			i = 0;
 			bootcpu_valid = true;
@@ -156,6 +207,7 @@ void __init arm_dt_init_cpu_maps(void)
 			i = cpuidx++;
 		}
 
+		/*! 20140104 Kernel config 값인 nr_cpu_ids 값보다 cpuidx가 크면 nr_cpu_ids 이상의 cpu값들은 무시됨 */
 		if (WARN(cpuidx > nr_cpu_ids, "DT /cpu %u nodes greater than "
 					       "max cores %u, capping them\n",
 					       cpuidx, nr_cpu_ids)) {
@@ -166,6 +218,7 @@ void __init arm_dt_init_cpu_maps(void)
 		tmp_map[i] = hwid;
 	}
 
+	/*! 20140104 0번 cpu가 없는 경우 정상적인 dtb가 아니라고 판단함. */
 	if (!bootcpu_valid) {
 		pr_warn("DT missing boot CPU MPIDR[23:0], fall back to default cpu_logical_map\n");
 		return;
@@ -178,6 +231,7 @@ void __init arm_dt_init_cpu_maps(void)
 	 */
 	for (i = 0; i < cpuidx; i++) {
 		set_cpu_possible(i, true);
+		/*! 20140104 __cpu_logical_map[cpu] = tmp_map[i] */
 		cpu_logical_map(i) = tmp_map[i];
 		pr_debug("cpu logical map 0x%x\n", cpu_logical_map(i));
 	}

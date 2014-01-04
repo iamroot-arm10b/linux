@@ -79,10 +79,12 @@ extern struct device_node *of_node_get(struct device_node *node);
 extern void of_node_put(struct device_node *node);
 #else /* CONFIG_OF_DYNAMIC */
 /* Dummy ref counting routines - to be implemented later */
+/*! 20140104 이곳이 실행됨 */
 static inline struct device_node *of_node_get(struct device_node *node)
 {
 	return node;
 }
+/*! 20140104 이곳이 실행됨 */
 static inline void of_node_put(struct device_node *node) { }
 #endif /* !CONFIG_OF_DYNAMIC */
 
@@ -150,6 +152,7 @@ static inline unsigned long of_read_ulong(const __be32 *cell, int size)
 
 /* Default string compare functions, Allow arch asm/prom.h to override */
 #if !defined(of_compat_cmp)
+/*! 20140104 strcasecmp는 대소문자 구분하지 않고 / strcmp는 대소문자 구분하여 s1, s2 비교 */
 #define of_compat_cmp(s1, s2, l)	strcasecmp((s1), (s2))
 #define of_prop_cmp(s1, s2)		strcmp((s1), (s2))
 #define of_node_cmp(s1, s2)		strcasecmp((s1), (s2))
@@ -560,6 +563,7 @@ static inline int of_property_read_u32(const struct device_node *np,
 				       const char *propname,
 				       u32 *out_value)
 {
+	/*! 20140104 np의 propname에 해당하는 value를 out_values에 할당 */
 	return of_property_read_u32_array(np, propname, out_value, 1);
 }
 

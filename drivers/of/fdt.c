@@ -896,6 +896,10 @@ void __init unflatten_device_tree(void)
 
 	/*! 20131221 오늘은 여기까지  */
 	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */
+	/*! 20140104
+	 * chosen 에 대한 device node를 찾아 전역변수 of_chosen에 할당
+	 * aliases 에 대한 device node를 찾아 aliases_lookup list 생성 (alias_prop 구조체 생성) 
+	 */
 	of_alias_scan(early_init_dt_alloc_memory_arch);
 }
 

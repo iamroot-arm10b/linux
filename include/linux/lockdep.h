@@ -494,6 +494,7 @@ static inline void print_irqtrace_events(struct task_struct *curr)
 # endif
 # define spin_release(l, n, i)			lock_release(l, n, i)
 #else
+/*! 20140104 여기가 실행된다. debug feature가 없음 */
 # define spin_acquire(l, s, t, i)		do { } while (0)
 # define spin_release(l, n, i)			do { } while (0)
 #endif

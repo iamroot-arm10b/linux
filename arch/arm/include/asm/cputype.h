@@ -50,6 +50,7 @@
 
 #define MPIDR_HWID_BITMASK 0xFFFFFF
 
+/*! 20140104 MPIDR_INVALID = 0xFF000000 */
 #define MPIDR_INVALID (~MPIDR_HWID_BITMASK)
 
 #define MPIDR_LEVEL_BITS 8
@@ -190,6 +191,10 @@ static inline unsigned int __attribute_const__ read_cpuid_implementor(void)
 	return (read_cpuid_id() & 0xFF000000) >> 24;
 }
 
+/*! 20140104
+ * MIDR값: 0x413fc0f3 (0100,0001,0011,1111,1100,0000,1111,0011)
+ * 위 값 중 0x0000c0f0 을 return
+ */
 static inline unsigned int __attribute_const__ read_cpuid_part_number(void)
 {
 	return read_cpuid_id() & 0xFFF0;
@@ -214,6 +219,19 @@ static inline unsigned int __attribute_const__ read_cpuid_tcmstatus(void)
 /*!  Multiprocessor affinity register를 읽는 함수 */
 static inline unsigned int __attribute_const__ read_cpuid_mpidr(void)
 {
+	/*! 20140104
+	 * [31] = 1, Multiprocessing Extensions 을 지원
+	 * [30] = U
+	 * [24] = MT
+	 * 나머지 = Reserved
+	 * [11:8] = Cluster ID, cluster id 모두 0 -> Little core 사용시 값 확인 필요함(?)
+	 * [1:0] = CPU ID, 각 cpu별로 0, 1, 2, 3 값을 가짐
+	 *
+	 * CPU0: mpidr 80000000
+	 * CPU1: mpidr 80000001
+	 * CPU2: mpidr 80000002
+	 * CPU3: mpidr 80000003 
+	 */
 	return read_cpuid(CPUID_MPIDR);
 }
 

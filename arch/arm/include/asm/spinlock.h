@@ -43,6 +43,10 @@
 #define WFE(cond)	ALT_SMP("wfe" cond, "nop")
 #endif
 
+/*! 20140104
+ * dsb = cache의 write buffer에 들어있는 값을 물리적 memory에 입력
+ * sev 함수로 인해 arch_spin_lock의 while문의 wfe() 가 깨어나며 다음라인으로 진행됨.
+ */
 static inline void dsb_sev(void)
 {
 #if __LINUX_ARM_ARCH__ >= 7
@@ -70,6 +74,7 @@ static inline void dsb_sev(void)
 #define arch_spin_unlock_wait(lock) \
 	do { while (arch_spin_is_locked(lock)) cpu_relax(); } while (0)
 
+/*! 20140104 여기가 실행됨 */
 #define arch_spin_lock_flags(lock, flags) arch_spin_lock(lock)
 
 static inline void arch_spin_lock(arch_spinlock_t *lock)
@@ -78,6 +83,14 @@ static inline void arch_spin_lock(arch_spinlock_t *lock)
 	u32 newval;
 	arch_spinlock_t lockval;
 
+	/*! 20140104
+	 * 고유한 tick(slock) 을 할당받는다.
+	 *
+	 * lockval = lock->slock;
+	 * newval = lockval + (1 << 16(=TICKET_SHIFT)); //tickets.next를 1 증가
+	 * lock->slock = newval; / strex의 성공여부가 tmp에 들어감
+	 * strex 성공하면 통과 실패하면(tmp가 0인 경우) "label 1" 다시수행
+	 */
 	__asm__ __volatile__(
 "1:	ldrex	%0, [%3]\n"
 "	add	%1, %0, %4\n"
@@ -88,8 +101,20 @@ static inline void arch_spin_lock(arch_spinlock_t *lock)
 	: "r" (&lock->slock), "I" (1 << TICKET_SHIFT)
 	: "cc");
 
+	/*! 20140104
+	 * ticket union -> [next,owner]
+	 * 상위16bit next  - lock을 잡을때마다 1씩 증가
+	 * 하위16bit owner - lock을 릴리즈할때마다 1씩 증가
+	 * lockval은 local 변수 / lock은 인자로 넘어온 변수(코어마다 가지는 전역변수)
+	 * 1. 이 시점에서 최초수행시		lockval=[0,0] / lock=[1,0] 
+	 * 2. 두번째 수행되면			lockval=[1,0] / lock=[2,0]
+	 * 3. 1번에서 잡은 lock이 릴리즈되면	lockval=[1,1] / lock=[2,1]
+	 * 4. 따라서, 1번에서 잡은 lock이 릴리즈되면 while문을 벗어나게 된다. 
+	 */
 	while (lockval.tickets.next != lockval.tickets.owner) {
+		/*! 20140104 arm 코어가 event를 받을 때까지 sleep됨 */
 		wfe();
+		/*! 20140104 lockval 값을 lock 값으로 업데이트 */
 		lockval.tickets.owner = ACCESS_ONCE(lock->tickets.owner);
 	}
 
@@ -124,7 +149,15 @@ static inline int arch_spin_trylock(arch_spinlock_t *lock)
 static inline void arch_spin_unlock(arch_spinlock_t *lock)
 {
 	smp_mb();
+	/*! 20140104
+	 * lock->tickets의 하위16bit(=owner)를 1증가시켜
+	 * 다음 lock이 arch_spin_lock 함수의 while문을 벗어날 수 있게 해준다.
+	 */
 	lock->tickets.owner++;
+	/*! 20140104
+	 * dsb = cache의 write buffer에 들어있는 값을 물리적 memory에 입력
+	 * sev 함수로 인해 arch_spin_lock의 while문의 wfe() 가 깨어나며 다음라인으로 진행됨.
+	 */
 	dsb_sev();
 }
 

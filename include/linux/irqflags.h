@@ -58,6 +58,7 @@
  */
 #define raw_local_irq_disable()		arch_local_irq_disable()
 #define raw_local_irq_enable()		arch_local_irq_enable()
+/*! 20140104 cpsr의 interrupt(irq) 관련된 bit를 가져와 flags 변수에 할당하고, irq disable */
 #define raw_local_irq_save(flags)			\
 	do {						\
 		typecheck(unsigned long, flags);	\
@@ -135,6 +136,7 @@
 
 #define local_irq_enable()	do { raw_local_irq_enable(); } while (0)
 #define local_irq_disable()	do { raw_local_irq_disable(); } while (0)
+/*! 20140104 cpsr의 irq 관련된 내용을 flags 변수에 저장한다. */
 #define local_irq_save(flags)					\
 	do {							\
 		raw_local_irq_save(flags);			\

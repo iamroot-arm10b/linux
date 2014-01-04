@@ -17,6 +17,11 @@
 
 #ifndef __ASSEMBLY__
 
+/*! 20140104
+ * MAX_ERRNO 4095 
+ * 0xFFFFF001 ~ 0xFFFFFFFF 사이의 값이 들어오면 Error임.
+ * 위 영역의 값은 Error로써 정의된 값으로 ptr값이 올 수 없다.
+ */
 #define IS_ERR_VALUE(x) unlikely((x) >= (unsigned long)-MAX_ERRNO)
 
 static inline void * __must_check ERR_PTR(long error)
@@ -24,11 +29,13 @@ static inline void * __must_check ERR_PTR(long error)
 	return (void *) error;
 }
 
+/*! 20140104 한번 봄.  */
 static inline long __must_check PTR_ERR(__force const void *ptr)
 {
 	return (long) ptr;
 }
 
+/*! 20140104 ptr 값이 Error 에 해당하는 값을 가지는지 확인 */
 static inline long __must_check IS_ERR(__force const void *ptr)
 {
 	return IS_ERR_VALUE((unsigned long)ptr);

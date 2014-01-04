@@ -20,6 +20,7 @@ typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
  * You should only assume nr_cpu_ids bits of this mask are valid.  This is
  * a macro so it's const-correct.
  */
+/*! 20140104 여길 봄 */
 #define cpumask_bits(maskp) ((maskp)->bits)
 
 #if NR_CPUS == 1
@@ -102,6 +103,7 @@ extern const struct cpumask *const cpu_active_mask;
 #endif
 
 /* verify cpu argument to cpumask_* operators */
+/*! 20140104 여기 실행됨 */
 static inline unsigned int cpumask_check(unsigned int cpu)
 {
 #ifdef CONFIG_DEBUG_PER_CPU_MAPS
@@ -171,7 +173,12 @@ static inline unsigned int cpumask_next(int n, const struct cpumask *srcp)
 {
 	/* -1 is a legal arg here. */
 	if (n != -1)
+		/*! 20140104 아무 동작 안함 */
 		cpumask_check(n);
+	/*! 20140104
+	 * srcp->bits 주소부터 nr_cpumask_bits 크기 안에서 
+	 * srcp->bits[n+1] 이후에 1이 되어있는 offset 값을 반환한다.
+	 */
 	return find_next_bit(cpumask_bits(srcp), nr_cpumask_bits, n+1);
 }
 
@@ -256,7 +263,6 @@ static inline void cpumask_set_cpu(unsigned int cpu, struct cpumask *dstp)
 {
 	set_bit(cpumask_check(cpu), cpumask_bits(dstp));
 	/*!
-	 *  
 	 * cpumask_bits: dstp의 bits 접근 
 	 */
 }

@@ -247,6 +247,7 @@ EXPORT_SYMBOL(kstrtouint);
  * Used as a replacement for the obsolete simple_strtoull. Return code must
  * be checked.
  */
+/*! 20140104 여기가 실행됨 atoi 함수와 같음, string을 base진법에 맞는 숫자로 변환 */ 
 int kstrtoint(const char *s, unsigned int base, int *res)
 {
 	long long tmp;

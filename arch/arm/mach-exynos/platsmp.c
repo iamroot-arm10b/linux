@@ -70,6 +70,7 @@ static void write_pen_release(int val)
 
 static void __iomem *scu_base_addr(void)
 {
+	/*! 20140104 S5P_VA_SCU = 0xF8800000 */
 	return (void __iomem *)(S5P_VA_SCU);
 }
 
@@ -179,12 +180,14 @@ static int exynos_boot_secondary(unsigned int cpu, struct task_struct *idle)
 
 static void __init exynos_smp_init_cpus(void)
 {
+	/*! 20140104 S5P_VA_SCU = 0xF8800000 */
 	void __iomem *scu_base = scu_base_addr();
 	unsigned int i, ncores;
 
 	if (read_cpuid_part_number() == ARM_CPU_PART_CORTEX_A9)
 		ncores = scu_base ? scu_get_core_count(scu_base) : 1;
 	else
+		/*! 20140104 우리는 여기가 실행됨 */
 		/*
 		 * CPU Nodes are passed thru DT and set_cpu_possible
 		 * is set by "arm_dt_init_cpu_maps".
@@ -230,6 +233,7 @@ static void __init exynos_smp_prepare_cpus(unsigned int max_cpus)
 	}
 }
 
+/*! 20140104 이것이 참조됨 */
 struct smp_operations exynos_smp_ops __initdata = {
 	.smp_init_cpus		= exynos_smp_init_cpus,
 	.smp_prepare_cpus	= exynos_smp_prepare_cpus,

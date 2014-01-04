@@ -38,6 +38,7 @@ extern struct smp_operations psci_smp_ops;
 void psci_init(void);
 bool psci_smp_available(void);
 #else
+/*! 20140104 여기 실행됨 */
 static inline void psci_init(void) { }
 static inline bool psci_smp_available(void) { return false; }
 #endif

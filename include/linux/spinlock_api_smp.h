@@ -101,12 +101,16 @@ static inline int __raw_spin_trylock(raw_spinlock_t *lock)
  */
 #if !defined(CONFIG_GENERIC_LOCKBREAK) || defined(CONFIG_DEBUG_LOCK_ALLOC)
 
+/*! 20140104 여기가 실행됨 */
 static inline unsigned long __raw_spin_lock_irqsave(raw_spinlock_t *lock)
 {
 	unsigned long flags;
 
+	/*! 20140104 cpsr의 irq 관련된 내용을 flags 변수에 저장하고 irq를 disable한다. */
 	local_irq_save(flags);
+	/*! 20140104 다른 thread가 동작하는 것을 막는다. 계속 현재 thread만 수행되도록 한다.  */
 	preempt_disable();
+	/*! 20140104 아무것도 안함 */
 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
 	/*
 	 * On lockdep we dont want the hand-coded irq-enable of
@@ -116,6 +120,7 @@ static inline unsigned long __raw_spin_lock_irqsave(raw_spinlock_t *lock)
 #ifdef CONFIG_LOCKDEP
 	LOCK_CONTENDED(lock, do_raw_spin_trylock, do_raw_spin_lock);
 #else
+	/*! 20140104 여기가 실행됨 */
 	do_raw_spin_lock_flags(lock, &flags);
 #endif
 	return flags;
@@ -153,11 +158,13 @@ static inline void __raw_spin_unlock(raw_spinlock_t *lock)
 	preempt_enable();
 }
 
+/*! 20140104 여기가 실행됨 */
 static inline void __raw_spin_unlock_irqrestore(raw_spinlock_t *lock,
 					    unsigned long flags)
 {
 	spin_release(&lock->dep_map, 1, _RET_IP_);
 	do_raw_spin_unlock(lock);
+	/*! 20140104 irq 다시 enable 하고 cpsr에 기존 flag값 설정 */
 	local_irq_restore(flags);
 	preempt_enable();
 }

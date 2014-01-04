@@ -28,6 +28,7 @@
 
 asmlinkage void preempt_schedule(void);
 
+/*! 20131221 TIF_NEED_RESCHED 가 설정되어 있으면 해당함수 실행 */ 
 #define preempt_check_resched() \
 do { \
 	if (unlikely(test_thread_flag(TIF_NEED_RESCHED))) \
@@ -58,7 +59,14 @@ do { \
 
 
 #ifdef CONFIG_PREEMPT_COUNT
-/* 20131221 preempt count를 증가시켜 disable 시킨다. */
+/*! 20131221 preempt count를 증가시켜 disable 시킨다. */
+/*! 20140104
+ * http://nimhaplz.egloos.com/5683475 참고
+ * 다른 thread가 동작하는 것을 막는다. 계속 현재 thread만 수행되도록 한다.
+ * 인터럽트를 막지는 않는다.
+ * preempt_count = 0 인 경우 preemption enable / 1 이상인 경우 preemption disable
+ * 스케쥴링 나오면 자세히 봅시다.
+ */
 #define preempt_disable() \
 do { \
 	inc_preempt_count(); \
@@ -75,6 +83,7 @@ do { \
 /*! 20131221 preempt count를 감소한다. */
 #define preempt_enable_no_resched()	sched_preempt_enable_no_resched()
 
+/*! 20131221 여기가 실행된다. */ 
 #define preempt_enable() \
 do { \
 	preempt_enable_no_resched(); \

@@ -18,6 +18,7 @@ struct meminfo;
 struct pt_regs;
 struct smp_operations;
 #ifdef CONFIG_SMP
+/*! 20140104 여기가 실행됨 */
 #define smp_ops(ops) (&(ops))
 #define smp_init_ops(ops) (&(ops))
 #else
