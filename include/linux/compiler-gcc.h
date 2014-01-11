@@ -115,5 +115,6 @@
  * code
  */
 #define uninitialized_var(x) x = x
+/*! 20140111 초기값 셋팅안했다는 warning을 안나게 하기 위한 것 */
 
 #define __always_inline		inline __attribute__((always_inline))

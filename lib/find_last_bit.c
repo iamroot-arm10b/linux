@@ -24,15 +24,21 @@ unsigned long find_last_bit(const unsigned long *addr, unsigned long size)
 
 	/* Start at final word. */
 	words = size / BITS_PER_LONG;
+	/*! 20140111 BITS_PER_LONG: 32 
+	 * size가 해당하는 word index를 찾는다.
+	 */
 
 	/* Partial final word? */
 	if (size & (BITS_PER_LONG-1)) {
 		tmp = (addr[words] & (~0UL >> (BITS_PER_LONG
 					 - (size & (BITS_PER_LONG-1)))));
+		/*! 20140111 size가 4인 경우, tmp = addr[0] & 0xF */
+		/*! 20140111 size가 130인 경우, tmp = addr[0] & (~0UL >> (32 - 2)) */
 		if (tmp)
 			goto found;
 	}
 
+	/*! 20140111 msb부터 1이 처음 있는 위치를 찾는다. */
 	while (words) {
 		tmp = addr[--words];
 		if (tmp) {

@@ -614,6 +614,7 @@ static void __init smp_build_mpidr_hash(void)
 	for_each_possible_cpu(i)
 	/*! 20140104 여기까지 봄 다음부턴 616 Line부터 확인할 것 */
 		mask |= (cpu_logical_map(i) ^ cpu_logical_map(0));
+
 	pr_debug("mask of set bits 0x%x\n", mask);
 	/*
 	 * Find and stash the last and first bit set at all affinity levels to
@@ -627,8 +628,22 @@ static void __init smp_build_mpidr_hash(void)
 		 * to express the affinity level.
 		 */
 		ls = fls(affinity);
+		/*! 20140111
+		 * ls: 2 (첫번째 1이 있는 위치가 msb(최상위bit)부터 찾았을때 lsb에서 2번째 bit 이므로)
+		 */
 		fs[i] = affinity ? ffs(affinity) - 1 : 0;
+		/*! 20140111
+		 * ffs: 0번 bit 에서 시작하여 처음으로 1을 만나는 bit 위치
+		 */
 		bits[i] = ls - fs[i];
+		/*! 20140111
+		 * ex) mask = 0x0000 0003 , i = 0 일때, 
+		 *     => affinity: 3, ls: 2, fs[0]: 0, bits[0]: 2
+		 * ex) mask = 0x0000 0003 , i = 1 일때, 
+		 *     => affinity: 0, ls: 0, fs[1]: 0, bits[1]: 0
+		 * ex) mask = 0x0000 0003 , i = 2 일때, 
+		 *     => affinity: 0, ls: 0, fs[2]: 0, bits[2]: 0
+		 */
 	}
 	/*
 	 * An index can be created from the MPIDR by isolating the
@@ -646,6 +661,9 @@ static void __init smp_build_mpidr_hash(void)
 						(bits[1] + bits[0]);
 	mpidr_hash.mask = mask;
 	mpidr_hash.bits = bits[2] + bits[1] + bits[0];
+	/*! 20140111
+	 * lsb 쪽에서 얼마만큼 right shift 해야 0번 bit가 1이 나오는지 계산하는 부분
+	 */
 	pr_debug("MPIDR hash: aff0[%u] aff1[%u] aff2[%u] mask[0x%x] bits[%u]\n",
 				mpidr_hash.shift_aff[0],
 				mpidr_hash.shift_aff[1],
@@ -657,8 +675,10 @@ static void __init smp_build_mpidr_hash(void)
 	 * than expected on most systems.
 	 */
 	if (mpidr_hash_size() > 4 * num_possible_cpus())
+		/*! 20140111 cpu의 갯수를 체크 */
 		pr_warn("Large number of MPIDR hash buckets detected\n");
 	sync_cache_w(&mpidr_hash);
+	/*! 20140111 관련된 캐시들 flush 시켜서 sync를 맞춘다. */
 }
 #endif
 
@@ -1055,6 +1075,7 @@ static void __init reserve_crashkernel(void)
 }
 #else
 static inline void reserve_crashkernel(void) {}
+/*! 20140111 여기 실행됨 */
 #endif /* CONFIG_KEXEC */
 
 static int __init meminfo_cmp(const void *_a, const void *_b)
@@ -1175,6 +1196,7 @@ void __init setup_arch(char **cmdline_p)
 		 */
 		smp_init_cpus();
 		smp_build_mpidr_hash();
+		/*! 20140111 현재 사용가능한 processor의 MPIDR 값을 이용하여 hash를 만든다. */
 	}
 #endif
 
@@ -1182,9 +1204,11 @@ void __init setup_arch(char **cmdline_p)
 		hyp_mode_check();
 
 	reserve_crashkernel();
+	/*! 20140111 CONFIG_KEXEC = y 가 아니므로 실행되지 않음 */
 
 #ifdef CONFIG_MULTI_IRQ_HANDLER
 	handle_arch_irq = mdesc->handle_irq;
+	/*! 20140111 머신 descript의 irq를 handle_arch_irq의 포인터에 지정. handle_irq를 못찾으니 NULL 로 예상 */
 #endif
 
 #ifdef CONFIG_VT
@@ -1192,11 +1216,13 @@ void __init setup_arch(char **cmdline_p)
 	conswitchp = &vga_con;
 #elif defined(CONFIG_DUMMY_CONSOLE)
 	conswitchp = &dummy_con;
+	/*! 20140111 system 상의 graphic 콘솔이 설정되어있는지 확인하는 것. 더미 콘솔로 셋팅 */
 #endif
 #endif
 
 	if (mdesc->init_early)
 		mdesc->init_early();
+		/*! 20140111 없음므로 null */
 }
 
 

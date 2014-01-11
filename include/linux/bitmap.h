@@ -278,6 +278,7 @@ static inline int bitmap_weight(const unsigned long *src, int nbits)
 	if (small_const_nbits(nbits))
 		return hweight_long(*src & BITMAP_LAST_WORD_MASK(nbits));
 	return __bitmap_weight(src, nbits);
+	/*! 20140111 src에서 1인 bit의 갯수 */
 }
 
 static inline void bitmap_shift_right(unsigned long *dst,

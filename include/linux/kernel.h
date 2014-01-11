@@ -62,6 +62,7 @@
 #endif
 
 /* The `const' in roundup() prevents gcc-3.3 from calling __divdi3 */
+/*! 20140111 x를 y단위로 올림 */
 #define roundup(x, y) (					\
 {							\
 	const typeof(y) __y = y;			\

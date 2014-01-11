@@ -1408,6 +1408,7 @@ early_param("percpu_alloc", percpu_alloc_setup);
 #if defined(CONFIG_NEED_PER_CPU_EMBED_FIRST_CHUNK) || \
 	!defined(CONFIG_HAVE_SETUP_PER_CPU_AREA)
 #define BUILD_EMBED_FIRST_CHUNK
+/*! 20140111 define 됨 */
 #endif
 
 /* build pcpu_page_first_chunk() iff needed by the arch config */
@@ -1446,6 +1447,7 @@ static struct pcpu_alloc_info * __init pcpu_build_alloc_info(
 	static int group_map[NR_CPUS] __initdata;
 	static int group_cnt[NR_CPUS] __initdata;
 	const size_t static_size = __per_cpu_end - __per_cpu_start;
+	/*! 20140111 static_size : per cpu section의 크기 */
 	int nr_groups = 1, nr_units = 0;
 	size_t size_sum, min_unit_size, alloc_size;
 	int upa, max_upa, uninitialized_var(best_upa);	/* units_per_alloc */
@@ -1459,9 +1461,12 @@ static struct pcpu_alloc_info * __init pcpu_build_alloc_info(
 	memset(group_cnt, 0, sizeof(group_cnt));
 
 	/* calculate size_sum and ensure dyn_size is enough for early alloc */
+	/*! 20140111 PERCPU_DYNAMIC_EARLY_SIZE: 12k */
 	size_sum = PFN_ALIGN(static_size + reserved_size +
 			    max_t(size_t, dyn_size, PERCPU_DYNAMIC_EARLY_SIZE));
+	/*! 20140111 size_sum: 4096byte 단위로 Page align된 size */
 	dyn_size = size_sum - static_size - reserved_size;
+	/*! 20140111 align으로 증가된 size만큼 dyn_size에 추가함 */
 
 	/*
 	 * Determine min_unit_size, alloc_size and max_upa such that
@@ -1470,8 +1475,11 @@ static struct pcpu_alloc_info * __init pcpu_build_alloc_info(
 	 * or larger than min_unit_size.
 	 */
 	min_unit_size = max_t(size_t, size_sum, PCPU_MIN_UNIT_SIZE);
+	/*! 20140111 PCPU_MIN_UNIT_SIZE: page align된 32k */
 
 	alloc_size = roundup(min_unit_size, atom_size);
+	/*! 20140111 min_unit_size를 atom_size단위로 올림 */
+	/*! 20140111 여기까지 스터디 함 */
 	upa = alloc_size / min_unit_size;
 	while (alloc_size % upa || ((alloc_size / upa) & ~PAGE_MASK))
 		upa--;
@@ -1612,7 +1620,12 @@ int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 				  pcpu_fc_alloc_fn_t alloc_fn,
 				  pcpu_fc_free_fn_t free_fn)
 {
+	/*! 20140111 여기 실행됨
+	 * reserved_size: 8k, dyn_size: 12k = 0x3000, atom_size: 4k = 0x1000
+	 */
+
 	void *base = (void *)ULONG_MAX;
+	/*! 20140111 0ULONG_MAX: 0xFFFFFFFF */
 	void **areas = NULL;
 	struct pcpu_alloc_info *ai;
 	size_t size_sum, areas_size, max_distance;
@@ -1864,6 +1877,11 @@ void __init setup_per_cpu_areas(void)
 	/*
 	 * Always reserve area for module percpu variables.  That's
 	 * what the legacy allocator did.
+	 */
+	/*! 20140111 per cpu 변수들
+	 * PERCPU_MODULE_RESERVE: 8k
+	 * PERCPU_DYNAMIC_RESERVE: 12k = 0x3000
+	 * PAGE_SIZE: 4k = 0x1000
 	 */
 	rc = pcpu_embed_first_chunk(PERCPU_MODULE_RESERVE,
 				    PERCPU_DYNAMIC_RESERVE, PAGE_SIZE, NULL,

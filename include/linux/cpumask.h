@@ -469,6 +469,7 @@ static inline bool cpumask_full(const struct cpumask *srcp)
 static inline unsigned int cpumask_weight(const struct cpumask *srcp)
 {
 	return bitmap_weight(cpumask_bits(srcp), nr_cpumask_bits);
+	/*! 20140111 사용가능한 cpu의 갯수를 리턴 */
 }
 
 /**

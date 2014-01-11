@@ -351,8 +351,10 @@ static void __init setup_command_line(char *command_line)
 {
 	saved_command_line = alloc_bootmem(strlen (boot_command_line)+1);
 	static_command_line = alloc_bootmem(strlen (command_line)+1);
+	/*! 20140111 boot_command_line 을 command_line에 복사했으므로 같은 값 */
 	strcpy (saved_command_line, boot_command_line);
 	strcpy (static_command_line, command_line);
+	/*! 20140111 device tree 에서 넘어온 command line 의 argument 를 할당 */
 }
 
 /*
@@ -541,10 +543,15 @@ asmlinkage void __init start_kernel(void)
 	pr_notice("%s", linux_banner);
 	/*! 20130803 setup_arch 시작 */
 	setup_arch(&command_line);
+	/*! 20140111 아키텍처에 종속적인 설정 셋팅(메모리, device tree 등의 관련 자료구조 초기화)  */
 	mm_init_owner(&init_mm, &init_task);
+	/*! 20140111 비어있음 */
 	mm_init_cpumask(&init_mm);
+	/*! 20140111 아무것도 안함 */
 	setup_command_line(command_line);
+	/*! 20140111 device tree 에서 넘어온 command line 의 argument 를 할당 */
 	setup_nr_cpu_ids();
+	/*! 20140111 device tree의 값으로 CPU의 갯수 재설정 */
 	setup_per_cpu_areas();
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
