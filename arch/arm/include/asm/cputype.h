@@ -56,9 +56,7 @@
 #define MPIDR_LEVEL_BITS 8
 #define MPIDR_LEVEL_MASK ((1 << MPIDR_LEVEL_BITS) - 1)
 
-/*!
- * 각 레벨은 8비트로 이루어져 있다.
- */
+/*! 각 level은 8비트로 이루어져 있다. */
 #define MPIDR_AFFINITY_LEVEL(mpidr, level) \
 	((mpidr >> (MPIDR_LEVEL_BITS * level)) & MPIDR_LEVEL_MASK)
 

@@ -612,9 +612,9 @@ static void __init smp_build_mpidr_hash(void)
 	 *	(cpu) < nr_cpu_ids;)
 	 */
 	for_each_possible_cpu(i)
-	/*! 20140104 여기까지 봄 다음부턴 616 Line부터 확인할 것 */
+	/*! 20140104 여기까지 봄 */
 		mask |= (cpu_logical_map(i) ^ cpu_logical_map(0));
-
+	/*! 20140111 유효한 CPU number를 구함. 현재 cpu 상한값의 mask를 구하는 것 */
 	pr_debug("mask of set bits 0x%x\n", mask);
 	/*
 	 * Find and stash the last and first bit set at all affinity levels to
@@ -622,6 +622,10 @@ static void __init smp_build_mpidr_hash(void)
 	 */
 	for (i = 0; i < 3; i++) {
 		affinity = MPIDR_AFFINITY_LEVEL(mask, i);
+		/*! 20140111
+		 * ((mask >> (MPIDR_LEVEL_BITS * i)) & MPIDR_LEVEL_MASK)
+		 */
+		/*! 20140111 MPIDR의 값을 1byte씩 0 ~ 23  bit를 읽어온다. */
 		/*
 		 * Find the MSB bit and LSB bits position
 		 * to determine how many bits are required
@@ -1222,7 +1226,7 @@ void __init setup_arch(char **cmdline_p)
 
 	if (mdesc->init_early)
 		mdesc->init_early();
-		/*! 20140111 없음므로 null */
+		/*! 20140111 init_early() 함수가 없으므로 null */
 }
 
 
