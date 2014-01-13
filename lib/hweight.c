@@ -17,7 +17,6 @@ unsigned int __sw_hweight32(unsigned int w)
 	w =  (w + (w >> 4)) & 0x0f0f0f0f;
 	return (w * 0x01010101) >> 24;
 #else
-	/*! 20140111 여기가 실행 */
 	/*! 20140111 w = 0x00FF 인 경우 bit가 1로 셋팅된 갯수 8을 리턴한다. */
 	unsigned int res = w - ((w >> 1) & 0x55555555);
 	res = (res & 0x33333333) + ((res >> 2) & 0x33333333);
