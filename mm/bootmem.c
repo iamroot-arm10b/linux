@@ -704,6 +704,7 @@ static void * __init ___alloc_bootmem_nopanic(unsigned long size,
 					      unsigned long goal,
 					      unsigned long limit)
 {
+	/*! 20140118 여기 실행됨 */
 	void *ptr;
 
 restart:
@@ -734,6 +735,7 @@ restart:
 void * __init __alloc_bootmem_nopanic(unsigned long size, unsigned long align,
 					unsigned long goal)
 {
+	/*! 20140118 여기 실행됨 */
 	unsigned long limit = 0;
 
 	return ___alloc_bootmem_nopanic(size, align, goal, limit);

@@ -75,6 +75,7 @@ static inline void kmemleak_alloc_percpu(const void __percpu *ptr, size_t size)
 }
 static inline void kmemleak_free(const void *ptr)
 {
+	/*! 20140118 기본으로 꺼져있는데, 메모리 누수가 있다고 생각되면 피처(feature)를 켠다.  */
 }
 static inline void kmemleak_free_part(const void *ptr, size_t size)
 {
