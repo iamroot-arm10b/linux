@@ -61,6 +61,7 @@ static inline __attribute__((const))
 unsigned long __roundup_pow_of_two(unsigned long n)
 {
 	return 1UL << fls_long(n - 1);
+	/*! 20140125 2의 승수로 roundup한 값을 리턴 */
 }
 
 /*

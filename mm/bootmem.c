@@ -692,6 +692,7 @@ static void * __init alloc_bootmem_core(unsigned long size,
 			break;
 
 		region = alloc_bootmem_bdata(bdata, size, align, goal, limit);
+		/*! 20140125 메모리를 할당하고 초기화한다 */
 		if (region)
 			return region;
 	}
@@ -709,6 +710,7 @@ static void * __init ___alloc_bootmem_nopanic(unsigned long size,
 
 restart:
 	ptr = alloc_bootmem_core(size, align, goal, limit);
+	/*! 20131123 메모리를 할당하고 초기화한다 */
 	if (ptr)
 		return ptr;
 	if (goal) {
@@ -745,7 +747,7 @@ static void * __init ___alloc_bootmem(unsigned long size, unsigned long align,
 					unsigned long goal, unsigned long limit)
 {
 	void *mem = ___alloc_bootmem_nopanic(size, align, goal, limit);
-	/*! 20131123 boot_mem 에서 넘어온 크기만큼의 메모리를 할당한다 */
+	/*! 20131123 boot_mem 에서 넘어온 크기만큼의 메모리를 할당하고 초기화한다 */
 
 	if (mem)
 		return mem;
@@ -776,7 +778,7 @@ void * __init __alloc_bootmem(unsigned long size, unsigned long align,
 	unsigned long limit = 0;
 
 	return ___alloc_bootmem(size, align, goal, limit);
-	/*! 20131123 boot_mem 에서 넘어온 크기만큼의 메모리를 할당한다 */
+	/*! 20131123 boot_mem 에서 넘어온 크기만큼의 메모리를 할당하고 초기화한다 */
 }
 
 /*! 20131116 ___alloc_bootmem_node_nopanic((&contig_page_data), array_size, 64, 0x60000000, 0) */

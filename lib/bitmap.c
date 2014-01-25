@@ -383,6 +383,7 @@ int bitmap_scnprintf(char *buf, unsigned int buflen,
 	u32 chunkmask;
 
 	chunksz = nmaskbits & (CHUNKSZ - 1);
+	/*! 20140125 CHUNKSZ: 32 */
 	if (chunksz == 0)
 		chunksz = CHUNKSZ;
 
@@ -397,6 +398,7 @@ int bitmap_scnprintf(char *buf, unsigned int buflen,
 		chunksz = CHUNKSZ;
 		sep = ",";
 	}
+	/*! 20140125 bitmap이 1111 로 되어 있으면 chunksz는 4, buf="f" */
 	return len;
 }
 EXPORT_SYMBOL(bitmap_scnprintf);

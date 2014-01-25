@@ -553,6 +553,7 @@ asmlinkage void __init start_kernel(void)
 	setup_nr_cpu_ids();
 	/*! 20140111 device tree의 값으로 CPU의 갯수 재설정 */
 	setup_per_cpu_areas();
+	/*! 20140125 per_cpu 변수 사용을 위한 영역 할당 및 초기화. 2014/01/25 여기까지 */
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
 	build_all_zonelists(NULL, NULL);

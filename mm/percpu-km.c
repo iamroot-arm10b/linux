@@ -87,6 +87,7 @@ static struct page *pcpu_addr_to_page(void *addr)
 	return virt_to_page(addr);
 }
 
+/*! 20140125 이곳은 nommu 인 경우에만 실행되므로 우리는 해당없음 */
 static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai)
 {
 	size_t nr_pages, alloc_pages;
@@ -99,6 +100,10 @@ static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai)
 
 	nr_pages = (ai->groups[0].nr_units * ai->unit_size) >> PAGE_SHIFT;
 	alloc_pages = roundup_pow_of_two(nr_pages);
+	/*! 20140125
+	 * nr_pages 를 2의 승수로 올림한 값을 alloc_pages에 setting
+	 * ex) nr_pages=9 인 경우 alloc_pages=16
+	 */
 
 	if (alloc_pages > nr_pages)
 		printk(KERN_WARNING "percpu: wasting %zu pages per chunk\n",

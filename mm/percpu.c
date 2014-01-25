@@ -201,14 +201,18 @@ static bool pcpu_addr_in_reserved_chunk(void *addr)
 static int __pcpu_size_to_slot(int size)
 {
 	int highbit = fls(size);	/* size is in bytes */
+	/*! 20140125 fls: 31번 bit(msb)부터 찾아가며 첫번째 1이 나오는 bit의 자릿수(1~32) */
 	return max(highbit - PCPU_SLOT_BASE_SHIFT + 2, 1);
+	/*! 20140125 size가 12kb(0x3000)인 경우에 highbit:14 이므로 return 11 */
 }
 
 static int pcpu_size_to_slot(int size)
 {
 	if (size == pcpu_unit_size)
+		/*! 20140125 pcpu_unit_size:  */
 		return pcpu_nr_slots - 1;
 	return __pcpu_size_to_slot(size);
+	/*! 20140125 size가 12kb인 경우에 return 11 */
 }
 
 static int pcpu_chunk_slot(const struct pcpu_chunk *chunk)
@@ -217,6 +221,7 @@ static int pcpu_chunk_slot(const struct pcpu_chunk *chunk)
 		return 0;
 
 	return pcpu_size_to_slot(chunk->free_size);
+	/*! 20140125 chunk->free_size가 12kb인 경우에 return 11 */
 }
 
 /* set the pointer to a chunk in a page struct */
@@ -329,6 +334,7 @@ static void pcpu_mem_free(void *ptr, size_t size)
 static void pcpu_chunk_relocate(struct pcpu_chunk *chunk, int oslot)
 {
 	int nslot = pcpu_chunk_slot(chunk);
+	/*! 20140125 chunk->free_size가 12k 인 경우에 nslot = 11 */
 
 	if (chunk != pcpu_reserved_chunk && oslot != nslot) {
 		if (oslot < nslot)
@@ -336,6 +342,7 @@ static void pcpu_chunk_relocate(struct pcpu_chunk *chunk, int oslot)
 		else
 			list_move_tail(&chunk->list, &pcpu_slot[nslot]);
 	}
+	/*! 20140125 pcpu_chunk를 list로 연결한다. */
 }
 
 /**
@@ -1150,6 +1157,7 @@ static void pcpu_dump_alloc_info(const char *lvl,
 		}
 	}
 	printk(KERN_CONT "\n");
+	/*! 20140125 ai의 모든 member들의 정보를 출력한다. */
 }
 
 /**
@@ -1213,6 +1221,7 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 {
 	static char cpus_buf[4096] __initdata;
 	static int smap[PERCPU_DYNAMIC_EARLY_SLOTS] __initdata;
+	/*! 20140125 PERCPU_DYNAMIC_EARLY_SLOTS: 128 */
 	static int dmap[PERCPU_DYNAMIC_EARLY_SLOTS] __initdata;
 	size_t dyn_size = ai->dyn_size;
 	size_t size_sum = ai->static_size + ai->reserved_size + dyn_size;
@@ -1225,6 +1234,7 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 	int group, unit, i;
 
 	cpumask_scnprintf(cpus_buf, sizeof(cpus_buf), cpu_possible_mask);
+	/*! 20140125 cpu_possible_mask를 hexa값으로 전환하여 cpus_buf에 저장 */
 
 #define PCPU_SETUP_BUG_ON(cond)	do {					\
 	if (unlikely(cond)) {						\
@@ -1248,12 +1258,14 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 	PCPU_SETUP_BUG_ON(ai->unit_size < PCPU_MIN_UNIT_SIZE);
 	PCPU_SETUP_BUG_ON(ai->dyn_size < PERCPU_DYNAMIC_EARLY_SIZE);
 	PCPU_SETUP_BUG_ON(pcpu_verify_alloc_info(ai) < 0);
+	/*! 20140125 alloc이 nr_pages보다 많은 경우 warning */
 
 	/* process group information and build config tables accordingly */
 	group_offsets = alloc_bootmem(ai->nr_groups * sizeof(group_offsets[0]));
 	group_sizes = alloc_bootmem(ai->nr_groups * sizeof(group_sizes[0]));
 	unit_map = alloc_bootmem(nr_cpu_ids * sizeof(unit_map[0]));
 	unit_off = alloc_bootmem(nr_cpu_ids * sizeof(unit_off[0]));
+	/*! 20140125 각 변수에 메모리 할당 */
 
 	for (cpu = 0; cpu < nr_cpu_ids; cpu++)
 		unit_map[cpu] = UINT_MAX;
@@ -1286,17 +1298,22 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 			if (pcpu_high_unit_cpu == NR_CPUS ||
 			    unit_off[cpu] > unit_off[pcpu_high_unit_cpu])
 				pcpu_high_unit_cpu = cpu;
+			/*! 20140125 현재 cpu map에서 가장 작은 cpu번호와 가장 큰 cpu 번호를 할당한다. */
 		}
+		/*! 20140125 할당한 메모리에 값 넣기 */
 	}
 	pcpu_nr_units = unit;
 
 	for_each_possible_cpu(cpu)
+	/*! 20140125 unit map에 초기화되지 않은 unit이 있으면 BUG() 실행 */
 		PCPU_SETUP_BUG_ON(unit_map[cpu] == UINT_MAX);
 
 	/* we're done parsing the input, undefine BUG macro and dump config */
 #undef PCPU_SETUP_BUG_ON
 	pcpu_dump_alloc_info(KERN_DEBUG, ai);
+	/*! 20140125 ai의 정보를 출력 */
 
+	/*! 20140125 초기화된 ai정보를 커널이 관리하는 전역변수로 복사 */
 	pcpu_nr_groups = ai->nr_groups;
 	pcpu_group_offsets = group_offsets;
 	pcpu_group_sizes = group_sizes;
@@ -1306,18 +1323,26 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 	/* determine basic parameters */
 	pcpu_unit_pages = ai->unit_size >> PAGE_SHIFT;
 	pcpu_unit_size = pcpu_unit_pages << PAGE_SHIFT;
+	/*! 20140125 pcpu_unit_pages: 8, pcpu_unit_size: 32kb(0x8000) */
 	pcpu_atom_size = ai->atom_size;
 	pcpu_chunk_struct_size = sizeof(struct pcpu_chunk) +
 		BITS_TO_LONGS(pcpu_unit_pages) * sizeof(unsigned long);
+	/*! 20140125 pcpu_chunk_struct_size = sizeof(struct pcpu_chunk) + 1 * 4 
+	 * 왜 4byte를 추가 할당할까?
+	 * populated[]는 sizeof(struct pcpu_chunk)에 포함되지 않음
+	 */
 
 	/*
 	 * Allocate chunk slots.  The additional last slot is for
 	 * empty chunks.
 	 */
 	pcpu_nr_slots = __pcpu_size_to_slot(pcpu_unit_size) + 2;
+	/*! 20140125 필요한 slot 갯수(12)보다 2개 더 할당한다.  */
 	pcpu_slot = alloc_bootmem(pcpu_nr_slots * sizeof(pcpu_slot[0]));
+	/*! 20140125 추가한 slot을 포함하는 메모리공간 할당 */
 	for (i = 0; i < pcpu_nr_slots; i++)
 		INIT_LIST_HEAD(&pcpu_slot[i]);
+		/*! 20140125 slot별로 list head를 초기화함 */
 
 	/*
 	 * Initialize static chunk.  If reserved_size is zero, the
@@ -1331,9 +1356,12 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 	schunk->base_addr = base_addr;
 	schunk->map = smap;
 	schunk->map_alloc = ARRAY_SIZE(smap);
+	/*! 20140125 smap의 array 갯수 */
 	schunk->immutable = true;
 	bitmap_fill(schunk->populated, pcpu_unit_pages);
+	/*! 20140125 pcpu_unit_pages 갯수만큼 populated bit 를 1로 채운다. */
 
+	/*! 20140125 reserved_size: 8k, dyn_size: 12k = 0x3000, atom_size: 4k = 0x1000 */
 	if (ai->reserved_size) {
 		schunk->free_size = ai->reserved_size;
 		pcpu_reserved_chunk = schunk;
@@ -1345,6 +1373,10 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 	schunk->contig_hint = schunk->free_size;
 
 	schunk->map[schunk->map_used++] = -ai->static_size;
+	/*! 20140125
+	 * schunk->map_used 의 초기값은 0
+	 * 양수값은 사용하지 않는 공간의 크기, 음수값은 사용중인 공간의 크기를 나타낸다.
+	 */
 	if (schunk->free_size)
 		schunk->map[schunk->map_used++] = schunk->free_size;
 
@@ -1365,6 +1397,7 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 
 	/* link the first chunk in */
 	pcpu_first_chunk = dchunk ?: schunk;
+	/*! 20140125 dchunk가 NULL이면 pcpu_first_chunk = schunk */
 	pcpu_chunk_relocate(pcpu_first_chunk, -1);
 
 	/* we're done */
@@ -1750,6 +1783,10 @@ int __init pcpu_embed_first_chunk(size_t reserved_size, size_t dyn_size,
 	/*! 2014/01/18 여기까지 스터디함 */
 
 	rc = pcpu_setup_first_chunk(ai, base);
+	/*! 20140125
+	 * ai(alloc info) 정보를 parsing 하여 pcpu_* 전역변수들에 할당하고
+	 * pcpu slot들을 만들고 first chunk를 할당한다.
+	 */
 	goto out_free;
 
 out_free_areas:
@@ -1923,12 +1960,18 @@ void __init setup_per_cpu_areas(void)
 	rc = pcpu_embed_first_chunk(PERCPU_MODULE_RESERVE,
 				    PERCPU_DYNAMIC_RESERVE, PAGE_SIZE, NULL,
 				    pcpu_dfl_fc_alloc, pcpu_dfl_fc_free);
+	/*! 20140125 per cpu 변수를 위한 공간을 할당하고 관련자료구조를 초기화한 후 첫번째 chunk 를 setup한다. */
 	if (rc < 0)
 		panic("Failed to initialize percpu areas.");
 
 	delta = (unsigned long)pcpu_base_addr - (unsigned long)__per_cpu_start;
+	/*! 20140125
+	 * delta: pcpu base 주소와 pcpu section의 start 와의 차이값
+	 * delta는 pcpu section 과 첫번째 cpu chunk와의 차이
+	 */
 	for_each_possible_cpu(cpu)
 		__per_cpu_offset[cpu] = delta + pcpu_unit_offsets[cpu];
+	/*! 20140125 delta를 이용하여 각 cpu별 chunk의 offset을 설정한다. */
 }
 #endif	/* CONFIG_HAVE_SETUP_PER_CPU_AREA */
 

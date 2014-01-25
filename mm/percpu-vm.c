@@ -444,5 +444,6 @@ static struct page *pcpu_addr_to_page(void *addr)
 static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai)
 {
 	/* no extra restriction */
+	/*! 20140125 여기가 실행됨 */
 	return 0;
 }

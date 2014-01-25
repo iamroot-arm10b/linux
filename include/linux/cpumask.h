@@ -555,6 +555,7 @@ static inline int cpumask_scnprintf(char *buf, int len,
 				    const struct cpumask *srcp)
 {
 	return bitmap_scnprintf(buf, len, cpumask_bits(srcp), nr_cpumask_bits);
+	/*! 20140125 bitmap을 hexa값으로 전환하여 buf에 저장 */
 }
 
 /**
