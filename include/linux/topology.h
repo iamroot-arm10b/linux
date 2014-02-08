@@ -213,6 +213,8 @@ static inline void set_cpu_numa_node(int cpu, int node)
 #ifndef numa_node_id
 static inline int numa_node_id(void)
 {
+    /*! 20140208 여기가 수행됨 */
+    /*! 20140208 0이 리턴됨 */
 	return cpu_to_node(raw_smp_processor_id());
 }
 #endif

@@ -57,6 +57,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
  * established ways to produce a usable pointer from the percpu variable
  * offset.
  */
+/*! 20140208 각 cpu별 percpu 영역에서 주어진 cpu 번호에 해당하는 var 의 주소를 반환한다 */
 #define per_cpu(var, cpu) \
 	(*SHIFT_PERCPU_PTR(&(var), per_cpu_offset(cpu)))
 

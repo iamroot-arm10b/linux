@@ -2854,6 +2854,7 @@ static unsigned long nr_free_zone_pages(int offset)
 	/* Just pick one node, since fallback list is circular */
 	unsigned long sum = 0;
 
+	/*! 20140208 스터디 여기까지 */
 	struct zonelist *zonelist = node_zonelist(numa_node_id(), GFP_KERNEL);
 
 	for_each_zone_zonelist(zone, z, zonelist, offset) {
@@ -2886,6 +2887,7 @@ EXPORT_SYMBOL_GPL(nr_free_buffer_pages);
  */
 unsigned long nr_free_pagecache_pages(void)
 {
+	/*! 20140208 GFP_HIGHUSER_MOVABLE = 0x10u | 0x40u | 0x80u | 0x2000u | 0x02u | 0x08u */
 	return nr_free_zone_pages(gfp_zone(GFP_HIGHUSER_MOVABLE));
 }
 
@@ -3167,16 +3169,20 @@ static int build_zonelists_node(pg_data_t *pgdat, struct zonelist *zonelist,
 
 	do {
 		zone_type--;
+		/*! 20140208 zone_type = 2(movable), 1(highmem), 0(lowmem) */
 		zone = pgdat->node_zones + zone_type;
 		/*! 20140208 pgdat->node_zones 배열이 MAX_NR_ZONES 만큼 만들어졌고 역순으로 처리 */
+		/*! 20140208 populated_zone 함수에서는 moveablezone을 제외한 highmem, lowmem zone인 경우 true 반환 */
 		if (populated_zone(zone)) {
 			zoneref_set_zone(zone,
 				&zonelist->_zonerefs[nr_zones++]);
+			/*! 20140208 _zonerefs[0]에 highmem, _zonerefs[1]에 lowmem zone이 들어간다 */
 			check_highest_zone(zone_type);
 		}
 	} while (zone_type);
 
 	return nr_zones;
+	/*! 20140208 nr_zones은 실제로 page를 가지는 zone의 개수 */
 }
 
 
@@ -3593,6 +3599,7 @@ static void build_zonelists(pg_data_t *pgdat)
 
 	zonelist = &pgdat->node_zonelists[0];
 	j = build_zonelists_node(pgdat, zonelist, 0);
+	/*! 20140208 pgdat의 정보를 토대로 zonelist->_zonerefs 를 채움*/
 
 	/*
 	 * Now we build the zonelist so that it contains the zones
@@ -3602,6 +3609,7 @@ static void build_zonelists(pg_data_t *pgdat)
 	 * zones coming right after the local ones are those from
 	 * node N+1 (modulo N)
 	 */
+	/*! 20140208 local_node는 0 이므로 아래 두 for문은 수행되지 않는다. */
 	for (node = local_node + 1; node < MAX_NUMNODES; node++) {
 		if (!node_online(node))
 			continue;
@@ -3613,6 +3621,7 @@ static void build_zonelists(pg_data_t *pgdat)
 		j = build_zonelists_node(NODE_DATA(node), zonelist, j);
 	}
 
+	/*! 20140208 마지막 zonelist->_zonerefs 을 NULL로 초기화한다. */
 	zonelist->_zonerefs[j].zone = NULL;
 	zonelist->_zonerefs[j].zone_idx = 0;
 }
@@ -3620,6 +3629,7 @@ static void build_zonelists(pg_data_t *pgdat)
 /* non-NUMA variant of zonelist performance cache - just NULL zlcache_ptr */
 static void build_zonelist_cache(pg_data_t *pgdat)
 {
+	/*! 20140208 여기가 수행됨 */
 	pgdat->node_zonelists[0].zlcache_ptr = NULL;
 }
 
@@ -3677,7 +3687,9 @@ static int __build_all_zonelists(void *data)
 		 */
 
 		build_zonelists(pgdat);
+		/*! 20140208 pgdat->node_zonelists 구조체를 초기화한다. */
 		build_zonelist_cache(pgdat);
+		/*! 20140208 NUMA가 아니라서 zlcache_ptr을 NULL 로 초기화한다. */
 	}
 
 	/*
@@ -3694,7 +3706,9 @@ static int __build_all_zonelists(void *data)
 	 * (a chicken-egg dilemma).
 	 */
 	for_each_possible_cpu(cpu) {
+	/*! 20140208 for ((cpu) = -1; (cpu) = cpumask_next((cpu), (cpu_possible_mask)), (cpu) < nr_cpu_ids;) */
 		setup_pageset(&per_cpu(boot_pageset, cpu), 0);
+		/*! 20140208 cpu 번호에 해당하는 per_cpu_pageset 구조체 boot_pageset 주소를 가져와 boot_pageset을 초기화함 */
 
 #ifdef CONFIG_HAVE_MEMORYLESS_NODES
 		/*
@@ -3724,8 +3738,11 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 
 	if (system_state == SYSTEM_BOOTING) {
 		__build_all_zonelists(NULL);
+		/*! 20140208 zonelist 초기화 및 cpu별 pageset 초기화. */
 		mminit_verify_zonelist();
+		/*! 20140208 zonelist에 대한 내용을 출력한다. */
 		cpuset_init_current_mems_allowed();
+		/*! 20140208 아무동작안함 */
 	} else {
 #ifdef CONFIG_MEMORY_HOTPLUG
 		if (zone)
@@ -3734,6 +3751,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 		/* we have to stop all cpus to guarantee there is no user
 		   of zonelist */
 		stop_machine(__build_all_zonelists, pgdat, NULL);
+		/*! 20140208 TODO: 다음에 확인할 것!!!! */
 		/* cpuset refresh routine should be here */
 	}
 	vm_total_pages = nr_free_pagecache_pages();
@@ -4127,17 +4145,25 @@ static void pageset_update(struct per_cpu_pages *pcp, unsigned long high,
        /* start with a fail safe value for batch */
 	pcp->batch = 1;
 	smp_wmb();
+	/*! 20140208
+	 * dmb를 사용한 베리어 사용
+	 * 간단히 얘기하면 DMB 명령어 이전에 data access에 대한 모든 명령어가 끝나고 나서
+	 * DMB 명령어 이후의 data access 가 발생하는 것을 보장한다는 것이다.
+	 * 출처: http://forum.falinux.com/zbxe/index.php?document_srl=534002&mid=Kernel_API
+	 */
 
        /* Update high, then batch, in order */
 	pcp->high = high;
 	smp_wmb();
 
 	pcp->batch = batch;
+	/*! 20140208 high 먼저 입력하고 batch 입력해야함. batch < high 이여야 함.*/
 }
 
 /* a companion to pageset_set_high() */
 static void pageset_set_batch(struct per_cpu_pageset *p, unsigned long batch)
 {
+	/*! 20140208 여기를 봄 */
 	pageset_update(&p->pcp, 6 * batch, max(1UL, 1 * batch));
 }
 
@@ -4152,12 +4178,15 @@ static void pageset_init(struct per_cpu_pageset *p)
 	pcp->count = 0;
 	for (migratetype = 0; migratetype < MIGRATE_PCPTYPES; migratetype++)
 		INIT_LIST_HEAD(&pcp->lists[migratetype]);
+	/*! 20140208 per_cpu_pageset 구조체를 0으로 초기화하고 pcp 멤버변수의 count, list 초기화 */
 }
 
 static void setup_pageset(struct per_cpu_pageset *p, unsigned long batch)
 {
 	pageset_init(p);
+	/*! 20140208 p 변수 초기화 */
 	pageset_set_batch(p, batch);
+	/*! 20140208 p->pcp 의 high 와 batch 변수를 초기화함. */
 }
 
 /*

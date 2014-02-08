@@ -66,10 +66,12 @@ static struct {
 void get_online_cpus(void)
 {
 	might_sleep();
+	/*! 20140208 아무작업 안함 */
 	if (cpu_hotplug.active_writer == current)
 		return;
 	mutex_lock(&cpu_hotplug.lock);
 	cpu_hotplug.refcount++;
+	/*! 20140208 cpu_hotplug.refcount 값을 증가함 */
 	mutex_unlock(&cpu_hotplug.lock);
 
 }

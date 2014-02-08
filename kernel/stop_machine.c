@@ -482,6 +482,7 @@ int stop_machine(int (*fn)(void *), void *data, const struct cpumask *cpus)
 
 	/* No CPUs can come up or down during this. */
 	get_online_cpus();
+	/*! 20140208 cpu_hotplug.refcount count 값을 올림 */
 	ret = __stop_machine(fn, data, cpus);
 	put_online_cpus();
 	return ret;

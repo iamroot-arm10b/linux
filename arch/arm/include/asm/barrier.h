@@ -20,6 +20,7 @@
 #define isb() __asm__ __volatile__ ("isb" : : : "memory")
 #define dsb() __asm__ __volatile__ ("dsb" : : : "memory")
 #define dmb() __asm__ __volatile__ ("dmb" : : : "memory")
+/*! 20140208 dmb = cpu가 순서를 보장하게 만들고, memory 는 컴파일러가 순서를 보장하게 만듬. (최적화를 금지함)*/
 #elif defined(CONFIG_CPU_XSC3) || __LINUX_ARM_ARCH__ == 6
 #define isb() __asm__ __volatile__ ("mcr p15, 0, %0, c7, c5, 4" \
 				    : : "r" (0) : "memory")

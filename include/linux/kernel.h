@@ -146,6 +146,7 @@ struct user;
 extern int _cond_resched(void);
 # define might_resched() _cond_resched()
 #else
+/*! 20140208 여기 수행 */
 # define might_resched() do { } while (0)
 #endif
 
@@ -166,6 +167,7 @@ extern int _cond_resched(void);
 #else
   static inline void __might_sleep(const char *file, int line,
 				   int preempt_offset) { }
+/*! 20140208 여기 수행 */
 # define might_sleep() do { might_resched(); } while (0)
 #endif
 

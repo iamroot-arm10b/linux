@@ -143,6 +143,7 @@ static inline nodemask_t cpuset_mems_allowed(struct task_struct *p)
 }
 
 #define cpuset_current_mems_allowed (node_states[N_MEMORY])
+/*! 20140208 여기가 수행됨 */
 static inline void cpuset_init_current_mems_allowed(void) {}
 
 static inline int cpuset_nodemask_valid_mems_allowed(nodemask_t *nodemask)

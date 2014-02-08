@@ -50,6 +50,7 @@ struct vm_area_struct;
 #define __GFP_HIGHMEM	((__force gfp_t)___GFP_HIGHMEM)
 #define __GFP_DMA32	((__force gfp_t)___GFP_DMA32)
 #define __GFP_MOVABLE	((__force gfp_t)___GFP_MOVABLE)  /* Page is movable */
+/*! 20140208 GFP_ZONEMASK = 0x0F */
 #define GFP_ZONEMASK	(__GFP_DMA|__GFP_HIGHMEM|__GFP_DMA32|__GFP_MOVABLE)
 /*
  * Action modifiers - doesn't change the zoning
@@ -114,6 +115,7 @@ struct vm_area_struct;
 #define GFP_USER	(__GFP_WAIT | __GFP_IO | __GFP_FS | __GFP_HARDWALL)
 #define GFP_HIGHUSER	(__GFP_WAIT | __GFP_IO | __GFP_FS | __GFP_HARDWALL | \
 			 __GFP_HIGHMEM)
+/*! 20140208 GFP_HIGHUSER_MOVABLE = 0x10u | 0x40u | 0x80u | 0x2000u | 0x02u | 0x08u */
 #define GFP_HIGHUSER_MOVABLE	(__GFP_WAIT | __GFP_IO | __GFP_FS | \
 				 __GFP_HARDWALL | __GFP_HIGHMEM | \
 				 __GFP_MOVABLE)
@@ -221,6 +223,17 @@ static inline int allocflags_to_migratetype(gfp_t gfp_flags)
 #error ZONES_SHIFT too large to create GFP_ZONE_TABLE integer
 #endif
 
+/*! 20140208 ZONES_SHIFT = 2 */
+/*! 20140208
+	(ZONE_NORMAL << 0 * ZONES_SHIFT)				      \                 0 << 0 * 2
+	| (OPT_ZONE_DMA << ___GFP_DMA * ZONES_SHIFT)			      \         0 << 1 * 2
+	| (OPT_ZONE_HIGHMEM << ___GFP_HIGHMEM * ZONES_SHIFT)		      \     1 << 2 * 2
+	| (OPT_ZONE_DMA32 << ___GFP_DMA32 * ZONES_SHIFT)		      \         0 << 4 * 2
+	| (ZONE_NORMAL << ___GFP_MOVABLE * ZONES_SHIFT)			      \         0 << 8 * 2
+	| (OPT_ZONE_DMA << (___GFP_MOVABLE | ___GFP_DMA) * ZONES_SHIFT)	      \ 0 << 9 * 2
+	| (ZONE_MOVABLE << (___GFP_MOVABLE | ___GFP_HIGHMEM) * ZONES_SHIFT)   \ 2 << a * 2
+	| (OPT_ZONE_DMA32 << (___GFP_MOVABLE | ___GFP_DMA32) * ZONES_SHIFT)   \ 0 << c * 2
+ */
 #define GFP_ZONE_TABLE ( \
 	(ZONE_NORMAL << 0 * ZONES_SHIFT)				      \
 	| (OPT_ZONE_DMA << ___GFP_DMA * ZONES_SHIFT)			      \
@@ -238,6 +251,16 @@ static inline int allocflags_to_migratetype(gfp_t gfp_flags)
  * entry starting with bit 0. Bit is set if the combination is not
  * allowed.
  */
+/*! 20140208
+	1 << (___GFP_DMA | ___GFP_HIGHMEM)				      \                 1 << 3
+	| 1 << (___GFP_DMA | ___GFP_DMA32)				      \                 1 << 5
+	| 1 << (___GFP_DMA32 | ___GFP_HIGHMEM)				      \             1 << 6
+	| 1 << (___GFP_DMA | ___GFP_DMA32 | ___GFP_HIGHMEM)		      \         1 << 7
+	| 1 << (___GFP_MOVABLE | ___GFP_HIGHMEM | ___GFP_DMA)		      \     1 << b
+	| 1 << (___GFP_MOVABLE | ___GFP_DMA32 | ___GFP_DMA)		      \         1 << d
+	| 1 << (___GFP_MOVABLE | ___GFP_DMA32 | ___GFP_HIGHMEM)		      \     1 << e
+	| 1 << (___GFP_MOVABLE | ___GFP_DMA32 | ___GFP_DMA | ___GFP_HIGHMEM)  \ 1 << f
+ */
 #define GFP_ZONE_BAD ( \
 	1 << (___GFP_DMA | ___GFP_HIGHMEM)				      \
 	| 1 << (___GFP_DMA | ___GFP_DMA32)				      \
@@ -253,9 +276,12 @@ static inline enum zone_type gfp_zone(gfp_t flags)
 {
 	enum zone_type z;
 	int bit = (__force int) (flags & GFP_ZONEMASK);
+    /*! 20140208 GFP_ZONEMASK = (__GFP_DMA|__GFP_HIGHMEM|__GFP_DMA32|__GFP_MOVABLE) */
 
+    /*! 20140208 (flags & 0x0f) 에 해당하는 ZONE_* 상수값을 가져온다 */
 	z = (GFP_ZONE_TABLE >> (bit * ZONES_SHIFT)) &
 					 ((1 << ZONES_SHIFT) - 1);
+    /*! 20140208 (falgs & 0x0f) 에 해당하는 것이 GFP_ZONE_BAD에 해당하면 BUG 발생 */
 	VM_BUG_ON((GFP_ZONE_BAD >> bit) & 1);
 	return z;
 }

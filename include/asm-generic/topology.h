@@ -32,6 +32,7 @@
 /* Other architectures wishing to use this simple topology API should fill
    in the below functions as appropriate in their own <asm/topology.h> file. */
 #ifndef cpu_to_node
+/*! 20140208 여기가 수행됨 (x,y) 인 경우 y가 리턴됨 따라서, 0이 리턴됨 */
 #define cpu_to_node(cpu)	((void)(cpu),0)
 #endif
 #ifndef set_numa_node

@@ -292,6 +292,7 @@ static inline int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
 
 static inline void check_highest_zone(int k)
 {
+	/*! 20140208 여기가 수행된다 */
 }
 
 #ifdef CONFIG_TMPFS

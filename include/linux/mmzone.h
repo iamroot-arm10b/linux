@@ -245,6 +245,7 @@ struct per_cpu_pages {
 	int batch;		/* chunk size for buddy add/remove */
 
 	/* Lists of pages, one per migrate type stored on the pcp-lists */
+    /*! 20140208 MIGRATE_PCPTYPES = 3 */
 	struct list_head lists[MIGRATE_PCPTYPES];
 };
 
@@ -856,7 +857,7 @@ unsigned long __init node_memmap_size_bytes(int, unsigned long, unsigned long);
 static inline int populated_zone(struct zone *zone)
 {
 	return (!!zone->present_pages);
-	/*! 20140208 값이 0 이외의 경우는 1로 리턴 */
+	/*! 20140208 page가 있다면, 값이 0 이외의 경우는 1로 리턴 */
 }
 
 extern int movable_zone;

@@ -21,6 +21,7 @@ int mminit_loglevel;
 #endif
 
 /* The zonelists are simply reported, validation is manual. */
+/*! 20140208 여기가 수행됨. */
 void mminit_verify_zonelist(void)
 {
 	int nid;
@@ -29,12 +30,14 @@ void mminit_verify_zonelist(void)
 		return;
 
 	for_each_online_node(nid) {
+	/*! 20140208 for ( (node) = 0; (node) == 0; (node) = 1) */
 		pg_data_t *pgdat = NODE_DATA(nid);
 		struct zone *zone;
 		struct zoneref *z;
 		struct zonelist *zonelist;
 		int i, listid, zoneid;
 
+		/*! 20140208 MAX_ZONELISTS = 1, MAX_NR_ZONES = 3 */
 		BUG_ON(MAX_ZONELISTS > 2);
 		for (i = 0; i < MAX_ZONELISTS * MAX_NR_ZONES; i++) {
 
@@ -43,9 +46,12 @@ void mminit_verify_zonelist(void)
 			listid = i / MAX_NR_ZONES;
 			zonelist = &pgdat->node_zonelists[listid];
 			zone = &pgdat->node_zones[zoneid];
+			/*! 20140208 node_zones[0] = lowmem, node_zones[1] = highmem, node_zones[2] = moveable */
 			if (!populated_zone(zone))
+				/*! 20140208 node_zones[2] = Movable 인 경우에 해당 */
 				continue;
 
+			/*! 20140208 zonelist 내용을 print한다. */
 			/* Print information about the zonelist */
 			printk(KERN_DEBUG "mminit::zonelist %s %d:%s = ",
 				listid > 0 ? "thisnode" : "general", nid,
