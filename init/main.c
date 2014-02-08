@@ -555,6 +555,7 @@ asmlinkage void __init start_kernel(void)
 	setup_per_cpu_areas();
 	/*! 20140125 per_cpu 변수 사용을 위한 영역 할당 및 초기화. 2014/01/25 여기까지 */
 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
+	/*! 20140208 레지스터에 현재 core의 per_cpu offset을 저장한다. */
 
 	build_all_zonelists(NULL, NULL);
 	page_alloc_init();

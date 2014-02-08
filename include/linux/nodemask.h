@@ -442,6 +442,7 @@ static inline void node_set_offline(int nid)
 }
 
 #else
+/*! 20140208 node가 1 보다 크지 않은 경우에는 여기 실행 */
 
 static inline int node_state(int node, enum node_states state)
 {

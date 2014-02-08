@@ -21,6 +21,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
  */
 
 #define per_cpu_offset(x) (__per_cpu_offset[x])
+/*! 20140208 번호를 받아서 CPU의 per_cpu_offset 을 리턴 */
 #endif
 
 /*

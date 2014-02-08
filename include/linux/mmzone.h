@@ -856,6 +856,7 @@ unsigned long __init node_memmap_size_bytes(int, unsigned long, unsigned long);
 static inline int populated_zone(struct zone *zone)
 {
 	return (!!zone->present_pages);
+	/*! 20140208 값이 0 이외의 경우는 1로 리턴 */
 }
 
 extern int movable_zone;

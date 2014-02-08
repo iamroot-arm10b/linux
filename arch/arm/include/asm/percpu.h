@@ -21,15 +21,19 @@
  * in the TPIDRPRW. TPIDRPRW only exists on V6K and V7
  */
 #if defined(CONFIG_SMP) && !defined(CONFIG_CPU_V6)
-/*!
- * PL1 레지스터 값을 off로 설정한다.
- */
+/*! PL1 레지스터 값을 offset으로 설정한다.  */
 static inline void set_my_cpu_offset(unsigned long off)
 {
 	/* Set TPIDRPRW */
 	asm volatile("mcr p15, 0, %0, c13, c0, 4" : : "r" (off) : "memory");
+	/*! 20140208 DDI0406C_b_arm_architecture_reference_manual.pdf pp.1719
+	 * PL(the processor privilege level) 관련해서 p.141 참조. 
+	 * PL1은 Usr mode와 Hyp mode 제외한 모든 mode
+	 * 이 레지스터는 PL1 이상이어야 접근 가능하기 때문에 셋팅하는 것.
+	 */
 }
 
+/*! 20140208 TPIDRPRW에 있는 per_cpu_offset 값을 리턴한다.  */
 static inline unsigned long __my_cpu_offset(void)
 {
 	unsigned long off;

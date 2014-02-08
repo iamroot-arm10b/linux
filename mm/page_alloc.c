@@ -3163,10 +3163,12 @@ static int build_zonelists_node(pg_data_t *pgdat, struct zonelist *zonelist,
 {
 	struct zone *zone;
 	enum zone_type zone_type = MAX_NR_ZONES;
+	/*! 20140208 MAX_NR_ZONES: 3 */
 
 	do {
 		zone_type--;
 		zone = pgdat->node_zones + zone_type;
+		/*! 20140208 pgdat->node_zones 배열이 MAX_NR_ZONES 만큼 만들어졌고 역순으로 처리 */
 		if (populated_zone(zone)) {
 			zoneref_set_zone(zone,
 				&zonelist->_zonerefs[nr_zones++]);
@@ -3577,6 +3579,7 @@ int local_memory_node(int node)
 
 static void set_zonelist_order(void)
 {
+	/*! 20140208 ZONELIST_ORDER_ZONE: 2 */
 	current_zonelist_order = ZONELIST_ORDER_ZONE;
 }
 
@@ -3659,13 +3662,19 @@ static int __build_all_zonelists(void *data)
 	memset(node_load, 0, sizeof(node_load));
 #endif
 
+	/*! 20140208 node_online: node가 0인지 체크하는 함수, 0이 리턴됨 */
 	if (self && !node_online(self->node_id)) {
 		build_zonelists(self);
 		build_zonelist_cache(self);
 	}
 
 	for_each_online_node(nid) {
+	/*! 20140208 for ( (nid) = 0; (nid) == 0; (nid) = 1) */
 		pg_data_t *pgdat = NODE_DATA(nid);
+		/*! 20140208
+		 * pgdat = (&contig_page_data) = &bootmem_node_data[0]
+		 * bootmem_data_t bootmem_node_data[1] __initdata;
+		 */
 
 		build_zonelists(pgdat);
 		build_zonelist_cache(pgdat);
@@ -3711,6 +3720,7 @@ static int __build_all_zonelists(void *data)
 void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 {
 	set_zonelist_order();
+	/*! 20140208 current_zonelist_order = 2 로 셋팅 */
 
 	if (system_state == SYSTEM_BOOTING) {
 		__build_all_zonelists(NULL);

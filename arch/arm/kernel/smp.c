@@ -416,6 +416,10 @@ void __init smp_cpus_done(unsigned int max_cpus)
 void __init smp_prepare_boot_cpu(void)
 {
 	set_my_cpu_offset(per_cpu_offset(smp_processor_id()));
+	/*! 20140208
+	 * PL1이상에서만 접근가능한 PL1 only Thread ID Register(TPIDRPRW)에
+	 * 현재 core의 per_cpu offset을 저장한다.
+	 */
 }
 
 void __init smp_prepare_cpus(unsigned int max_cpus)
