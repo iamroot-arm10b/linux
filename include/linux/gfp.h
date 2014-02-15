@@ -110,6 +110,7 @@ struct vm_area_struct;
 #define GFP_NOIO	(__GFP_WAIT)
 #define GFP_NOFS	(__GFP_WAIT | __GFP_IO)
 #define GFP_KERNEL	(__GFP_WAIT | __GFP_IO | __GFP_FS)
+/*! 20140215 GFP_KERNEL: 0x10u | 0x40u | 0x80u */
 #define GFP_TEMPORARY	(__GFP_WAIT | __GFP_IO | __GFP_FS | \
 			 __GFP_RECLAIMABLE)
 #define GFP_USER	(__GFP_WAIT | __GFP_IO | __GFP_FS | __GFP_HARDWALL)
@@ -297,6 +298,7 @@ static inline int gfp_zonelist(gfp_t flags)
 {
 	if (IS_ENABLED(CONFIG_NUMA) && unlikely(flags & __GFP_THISNODE))
 		return 1;
+	/*! 20140215 __GFP_THISNODE가 GFP_KERNEL 에 없으므로 0 리턴 */
 
 	return 0;
 }
@@ -313,6 +315,7 @@ static inline int gfp_zonelist(gfp_t flags)
 static inline struct zonelist *node_zonelist(int nid, gfp_t flags)
 {
 	return NODE_DATA(nid)->node_zonelists + gfp_zonelist(flags);
+	/*! 20140215 gfp_zonelist(flags): 0 이므로 NODE_DATA(nid)->node_zonelists 리턴 */
 }
 
 #ifndef HAVE_ARCH_FREE_PAGE

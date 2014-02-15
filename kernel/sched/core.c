@@ -2514,9 +2514,13 @@ asmlinkage void __sched schedule_user(void)
  */
 void __sched schedule_preempt_disabled(void)
 {
+	/*! 20140215 나중에 보기로 함 */
 	sched_preempt_enable_no_resched();
+	/*! 20140215 schedule을 위한 선점 허용 */
 	schedule();
+	/*! 20140215 context switching 발생 */
 	preempt_disable();
+	/*! 20140215 선점 막음 */
 }
 
 #ifdef CONFIG_PREEMPT

@@ -63,14 +63,17 @@ struct zoneref *next_zones_zonelist(struct zoneref *z,
 	 */
 	if (likely(nodes == NULL))
 		while (zonelist_zone_idx(z) > highest_zoneidx)
+		/*! 20140215 highest_zoneidx 보다 작은 zoneref를 검색한다. */
 			z++;
 	else
+	/*! 20140215 NUMA 인 경우에 여기 실행됨 */
 		while (zonelist_zone_idx(z) > highest_zoneidx ||
 				(z->zone && !zref_in_nodemask(z, nodes)))
 			z++;
 
 	*zone = zonelist_zone(z);
 	return z;
+	/*! 20140215 검색한 zoneref에 해당하는 zone, index를 리턴 */
 }
 
 #ifdef CONFIG_ARCH_HAS_HOLES_MEMORYMODEL

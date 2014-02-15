@@ -35,7 +35,9 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
 #endif
 
 	smp_mb();
+	/*! 20140215 메모리 업데이트 한 후에 작동됨 */
 
+	/*! 20140215 point변수의 크기이므로 size: 4 */
 	switch (size) {
 #if __LINUX_ARM_ARCH__ >= 6
 	case 1:
@@ -57,6 +59,7 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
 			: "=&r" (ret), "=&r" (tmp)
 			: "r" (x), "r" (ptr)
 			: "memory", "cc");
+		/*! 20140215 memory, cps flag를 변경했기때문에 최적화를 하지 말라는 것. */
 		break;
 #elif defined(swp_is_buggy)
 #ifdef CONFIG_SMP
@@ -96,6 +99,7 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
 		break;
 	}
 	smp_mb();
+	/*! 20140215 *ptr의 값을 리턴하고 *ptr에 x를 기록 */
 
 	return ret;
 }

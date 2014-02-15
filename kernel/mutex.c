@@ -95,11 +95,13 @@ __mutex_lock_slowpath(atomic_t *lock_count);
 void __sched mutex_lock(struct mutex *lock)
 {
 	might_sleep();
+	/*! 20140215 아무것도 안함 */
 	/*
 	 * The locking fastpath is the 1->0 transition from
 	 * 'unlocked' into 'locked' state.
 	 */
 	__mutex_fastpath_lock(&lock->count, __mutex_lock_slowpath);
+	/*! 20140215 __mutex_lock_slowpath(&lock->count) 로 대체됨 */
 	mutex_set_owner(lock);
 }
 
@@ -412,12 +414,15 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		    struct ww_acquire_ctx *ww_ctx)
 {
 	struct task_struct *task = current;
+	/*! 20140215 현재 실행중인 task의 구조체 */
 	struct mutex_waiter waiter;
 	unsigned long flags;
 	int ret;
 
 	preempt_disable();
+	/*! 20140215 preempt count를 증가시켜 disable 시킨다. */
 	mutex_acquire_nest(&lock->dep_map, subclass, 0, nest_lock, ip);
+	/*! 20140215 Debug feature 가 설정될때만 실행되므로 생략 */
 
 #ifdef CONFIG_MUTEX_SPIN_ON_OWNER
 	/*
@@ -516,15 +521,20 @@ slowpath:
 
 	debug_mutex_lock_common(lock, &waiter);
 	debug_mutex_add_waiter(lock, &waiter, task_thread_info(task));
+	/*! 20140215  Debug feature가 설정되지 않았으므로 아무일도 안함 */
 
 	/* add waiting tasks to the end of the waitqueue (FIFO): */
 	list_add_tail(&waiter.list, &lock->wait_list);
 	waiter.task = task;
+	/*! 20140215 mutex의 wait_list에 추가 */
 
 	if (MUTEX_SHOW_NO_WAITER(lock) && (atomic_xchg(&lock->count, -1) == 1))
+		/*! 20140215 lock이 0 이상인 경우 && lock->count 가 1인 경우 */
+		/*! 20140215 lock->count를 -1로 대체함 */
 		goto done;
 
 	lock_contended(&lock->dep_map, ip);
+	/*! 20140215 CONFIG_LOCK_STAT=n 이므로 아무것도 안함 */
 
 	for (;;) {
 		/*
@@ -539,37 +549,49 @@ slowpath:
 		if (MUTEX_SHOW_NO_WAITER(lock) &&
 		   (atomic_xchg(&lock->count, -1) == 1))
 			break;
+		/*! 20140215 mutex lock 이 풀렸을 경우에 break */
 
 		/*
 		 * got a signal? (This code gets eliminated in the
 		 * TASK_UNINTERRUPTIBLE case.)
 		 */
 		if (unlikely(signal_pending_state(state, task))) {
+			/*! 20140215 signal_pending_state: 0 */
 			ret = -EINTR;
 			goto err;
 		}
 
 		if (!__builtin_constant_p(ww_ctx == NULL) && ww_ctx->acquired > 0) {
+			/*! 20140215 ww_ctx가 NULL이므로 우리는 실행되지 않음 */
 			ret = __mutex_lock_check_stamp(lock, ww_ctx);
 			if (ret)
 				goto err;
 		}
 
 		__set_task_state(task, state);
+		/*! 20140215 (task)->state = state */
 
 		/* didn't get the lock, go to sleep: */
 		spin_unlock_mutex(&lock->wait_lock, flags);
+		/*! 20140215 wait_lock release */
 		schedule_preempt_disabled();
+		/*! 20140215 context switching 한 후 선점 막음 */
 		spin_lock_mutex(&lock->wait_lock, flags);
+		/*! 20140215 wait_lock 획득 */
 	}
 
 done:
+/*! 20140215 선점 disable, wait_lock을 잡고 있는 상태에서 done 진입 */
 	lock_acquired(&lock->dep_map, ip);
+	/*! 20140215 CONFIG_LOCK_STAT=n 이므로 아무일도 안함 */
 	/* got the lock - rejoice! */
 	mutex_remove_waiter(lock, &waiter, current_thread_info());
+	/*! 20140215 kernel/mutex.h 의 define이 실행됨 */
 	mutex_set_owner(lock);
+	/*! 20140215 lock->owner를 current task로 설정 */
 
 	if (!__builtin_constant_p(ww_ctx == NULL)) {
+		/*! 20140215 __builtin_constant_p는 나중에 보기로 함 */
 		struct ww_mutex *ww = container_of(lock,
 						      struct ww_mutex,
 						      base);
@@ -598,13 +620,16 @@ done:
 		atomic_set(&lock->count, 0);
 
 	spin_unlock_mutex(&lock->wait_lock, flags);
+	/*! 20140215 wait_lock을 풀어준다. */
 
 	debug_mutex_free_waiter(&waiter);
 	preempt_enable();
+	/*! 20140215 선점할 수 있도록 변경 */
 
 	return 0;
 
 err:
+	/*! 20140215 도중에 interrupt가 발생했을 경우에 실행됨 */
 	mutex_remove_waiter(lock, &waiter, task_thread_info(task));
 	spin_unlock_mutex(&lock->wait_lock, flags);
 	debug_mutex_free_waiter(&waiter);
@@ -810,10 +835,13 @@ EXPORT_SYMBOL(mutex_lock_killable);
 static __used noinline void __sched
 __mutex_lock_slowpath(atomic_t *lock_count)
 {
+	/*! 20140215 fastpath_lock을 획득하지 못한 경우 수행한다. */
 	struct mutex *lock = container_of(lock_count, struct mutex, count);
+	/*! 20140215 lock: lock_count 변수가 속해있는 mutex 구조체의 시작주소 */
 
 	__mutex_lock_common(lock, TASK_UNINTERRUPTIBLE, 0,
 			    NULL, _RET_IP_, NULL);
+	/*! 20140215 mutex lock 획득 */
 }
 
 static noinline int __sched

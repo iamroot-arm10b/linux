@@ -558,6 +558,7 @@ asmlinkage void __init start_kernel(void)
 	/*! 20140208 레지스터에 현재 core의 per_cpu offset을 저장한다. */
 
 	build_all_zonelists(NULL, NULL);
+	/*! 20140215 zonelist 초기화, zoneref 설정, vm_total_pages 설정 */
 	page_alloc_init();
 
 	pr_notice("Kernel command line: %s\n", boot_command_line);

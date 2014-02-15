@@ -59,7 +59,7 @@ extern int pageblock_order;
 #endif /* CONFIG_HUGETLB_PAGE */
 
 #define pageblock_nr_pages	(1UL << pageblock_order)
-/*! 20131207 pageblock_nr_pages = 512 = 1 << 9 */
+/*! 20140215 pageblock_nr_pages = 1024 = 1 << 10 */
 
 /* Forward declaration */
 struct page;

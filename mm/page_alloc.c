@@ -2856,14 +2856,29 @@ static unsigned long nr_free_zone_pages(int offset)
 
 	/*! 20140208 스터디 여기까지 */
 	struct zonelist *zonelist = node_zonelist(numa_node_id(), GFP_KERNEL);
+	/*! 20140215 GFP_KERNEL: 0x10u | 0x40u | 0x80u */
+	/*! 20140215 zonelist: node_zonelist의 첫번째 entry */
 
 	for_each_zone_zonelist(zone, z, zonelist, offset) {
+	/*! 20140215
+	 * for (z = first_zones_zonelist(zlist, highidx, NULL, &zone);	\
+	 *	zone;							\
+	 *	z = next_zones_zonelist(++z, highidx, NULL, &zone))	\
+	 */
+		/*! 20140215 offset이 2일 경우,
+		 * 첫번째는 z[0]: highmem zone, 
+		 * 두번째는 z[1]: normal zone
+		 * 세번째는 z[2]: NULL (for문 종료)
+		 */
 		unsigned long size = zone->managed_pages;
+		/*! 20140215 size: 현재 zone에서 관리하는 page의 크기(present page - reserved page) */
 		unsigned long high = high_wmark_pages(zone);
+		/*! 20140215 high: zone에서 유지하여야 할 최소 free page의 크기 (추정) */
 		if (size > high)
 			sum += size - high;
 	}
 
+	/*! 20140215 모든 zone의 watermark page를 제외한 free 페이지의 전체크기를 리턴 */
 	return sum;
 }
 
@@ -2889,6 +2904,8 @@ unsigned long nr_free_pagecache_pages(void)
 {
 	/*! 20140208 GFP_HIGHUSER_MOVABLE = 0x10u | 0x40u | 0x80u | 0x2000u | 0x02u | 0x08u */
 	return nr_free_zone_pages(gfp_zone(GFP_HIGHUSER_MOVABLE));
+	/*! 20140208 GFP: Get Free Page */
+	/*! 20140215 모든 zone의 watermark page를 제외한 free 페이지의 전체크기를 리턴 */
 }
 
 static inline void show_node(struct zone *zone)
@@ -3153,6 +3170,7 @@ static void zoneref_set_zone(struct zone *zone, struct zoneref *zoneref)
 {
 	zoneref->zone = zone;
 	zoneref->zone_idx = zone_idx(zone);
+	/*! 20140215 zone의 정보를 이용하여 zoneref 구조체를 초기화한다. */
 }
 
 /*
@@ -3755,6 +3773,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 		/* cpuset refresh routine should be here */
 	}
 	vm_total_pages = nr_free_pagecache_pages();
+	/*! 20140215 vm_total_pages: 모든 zone(high zone, normal zone)의 free 페이지의 합 */
 	/*
 	 * Disable grouping by mobility if the number of pages in the
 	 * system is too low to allow the mechanism to work. It would be
@@ -3776,6 +3795,7 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 #ifdef CONFIG_NUMA
 	printk("Policy zone: %s\n", zone_names[policy_zone]);
 #endif
+	/*! 20140215 zonelist 초기화, zoneref 설정, vm_total_pages 설정 */
 }
 
 /*
@@ -5550,6 +5570,11 @@ static int page_alloc_cpu_notify(struct notifier_block *self,
 void __init page_alloc_init(void)
 {
 	hotcpu_notifier(page_alloc_cpu_notify, 0);
+	/*! 20140215
+	 * static struct notifier_block page_alloc_cpu_notify_nb =			\
+	 * { .notifier_call = page_alloc_cpu_notify, .priority = 0 };	\
+	 * register_cpu_notifier(&page_alloc_cpu_notify_nb);			\
+	 */
 }
 
 /*

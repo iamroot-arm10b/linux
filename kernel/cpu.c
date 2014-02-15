@@ -32,6 +32,7 @@ static DEFINE_MUTEX(cpu_add_remove_lock);
  */
 void cpu_maps_update_begin(void)
 {
+	/*! 20140215 여기 실행 */
 	mutex_lock(&cpu_add_remove_lock);
 }
 
@@ -164,8 +165,11 @@ static void cpu_hotplug_done(void) {}
 /* Need to know about CPUs going up/down? */
 int __ref register_cpu_notifier(struct notifier_block *nb)
 {
+	/*! 20140215 hotcpu_notifier 에서 호출됨 */
 	int ret;
 	cpu_maps_update_begin();
+	/*! 20140215 mutex cpu_add_remove_lock 을 획득한다.  */
+	/*! 2014/02/15 여기까지 스터디 */
 	ret = raw_notifier_chain_register(&cpu_chain, nb);
 	cpu_maps_update_done();
 	return ret;

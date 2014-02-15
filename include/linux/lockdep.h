@@ -441,6 +441,7 @@ do {								\
 
 #define lock_contended(lockdep_map, ip) do {} while (0)
 #define lock_acquired(lockdep_map, ip) do {} while (0)
+/*! 20140215 여기 실행된다. */
 
 #define LOCK_CONTENDED(_lock, try, lock) \
 	lock(_lock)

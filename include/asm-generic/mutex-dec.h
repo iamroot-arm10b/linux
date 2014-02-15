@@ -22,6 +22,7 @@ __mutex_fastpath_lock(atomic_t *count, void (*fail_fn)(atomic_t *))
 {
 	if (unlikely(atomic_dec_return(count) < 0))
 		fail_fn(count);
+	/*! 20140215 count 를 1 감소하여 lock을 해제한다. */
 }
 
 /**

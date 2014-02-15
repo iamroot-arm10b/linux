@@ -788,6 +788,11 @@ static inline void ftrace_dump(enum ftrace_dump_mode oops_dump_mode) { }
 #define container_of(ptr, type, member) ({			\
 	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
+/*! 20140215
+ * container_of: member가 속한 struct 의 시작주소를 구한다.
+ * __mptr: 실제 변수의 offset 주소
+ * typeof: type에서 stuct의 member 가 0x00에서 얼마나 떨어져 있는지 계산하여 offset 구한다.
+ */
 
 /* Trap pasters of __FUNCTION__ at compile-time */
 #define __FUNCTION__ (__func__)

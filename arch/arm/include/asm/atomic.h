@@ -100,6 +100,7 @@ static inline int atomic_sub_return(int i, atomic_t *v)
 	int result;
 
 	smp_mb();
+	/*! 20140215 data memory barrier */
 
 	__asm__ __volatile__("@ atomic_sub_return\n"
 "1:	ldrex	%0, [%3]\n"
@@ -110,6 +111,7 @@ static inline int atomic_sub_return(int i, atomic_t *v)
 	: "=&r" (result), "=&r" (tmp), "+Qo" (v->counter)
 	: "r" (&v->counter), "Ir" (i)
 	: "cc");
+	/*! 20140215 atomic하게 뺀다. */
 
 	smp_mb();
 
@@ -213,6 +215,7 @@ static inline void atomic_clear_mask(unsigned long mask, unsigned long *addr)
 #endif /* __LINUX_ARM_ARCH__ */
 
 #define atomic_xchg(v, new) (xchg(&((v)->counter), new))
+/*! 20140215 여기 실행한다. */
 
 static inline int __atomic_add_unless(atomic_t *v, int a, int u)
 {

@@ -1017,8 +1017,15 @@ static inline struct zoneref *first_zones_zonelist(struct zonelist *zonelist,
 					nodemask_t *nodes,
 					struct zone **zone)
 {
+	/*! 20140215
+	 * zonelist: 0번째
+	 * highest_zoneidx: 2
+	 * nodes: 0
+	 * zone : 리턴할 포인터 값
+	 */
 	return next_zones_zonelist(zonelist->_zonerefs, highest_zoneidx, nodes,
 								zone);
+	/*! 20140215 검색한 zoneref에 해당하는 zone, index를 리턴 */
 }
 
 /**
@@ -1036,6 +1043,7 @@ static inline struct zoneref *first_zones_zonelist(struct zonelist *zonelist,
 	for (z = first_zones_zonelist(zlist, highidx, nodemask, &zone);	\
 		zone;							\
 		z = next_zones_zonelist(++z, highidx, nodemask, &zone))	\
+/*! 20140215 여기 실행 */
 
 /**
  * for_each_zone_zonelist - helper macro to iterate over valid zones in a zonelist at or below a given zone index
@@ -1048,6 +1056,7 @@ static inline struct zoneref *first_zones_zonelist(struct zonelist *zonelist,
  */
 #define for_each_zone_zonelist(zone, z, zlist, highidx) \
 	for_each_zone_zonelist_nodemask(zone, z, zlist, highidx, NULL)
+/*! 20140215 여기 실행 */
 
 #ifdef CONFIG_SPARSEMEM
 #include <asm/sparsemem.h>

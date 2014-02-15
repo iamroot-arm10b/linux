@@ -2396,7 +2396,9 @@ static inline int fatal_signal_pending(struct task_struct *p)
 
 static inline int signal_pending_state(long state, struct task_struct *p)
 {
+	/*! 20140215 여전히 mutex가 점유되고 있는 경우 여기 실행 */
 	if (!(state & (TASK_INTERRUPTIBLE | TASK_WAKEKILL)))
+	/*! 20140215 state: TASK_UNINTERRUPTIBLE, TASK_INTERRUPTIBLE: 1, TASK_WAKEKILL: 128 */
 		return 0;
 	if (!signal_pending(p))
 		return 0;

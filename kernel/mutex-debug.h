@@ -46,6 +46,7 @@ static inline void mutex_clear_owner(struct mutex *lock)
 		arch_spin_lock(&(lock)->rlock.raw_lock);\
 		DEBUG_LOCKS_WARN_ON(l->magic != l);	\
 	} while (0)
+/*! 20140215 mutex의 wait_lock에 대한 spin lock 획득 요청 */
 
 #define spin_unlock_mutex(lock, flags)				\
 	do {							\
