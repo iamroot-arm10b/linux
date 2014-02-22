@@ -431,9 +431,11 @@ void __init parse_early_options(char *cmdline)
 /* Arch code calls this early on, or if not, just before other parsing. */
 void __init parse_early_param(void)
 {
+	/*! 20140222 setup_arch()에서 실행됨 */
 	static __initdata int done = 0;
 	static __initdata char tmp_cmdline[COMMAND_LINE_SIZE];
 
+	/*! 20140222 start_kernel에서 다시 실행될 경우 done=1 이므로 바로 리턴 */
 	if (done)
 		return;
 
@@ -560,20 +562,32 @@ asmlinkage void __init start_kernel(void)
 	build_all_zonelists(NULL, NULL);
 	/*! 20140215 zonelist 초기화, zoneref 설정, vm_total_pages 설정 */
 	page_alloc_init();
+	/*! 20140222 page_alloc_cpu_notify 함수를 cpu_chain 에 추가한다. */
 
 	pr_notice("Kernel command line: %s\n", boot_command_line);
 	parse_early_param();
+	/*! 20140222 setup_arch에서 실행했으므로 아무일도 안함 */
 	parse_args("Booting kernel", static_command_line, __start___param,
 		   __stop___param - __start___param,
 		   -1, -1, &unknown_bootoption);
+	/*! 20140222
+	 * __start___param 섹션에 들어가는 구조체(struct kernel_param)의 예제는
+	 * drivers/acpi/battery.c 파일에 예시로 만들어둔 주석 참조
+	 * unknown_bootoption 은 kernel_param 의 ops가 정의되어있지 않은 경우에 사용
+	 */
 
 	jump_label_init();
+	/*! 20140222 아무것도 안함 */
 
 	/*
 	 * These use large bootmem allocations and must precede
 	 * kmem_cache_init()
 	 */
 	setup_log_buf(0);
+	/*! 20140222
+	 * log_buf_len 옵션이 넘어오면 새로운 log_buf를 만들고 기존 log_buf를 복사한다.
+	 * 우리는 값이 없어서 아무일도 안함
+	 */
 	pidhash_init();
 	vfs_caches_init_early();
 	sort_main_extable();
@@ -707,6 +721,7 @@ static void __init do_ctors(void)
 
 bool initcall_debug;
 core_param(initcall_debug, initcall_debug, bool, 0644);
+/*! 20140222 command line에서 __initcall_debug=y 인 경우 initcall_debug에 1이 들어간다. */
 
 static int __init_or_module do_one_initcall_debug(initcall_t fn)
 {

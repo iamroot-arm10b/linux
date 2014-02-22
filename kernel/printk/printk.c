@@ -754,6 +754,7 @@ void __init setup_log_buf(int early)
 	int free;
 
 	if (!new_log_buf_len)
+		/*! 20140222 new_log_buf_len 이 0이므로 리턴 */
 		return;
 
 	if (early) {

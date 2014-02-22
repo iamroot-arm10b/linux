@@ -167,6 +167,7 @@ EXPORT_SYMBOL(_raw_spin_lock_bh);
 #ifdef CONFIG_UNINLINE_SPIN_UNLOCK
 void __lockfunc _raw_spin_unlock(raw_spinlock_t *lock)
 {
+	/*! 20140222 여기 실행 */
 	__raw_spin_unlock(lock);
 }
 EXPORT_SYMBOL(_raw_spin_unlock);

@@ -153,9 +153,12 @@ static inline void __raw_spin_lock(raw_spinlock_t *lock)
 
 static inline void __raw_spin_unlock(raw_spinlock_t *lock)
 {
+	/*! 20140222 여기 실행됨 */
 	spin_release(&lock->dep_map, 1, _RET_IP_);
+	/*! 20140222 아무것도 안함 */
 	do_raw_spin_unlock(lock);
 	preempt_enable();
+	/*! 20140222 선점 허용 */
 }
 
 /*! 20140104 여기가 실행됨 */

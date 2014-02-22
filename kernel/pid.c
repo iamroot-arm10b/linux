@@ -565,14 +565,19 @@ void __init pidhash_init(void)
 {
 	unsigned int i, pidhash_size;
 
-	pid_hash = alloc_large_system_hash("PID", sizeof(*pid_hash), 0, 18,
-					   HASH_EARLY | HASH_SMALL,
-					   &pidhash_shift, NULL,
-					   0, 4096);
+	/*! 20140222 HASH_EARLY: 0x00000001, HASH_SMALL: 0x00000002 */
+	pid_hash = alloc_large_system_hash("PID", sizeof(*pid_hash), 0, 18, 
+			HASH_EARLY | HASH_SMALL,
+			&pidhash_shift, NULL,
+			0, 4096);
+	/*! 20140222 pidhash table 을 위한 memory 할당. 16k 할당함 */
+
 	pidhash_size = 1U << pidhash_shift;
+	/*! 20140222 pidhash_shift: 12, pidhash_size = 4096 개 entry */
 
 	for (i = 0; i < pidhash_size; i++)
 		INIT_HLIST_HEAD(&pid_hash[i]);
+	/*! 20140222 pidhash table의 list head 초기화 */
 }
 
 void __init pidmap_init(void)

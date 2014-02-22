@@ -26,6 +26,7 @@ static inline void mutex_set_owner(struct mutex *lock)
 static inline void mutex_clear_owner(struct mutex *lock)
 {
 	lock->owner = NULL;
+	/*! 20140222 owner를 NULL로 만든다. */
 }
 #else
 static inline void mutex_set_owner(struct mutex *lock)

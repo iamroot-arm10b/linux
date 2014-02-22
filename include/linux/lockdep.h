@@ -497,6 +497,7 @@ static inline void print_irqtrace_events(struct task_struct *curr)
 #else
 /*! 20140104 여기가 실행된다. debug feature가 없음 */
 # define spin_acquire(l, s, t, i)		do { } while (0)
+/*! 20140222 spin_release 는 여기 실행 */
 # define spin_release(l, n, i)			do { } while (0)
 #endif
 
@@ -528,6 +529,7 @@ static inline void print_irqtrace_events(struct task_struct *curr)
 # define mutex_acquire(l, s, t, i)		do { } while (0)
 # define mutex_acquire_nest(l, s, t, n, i)	do { } while (0)
 # define mutex_release(l, n, i)			do { } while (0)
+/*! 20140222  여기 실행 */
 #endif
 
 #ifdef CONFIG_DEBUG_LOCK_ALLOC

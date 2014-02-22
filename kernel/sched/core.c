@@ -1490,6 +1490,7 @@ static void ttwu_queue(struct task_struct *p, int cpu)
 static int
 try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
 {
+	/*! 20140222 여기는 나중에 scheduler 가 초기화 된 후에 보기로 함 */
 	unsigned long flags;
 	int cpu, success = 0;
 
@@ -1595,7 +1596,9 @@ out:
 int wake_up_process(struct task_struct *p)
 {
 	WARN_ON(task_is_stopped_or_traced(p));
+	/*! 20140222 현재 task의 상태가 stopped 이거나 traced 이면 warning 발생 */
 	return try_to_wake_up(p, TASK_NORMAL, 0);
+	/*! 20140222 나중에 scheduler 가 초기화 된 후에 보기로 함 */
 }
 EXPORT_SYMBOL(wake_up_process);
 

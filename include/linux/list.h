@@ -354,6 +354,7 @@ static inline void list_splice_tail_init(struct list_head *list,
  */
 #define list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
+/*! 20140222 member가 속한 struct 의 시작주소를 구한다.  */
 
 /**
  * list_first_entry - get the first element from a list

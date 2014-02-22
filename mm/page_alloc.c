@@ -5943,6 +5943,7 @@ void *__init alloc_large_system_hash(const char *tablename,
 				     unsigned long low_limit,
 				     unsigned long high_limit)
 {
+	/*! 20140222 여기 실행 */
 	unsigned long long max = high_limit;
 	unsigned long log2qty, size;
 	void *table = NULL;
@@ -5951,12 +5952,15 @@ void *__init alloc_large_system_hash(const char *tablename,
 	if (!numentries) {
 		/* round applicable memory size up to nearest megabyte */
 		numentries = nr_kernel_pages;
+		/*! 20140222 nr_kernel_pages: normal zone(760Mb) 의 page 갯수: 194,560개보다 작다 */
 		numentries += (1UL << (20 - PAGE_SHIFT)) - 1;
 		numentries >>= 20 - PAGE_SHIFT;
 		numentries <<= 20 - PAGE_SHIFT;
+		/*! 20140222 PAGE_SHIFT:12, 1024kb 단위로 올림 정렬 */
 
 		/* limit to 1 bucket per 2^scale bytes of low memory */
 		if (scale > PAGE_SHIFT)
+		/*! 20140222 scale: numentries 의 단위 */
 			numentries >>= (scale - PAGE_SHIFT);
 		else
 			numentries <<= (PAGE_SHIFT - scale);
@@ -5973,6 +5977,7 @@ void *__init alloc_large_system_hash(const char *tablename,
 			numentries = PAGE_SIZE / bucketsize;
 	}
 	numentries = roundup_pow_of_two(numentries);
+	/*! 20140222 2의 승수 단위로 올림 정렬: 해쉬테이블 만들기 위한 것 */
 
 	/* limit allocation size to 1/16 total memory by default */
 	if (max == 0) {
@@ -5981,17 +5986,22 @@ void *__init alloc_large_system_hash(const char *tablename,
 	}
 	max = min(max, 0x80000000ULL);
 
+	/*! 20140222 low_limit:0, max = high_limit:4096 */
 	if (numentries < low_limit)
 		numentries = low_limit;
 	if (numentries > max)
 		numentries = max;
+	/*! 20140222 numentries: 4096 */
 
 	log2qty = ilog2(numentries);
+	/*! 20140222 log2qty: 12 (= log2(4096)) */
 
 	do {
 		size = bucketsize << log2qty;
+		/*! 20140222 size = 4 << 12 = 16 * 1024 */
 		if (flags & HASH_EARLY)
 			table = alloc_bootmem_nopanic(size);
+			/*! 20140222 메모리를 할당하고 초기화 */
 		else if (hashdist)
 			table = __vmalloc(size, GFP_ATOMIC, PAGE_KERNEL);
 		else {
@@ -6022,6 +6032,7 @@ void *__init alloc_large_system_hash(const char *tablename,
 		*_hash_mask = (1 << log2qty) - 1;
 
 	return table;
+	/*! 20140222 할당한 table의 주소값 리턴 */
 }
 
 /* Return a pointer to the bitmap storing bits affecting a block of pages */

@@ -168,8 +168,11 @@ static inline int do_raw_spin_trylock(raw_spinlock_t *lock)
 
 static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 {
+	/*! 20140222 여기 실행 */
 	arch_spin_unlock(&lock->raw_lock);
+	/*! 20140222 spin lock을 해제한다.  */
 	__release(lock);
+	/*! 20140222 정적분석을 위한 sparse tool 에서 사용하기 위한 함수. gcc로 compile 될때는 아무일도 안함 */
 }
 #endif
 
@@ -239,6 +242,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 #define raw_spin_lock_irq(lock)		_raw_spin_lock_irq(lock)
 #define raw_spin_lock_bh(lock)		_raw_spin_lock_bh(lock)
 #define raw_spin_unlock(lock)		_raw_spin_unlock(lock)
+/*! 20140222 여기 실행 */
 #define raw_spin_unlock_irq(lock)	_raw_spin_unlock_irq(lock)
 
 /*! 20140104 irq enable / cpsr의 irq info flag 원복 / spinlock 릴리즈 */
@@ -346,6 +350,7 @@ do {									\
 static inline void spin_unlock(spinlock_t *lock)
 {
 	raw_spin_unlock(&lock->rlock);
+	/*! 20140222 여기 실행 */
 }
 
 static inline void spin_unlock_bh(spinlock_t *lock)

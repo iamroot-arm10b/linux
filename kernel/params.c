@@ -69,6 +69,7 @@ static char dash2underscore(char c)
 
 bool parameqn(const char *a, const char *b, size_t n)
 {
+	/*! 20140222 여기 실행함 */
 	size_t i;
 
 	for (i = 0; i < n; i++) {
@@ -82,6 +83,7 @@ bool parameqn(const char *a, const char *b, size_t n)
 bool parameq(const char *a, const char *b)
 {
 	return parameqn(a, b, strlen(a)+1);
+	/*! 20140222 - 와 _를 동일하게 취급하면서 a와 b가 같은지 비교 */
 }
 
 static int parse_one(char *param,
@@ -101,17 +103,21 @@ static int parse_one(char *param,
 	/*! 20130907 현재는 params = NULL, num_params = 0이므로 for문 생략. 나중에 분석. */
 	for (i = 0; i < num_params; i++) {
 		if (parameq(param, params[i].name)) {
+		/*! 20140222 param값이 kernel_param[i].name 과 같은 kernel_param을 찾음 */
 			if (params[i].level < min_level
 			    || params[i].level > max_level)
 				return 0;
 			/* No one handled NULL, so do it here. */
 			if (!val && params[i].ops->set != param_set_bool
 			    && params[i].ops->set != param_set_bint)
+			/*! 20140222 param_set_bool과 param_set_bint 가 아닌 경우 val는 NULL일 수 없다 */
 				return -EINVAL;
 			pr_debug("handling %s with %p\n", param,
 				params[i].ops->set);
 			mutex_lock(&param_lock);
 			err = params[i].ops->set(val, &params[i]);
+			/*! 20140222 val을 params[i].val 에 할당하는 것 */
+			/*! 20140222 예제: kernel/params.c 의 param_set_bool 참고 */
 			mutex_unlock(&param_lock);
 			return err;
 		}
@@ -194,13 +200,15 @@ int parse_args(const char *doing,
 	       s16 max_level,
 	       int (*unknown)(char *param, char *val, const char *doing))
 {
+	/*! 20140222 다시 분석 */
 	char *param, *val;
 
 	/*! 2013/08/31 여기까지 */
 
 	/* Chew leading spaces */
 	/*! args의 string 앞에 있는 공백을 제거한 첫 문자 pointer를 반환
-	*   bootargs = "console=ttySAC2,115200 init=/linuxrc"; */
+	 *  bootargs = "console=ttySAC2,115200 init=/linuxrc";
+	 */
 	args = skip_spaces(args);
 
 	if (*args)
@@ -279,6 +287,12 @@ STANDARD_PARAM_DEF(short, short, "%hi", long, strict_strtol);
 STANDARD_PARAM_DEF(ushort, unsigned short, "%hu", unsigned long, strict_strtoul);
 STANDARD_PARAM_DEF(int, int, "%i", long, strict_strtol);
 STANDARD_PARAM_DEF(uint, unsigned int, "%u", unsigned long, strict_strtoul);
+/*! 20140222 
+ * struct kernel_param_ops param_ops_uint = {
+ * 	.set = param_set_uint,		
+ * 	.get = param_get_uint,	
+ * };			
+ */
 STANDARD_PARAM_DEF(long, long, "%li", long, strict_strtol);
 STANDARD_PARAM_DEF(ulong, unsigned long, "%lu", unsigned long, strict_strtoul);
 
@@ -324,10 +338,13 @@ struct kernel_param_ops param_ops_charp = {
 EXPORT_SYMBOL(param_ops_charp);
 
 /* Actually could be a bool or an int, for historical reasons. */
+/*! 20140222 kernel/params.c 에서 예제로 분석함 */
 int param_set_bool(const char *val, const struct kernel_param *kp)
 {
 	/* No equals means "set"... */
 	if (!val) val = "1";
+	/*! 20140222 val이 null로 들어오면 "1"로 설정한다. */
+	/*! 20140222 param 값이 있으면 1 이 없어도 셋팅된 것이므로 1로 설정하는 것 */
 
 	/* One of =[yYnN01] */
 	return strtobool(val, kp->arg);

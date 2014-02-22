@@ -557,6 +557,7 @@ static inline void rcu_preempt_sleep_check(void)
 		smp_wmb(); \
 		(p) = (typeof(*v) __force space *)(v); \
 	} while (0)
+/*! 20140222 p 에 v를 대입 */
 
 
 /**
@@ -918,6 +919,7 @@ static inline notrace void rcu_read_unlock_sched_notrace(void)
  */
 #define rcu_assign_pointer(p, v) \
 	__rcu_assign_pointer((p), (v), __rcu)
+/*! 20140222 p의 주소값에 v를 넣는다. */
 
 /**
  * RCU_INIT_POINTER() - initialize an RCU protected pointer

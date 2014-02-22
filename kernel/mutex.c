@@ -252,8 +252,10 @@ void __sched mutex_unlock(struct mutex *lock)
 	 * after verifying that it was indeed current.
 	 */
 	mutex_clear_owner(lock);
+	/*! 20140222 lock의 owner를 NULL로 만든다. */
 #endif
 	__mutex_fastpath_unlock(&lock->count, __mutex_unlock_slowpath);
+	/*! 20140222 fastpath 또는 slowpath mutex unlock 실행 */
 }
 
 EXPORT_SYMBOL(mutex_unlock);
@@ -518,6 +520,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 slowpath:
 #endif
 	spin_lock_mutex(&lock->wait_lock, flags);
+	/*! 20140215 현재 mutex의 wait_lock에 대한 spin lock 획득 요청 */
 
 	debug_mutex_lock_common(lock, &waiter);
 	debug_mutex_add_waiter(lock, &waiter, task_thread_info(task));
@@ -747,8 +750,10 @@ __mutex_unlock_common_slowpath(atomic_t *lock_count, int nested)
 	unsigned long flags;
 
 	spin_lock_mutex(&lock->wait_lock, flags);
+	/*! 20140222 현재 mutex의 wait_lock에 대한 spin lock 획득 요청 */
 	mutex_release(&lock->dep_map, nested, _RET_IP_);
 	debug_mutex_unlock(lock);
+	/*! 20140222 Debug feature가 설정되지 않았으므로 아무일도 안함 */
 
 	/*
 	 * some architectures leave the lock unlocked in the fastpath failure
@@ -756,20 +761,27 @@ __mutex_unlock_common_slowpath(atomic_t *lock_count, int nested)
 	 * unlock it here
 	 */
 	if (__mutex_slowpath_needs_to_unlock())
+	/*! 20140222 dec방식에서 __mutex_slowpath_needs_to_unlock()=1이므로 실행됨 */
 		atomic_set(&lock->count, 1);
+		/*! 20140222 atomic하게 &lock->count를 1로 셋팅 */
 
 	if (!list_empty(&lock->wait_list)) {
+		/*! 20140222 wait_list가 비어있지 않으면 실행 */
 		/* get the first entry from the wait-list: */
 		struct mutex_waiter *waiter =
 				list_entry(lock->wait_list.next,
 					   struct mutex_waiter, list);
+		/*! 20140222 mutex_waiter구조체 list의 시작주소를 구한다.  */
 
 		debug_mutex_wake_waiter(lock, waiter);
+		/*! 20140222  Debug feature가 설정되지 않았으므로 아무일도 안함 */
 
 		wake_up_process(waiter->task);
+		/*! 20140222 mutex를 기다리고 있는 프로세스를 깨운다. */
 	}
 
 	spin_unlock_mutex(&lock->wait_lock, flags);
+	/*! 20140222 wait lock 해제 */
 }
 
 /*
@@ -778,7 +790,9 @@ __mutex_unlock_common_slowpath(atomic_t *lock_count, int nested)
 static __used noinline void
 __mutex_unlock_slowpath(atomic_t *lock_count)
 {
+	/*! 20140222 여기 실행됨 */
 	__mutex_unlock_common_slowpath(lock_count, 1);
+	/*! 20140222 slowpath에서 mutex unlock */
 }
 
 #ifndef CONFIG_DEBUG_LOCK_ALLOC

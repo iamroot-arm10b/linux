@@ -174,6 +174,7 @@ unsigned long __rounddown_pow_of_two(unsigned long n)
 				   ) :		\
 	__roundup_pow_of_two(n)			\
  )
+/*! 20140222 2의 배수로 round up */
 
 /**
  * rounddown_pow_of_two - round the given value down to nearest power of two

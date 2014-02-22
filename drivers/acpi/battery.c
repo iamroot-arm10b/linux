@@ -70,6 +70,23 @@ MODULE_LICENSE("GPL");
 
 static unsigned int cache_time = 1000;
 module_param(cache_time, uint, 0644);
+/*! 20140222 module_param 예제로 여기 따라가기로 함 */
+/*! 20140222
+ * param_check_uint(cache_time, &(value));				   
+ * module_param_cb(cache_time, &param_ops_uint, &value, perm);		  
+ *      <아래 내용으로 확장됨>
+ * 	static int __param_perm_check_cache_time __attribute__((unused)) =	
+ *		BUILD_BUG_ON_ZERO((perm) < 0 || (perm) > 0777 || ((perm) & 2))	
+ *		+ BUILD_BUG_ON_ZERO(sizeof("") > MAX_PARAM_PREFIX_LEN);	
+ * 	static const char __param_str_cache_time[] = "cache_time";		
+ * 	static struct kernel_param __moduleparam_const __param_cache_time
+ *		__used	__attribute__ ((unused,__section__ ("__param"),aligned(sizeof(void *)))) 
+ *		= { __param_str_cache_time, &param_ops_uint, 0644, -1, { &value } }
+ * 	
+ *		param_ops_uint 는 kernel/params.c 에서 선언된다.
+ * 
+ * __MODULE_PARM_TYPE(cache_time, "uint")
+ */
 MODULE_PARM_DESC(cache_time, "cache time in milliseconds");
 
 #ifdef CONFIG_ACPI_PROCFS_POWER

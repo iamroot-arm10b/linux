@@ -58,10 +58,12 @@ static inline void
 __mutex_fastpath_unlock(atomic_t *count, void (*fail_fn)(atomic_t *))
 {
 	if (unlikely(atomic_inc_return(count) <= 0))
+	/*! 20140222 mutex를 대기하는 process가 있다면(count <= 0) fail_fn(=__mutex_unlock_slowpath)로 진입 */
 		fail_fn(count);
 }
 
 #define __mutex_slowpath_needs_to_unlock()		1
+/*! 20140222 여기 실행 */
 
 /**
  * __mutex_fastpath_trylock - try to acquire the mutex, without waiting

@@ -741,6 +741,7 @@ void * __init __alloc_bootmem_nopanic(unsigned long size, unsigned long align,
 	unsigned long limit = 0;
 
 	return ___alloc_bootmem_nopanic(size, align, goal, limit);
+	/*! 20140222 메모리를 할당하고 초기화한다 */
 }
 
 static void * __init ___alloc_bootmem(unsigned long size, unsigned long align,

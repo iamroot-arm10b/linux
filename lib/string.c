@@ -347,6 +347,7 @@ char *skip_spaces(const char *str)
 	while (isspace(*str))
 		++str;
 	return (char *)str;
+	/*! 20140222 str 앞쪽의 공백 제거 */
 }
 EXPORT_SYMBOL(skip_spaces);
 
@@ -548,6 +549,7 @@ EXPORT_SYMBOL(sysfs_streq);
  */
 int strtobool(const char *s, bool *res)
 {
+	/*! 20140222 여기 봄 */
 	switch (s[0]) {
 	case 'y':
 	case 'Y':

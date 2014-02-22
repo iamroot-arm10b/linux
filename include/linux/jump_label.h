@@ -79,6 +79,7 @@ enum jump_label_type {
 struct module;
 
 #ifdef HAVE_JUMP_LABEL
+/*! 20140222 정의되어있지 않음 */
 
 #define JUMP_LABEL_TRUE_BRANCH 1UL
 
@@ -139,6 +140,7 @@ struct static_key {
 
 static __always_inline void jump_label_init(void)
 {
+	/*! 20140222 여기 실행 */
 }
 
 struct static_key_deferred {

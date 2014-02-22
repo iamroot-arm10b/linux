@@ -27,7 +27,9 @@ static int notifier_chain_register(struct notifier_block **nl,
 		nl = &((*nl)->next);
 	}
 	n->next = *nl;
+	/*! 20140222 priority가 높은 것부터 찾아서 연결 */
 	rcu_assign_pointer(*nl, n);
+	/*! 20140222 notifier_block nl list에 내림차순으로 n을 등록한다. */
 	return 0;
 }
 
@@ -345,6 +347,7 @@ int raw_notifier_chain_register(struct raw_notifier_head *nh,
 		struct notifier_block *n)
 {
 	return notifier_chain_register(&nh->head, n);
+	/*! 20140222 nh에 내림차순으로 n을 등록한다. */
 }
 EXPORT_SYMBOL_GPL(raw_notifier_chain_register);
 

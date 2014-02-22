@@ -39,9 +39,15 @@ void cpu_maps_update_begin(void)
 void cpu_maps_update_done(void)
 {
 	mutex_unlock(&cpu_add_remove_lock);
+	/*! 20140222 cpu_add_remove_lock을 unlock */
 }
 
 static RAW_NOTIFIER_HEAD(cpu_chain);
+/*! 20140222 
+ * static struct raw_notifier_head cpu_chain = { 
+ *	.head = NULL
+ * }
+ */
 
 /* If set, cpu_up and cpu_down will return -EBUSY and do nothing.
  * Should always be manipulated under cpu_add_remove_lock
@@ -171,7 +177,9 @@ int __ref register_cpu_notifier(struct notifier_block *nb)
 	/*! 20140215 mutex cpu_add_remove_lock 을 획득한다.  */
 	/*! 2014/02/15 여기까지 스터디 */
 	ret = raw_notifier_chain_register(&cpu_chain, nb);
+	/*! 20140222 cpu_chain list에 내림차순으로 nb를 등록한다. */
 	cpu_maps_update_done();
+	/*! 20140222 mutex lock을 release 한다. */
 	return ret;
 }
 
