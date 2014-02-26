@@ -589,6 +589,9 @@ asmlinkage void __init start_kernel(void)
 	 * 우리는 값이 없어서 아무일도 안함
 	 */
 	pidhash_init();
+	/*! 2014/02/22 여기까지 스터디함.
+	 * pidhash table의 list head 를 위한 메모리를 할당하여 초기화한다.
+	 */
 	vfs_caches_init_early();
 	sort_main_extable();
 	trap_init();
