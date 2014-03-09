@@ -176,6 +176,12 @@
 	restore_irqs_notrace \oldcpsr
 	.endm
 
+    /*! 20140309
+     * 사용법 .pushsection name [, subsection] [, "flags"[, @type[,arguments]]]
+     * https://sourceware.org/binutils/docs/as/Section.html 참고
+     * flags = "a" 는 section is allocatable 을 나타냄
+     */
+/*! 20140309 arch/arm/mm/cache-v7.S 9001: label 및 2: label 참고할것*/
 #define USER(x...)				\
 9999:	x;					\
 	.pushsection __ex_table,"a";		\

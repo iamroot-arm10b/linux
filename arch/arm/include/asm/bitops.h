@@ -289,7 +289,7 @@ static inline int fls(int x)
  * ffz = find first zero bit  (어떤 값 중 최초로 0이 되는 bit 번호를 찾음 range: 0~31)
  * ffs = find first bit set (어떤 값 중 최초로 1이 되는 bit 번호를 찾음 range: 1~32)
  * fls = find last bit set (어떤 값 중 최후로 1이 되는 bit 번호를 찾음 range: 1~32)
- * ex) 0b 1000 0000 0001 0000 0000 = 0x0008 0100 (ffz = 0, ffs = 9, fls = 20)
+ * ex) 0b ... 1000 0000 0001 0000 0000 = 0x0008 0100 (ffz = 0, ffs = 9, fls = 20)
  */
 #define __fls(x) (fls(x) - 1)
 #define ffs(x) ({ unsigned long __t = (x); fls(__t & -__t); })

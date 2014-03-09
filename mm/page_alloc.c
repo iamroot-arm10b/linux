@@ -5957,8 +5957,18 @@ void *__init alloc_large_system_hash(const char *tablename,
 		numentries >>= 20 - PAGE_SHIFT;
 		numentries <<= 20 - PAGE_SHIFT;
 		/*! 20140222 PAGE_SHIFT:12, 1024kb 단위로 올림 정렬 */
+		/*! 20140309 
+		 * 4k 단위로 했을 때 계산한 결과
+		 * 1024kb에 256개의 Page가필요함, 256 페이지 개수 단위로 Align
+		 * numentries += 255 한 후에 하위 8bit를 0으로 만듦
+		 */
 
 		/* limit to 1 bucket per 2^scale bytes of low memory */
+		/*! 20140309
+		 * scale 단위로 재조정
+		 * ex) scale=13 인 경우 8k(=2^13) 단위가 되는데,
+		 * PAGE_SHIFT(4k=2^12)로 계산된 numentries 개수를 scale에 맞게 조정하려고 2로 나눔
+		 */
 		if (scale > PAGE_SHIFT)
 		/*! 20140222 scale: numentries 의 단위 */
 			numentries >>= (scale - PAGE_SHIFT);
@@ -5974,17 +5984,35 @@ void *__init alloc_large_system_hash(const char *tablename,
 				BUG_ON(!numentries);
 			}
 		} else if (unlikely((numentries * bucketsize) < PAGE_SIZE))
+			/*! 20140309 PAGE_SIZE=4096, bucketsize=2번째인자*/
 			numentries = PAGE_SIZE / bucketsize;
+			/*! 20140309 최소 하나의 Page를 사용한다는 의미 */
 	}
 	numentries = roundup_pow_of_two(numentries);
 	/*! 20140222 2의 승수 단위로 올림 정렬: 해쉬테이블 만들기 위한 것 */
+	/*! 20140309 
+	 * numentries = 1 << fls_long(n-1)
+	 * ex1) numentries = 64라면, numentries = 1 << fls_long(63) = 1 << 6 = 64
+	 * ex2) numentries = 65라면, numentries = 1 << fls_long(64) = 1 << 7 = 128
+	 */
 
 	/* limit allocation size to 1/16 total memory by default */
 	if (max == 0) {
+		/*! 20140309 max = high_limit 9번째, 마지막 인자 */
 		max = ((unsigned long long)nr_all_pages << PAGE_SHIFT) >> 4;
+		/*! 20140309
+		 * nr_all_pages : 사용가능한 전체 메모리 Page개수
+		 * nr_all_pages << PAGE_SHIFT : 페이지개수를 size로 변환
+		 * 사용가능한 전체 메모리 size에서 16으로 나눈 값을 max 로 할당
+		 */
 		do_div(max, bucketsize);
+		/*! 20140309
+		 * max = max / bucketsize (max:최대로 할당할 수있는 bucket의 개수)
+		 * do_div의 리턴값 =  max % bucketsize
+		 */
 	}
 	max = min(max, 0x80000000ULL);
+	/*! 20140309 max는 2GB 이상일 수 없다. */
 
 	/*! 20140222 low_limit:0, max = high_limit:4096 */
 	if (numentries < low_limit)
@@ -5998,7 +6026,8 @@ void *__init alloc_large_system_hash(const char *tablename,
 
 	do {
 		size = bucketsize << log2qty;
-		/*! 20140222 size = 4 << 12 = 16 * 1024 */
+		/*! 20140222 size = 4 << 12 = 4 * 4096 */
+		/*! 20140309 size = bucketsize * numentries = 4 * 131072(128k) */
 		if (flags & HASH_EARLY)
 			table = alloc_bootmem_nopanic(size);
 			/*! 20140222 메모리를 할당하고 초기화 */

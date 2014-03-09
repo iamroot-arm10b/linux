@@ -1746,6 +1746,7 @@ void __init inode_init_early(void)
 	/* If hashes are distributed across NUMA nodes, defer
 	 * hash allocation until vmalloc space is available.
 	 */
+	/*! 20140309 HASHDIST_DEFAULT 0 */
 	if (hashdist)
 		return;
 
@@ -1759,9 +1760,20 @@ void __init inode_init_early(void)
 					&i_hash_mask,
 					0,
 					0);
+	/*! 20140309 
+	 * ihash_entries = 0
+	 * HASH_EARLY = 0x00000001
+	 * i_hash_shift = 16
+	 * i_hash_mask = (1<<16)-1
+	 * 4 << 16 = 할당된 sizeof
+	 * 1 << 16 = hlist_bl_head 할당된 entry 개수
+	 *
+	 * inode_hashtable = 할당받은 공간의 처음주소
+	 */
 
 	for (loop = 0; loop < (1U << i_hash_shift); loop++)
 		INIT_HLIST_HEAD(&inode_hashtable[loop]);
+	/*! 20140309 각 inode_hashtable[loop]->first를 NULL로 초기화해준다 */
 }
 
 void __init inode_init(void)

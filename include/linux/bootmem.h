@@ -179,6 +179,7 @@ extern void *alloc_large_system_hash(const char *tablename,
 #define HASHDIST_DEFAULT 1
 #else
 #define HASHDIST_DEFAULT 0
+/*! 20140309 우리는 여기를 참조 */
 #endif
 extern int hashdist;		/* Distribute hashes across NUMA nodes? */
 

@@ -339,6 +339,16 @@ ENTRY(v7_coherent_user_range)
 	sub	r3, r2, #1
 	bic	r12, r0, r3
 2:
+/*! 20140309
+ * arch/arm/include/asm/assembler.h 참고
+#define USER(x...)
+9999:	x;
+	.pushsection __ex_table,"a";
+	.align	3;
+	.long	9999b,9001f;
+	.popsection
+ *
+ */
  USER(	mcr	p15, 0, r12, c7, c5, 1	)	@ invalidate I line
 	add	r12, r12, r2
 	cmp	r12, r1
@@ -354,6 +364,7 @@ ENTRY(v7_coherent_user_range)
  * Fault handling for the cache operation above. If the virtual address in r0
  * isn't mapped, fail with -EFAULT.
  */
+/*! 20140309 여기수행됨 */
 9001:
 #ifdef CONFIG_ARM_ERRATA_775420
 	dsb

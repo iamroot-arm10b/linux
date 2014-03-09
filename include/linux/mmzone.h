@@ -24,8 +24,10 @@
 #define MAX_ORDER 11
 #else
 #define MAX_ORDER CONFIG_FORCE_MAX_ZONEORDER
+/*! 20140309 여기가 수행됨 */
 #endif
 #define MAX_ORDER_NR_PAGES (1 << (MAX_ORDER - 1))
+/*! 20140309 MAX_ORDER_NR_PAGES = 1 << 10 = 1024 */
 
 /*
  * PAGE_ALLOC_COSTLY_ORDER is the order at which allocations are deemed

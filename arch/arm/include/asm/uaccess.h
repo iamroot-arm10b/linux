@@ -35,6 +35,7 @@
  * on our cache or tlb entries.
  */
 
+/*! 20140309 __ex_table section에 들어가있는 데이터에 접근할때 사용하는 자료구조 */
 struct exception_table_entry
 {
 	unsigned long insn, fixup;

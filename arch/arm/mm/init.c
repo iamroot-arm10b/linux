@@ -600,6 +600,7 @@ static void __init free_unused_memmap(struct meminfo *mi)
 	 * The banks are sorted previously in bootmem_init().
 	 */
 	for_each_bank(i, mi) {
+		/*! 20140309 lowmem, highmem 두번 for문 수행 */
 		struct membank *bank = &mi->bank[i];
 
 		bank_start = bank_pfn_start(bank);
@@ -611,6 +612,11 @@ static void __init free_unused_memmap(struct meminfo *mi)
 		 */
 		bank_start = min(bank_start,
 				 ALIGN(prev_bank_end, PAGES_PER_SECTION));
+		/*! 20140309 
+		 * PAGES_PER_SECTION=1<<16
+		 * ALIGN 은 올림 후 정렬하게된다
+		 * bank_start 결정
+		 */
 #else
 		/*
 		 * Align down here since the VM subsystem insists that the
@@ -632,10 +638,13 @@ static void __init free_unused_memmap(struct meminfo *mi)
 		 * MAX_ORDER_NR_PAGES.
 		 */
 		prev_bank_end = ALIGN(bank_pfn_end(bank), MAX_ORDER_NR_PAGES);
+		/*! 20140309 MAX_ORDER_NR_PAGES = 1024, bank의 끝 pfn 값을 1024로 align */
 	}
 
 #ifdef CONFIG_SPARSEMEM
 	if (!IS_ALIGNED(prev_bank_end, PAGES_PER_SECTION))
+		/*! 20140309 prev_bank_end 이 1<<16으로 Align 되어있지 않으면 아래 수행 */
+		/*! 20140309 스터디 여기까지 */
 		free_memmap(prev_bank_end,
 			    ALIGN(prev_bank_end, PAGES_PER_SECTION));
 #endif
@@ -711,8 +720,20 @@ void __init mem_init(void)
 #endif
 
 	max_mapnr   = pfn_to_page(max_pfn + PHYS_PFN_OFFSET) - mem_map;
+	/*! 20140309 
+	 * memmap의 마지막 요소의 page 구조체 시작주소:  pfn_to_page(max_pfn + PHYS_PFN_OFFSET)
+	 * PHYS_PFN_OFFSET: 0x00020000
+	 * mem_map: 0 (TODO: 맞는값인지 추후 확인 필요!!)
+	 * max_mapnr: 전체 물리 page의 개수
+	 */
 
 	/* this will put all unused low memory onto the freelists */
+	/*! 20140309
+		struct meminfo {
+			int nr_banks;
+			struct membank bank[NR_BANKS];
+		};
+	 */
 	free_unused_memmap(&meminfo);
 	free_all_bootmem();
 

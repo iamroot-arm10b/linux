@@ -3001,6 +3001,7 @@ static void __init dcache_init_early(void)
 	/* If hashes are distributed across NUMA nodes, defer
 	 * hash allocation until vmalloc space is available.
 	 */
+	/*! 20140309 HASHDIST_DEFAULT 0 */
 	if (hashdist)
 		return;
 
@@ -3014,9 +3015,20 @@ static void __init dcache_init_early(void)
 					&d_hash_mask,
 					0,
 					0);
+	/*! 20140309 
+	 * dhash_entries = 0
+	 * HASH_EARLY = 0x00000001
+	 * d_hash_shift = 17
+	 * d_hash_mask = (1<<17)-1
+	 * 4 << 17 = 할당된 sizeof
+	 * 1 << 17 = hlist_bl_head 할당된 entry 개수
+	 *
+	 * dentry_hashtable = 할당받은 공간의 처음주소
+	 */
 
 	for (loop = 0; loop < (1U << d_hash_shift); loop++)
 		INIT_HLIST_BL_HEAD(dentry_hashtable + loop);
+	/*! 20140309 각 dentry_hashtable[loop]->first를 NULL로 초기화해준다 */
 }
 
 static void __init dcache_init(void)
@@ -3059,7 +3071,9 @@ EXPORT_SYMBOL(d_genocide);
 void __init vfs_caches_init_early(void)
 {
 	dcache_init_early();
+	/*! 20140309 directory cache를 위한 dentry_hashtable 생성*/
 	inode_init_early();
+	/*! 20140309 inode 를 위한 inode_hashtable 생성*/
 }
 
 void __init vfs_caches_init(unsigned long mempages)

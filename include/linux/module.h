@@ -515,6 +515,7 @@ extern void print_modules(void);
 static inline const struct exception_table_entry *
 search_module_extables(unsigned long addr)
 {
+    /*! 20140309 여기가 수행됨 */
 	return NULL;
 }
 

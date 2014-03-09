@@ -42,8 +42,17 @@ u32 __initdata main_extable_sort_needed = 1;
 void __init sort_main_extable(void)
 {
 	if (main_extable_sort_needed) {
+		/*! 20140309 main_extable_sort_needed = 1 */
 		pr_notice("Sorting __ex_table...\n");
 		sort_extable(__start___ex_table, __stop___ex_table);
+		/*! 20140309 
+		 * __ex_table section 관련 내용은 아래 파일들 참고
+		 * linux/arch/arm/mm/extable.c
+		 * arch/arm/include/asm/uaccess.h
+		 * arch/arm/include/asm/assembler.h
+		 * arch/arm/mm/cache-v7.S
+		 * arch/arm/mm/extable.c
+		 */
 	}
 }
 
@@ -55,6 +64,7 @@ const struct exception_table_entry *search_exception_tables(unsigned long addr)
 	e = search_extable(__start___ex_table, __stop___ex_table-1, addr);
 	if (!e)
 		e = search_module_extables(addr);
+	/*! 20140309 각 insn값을 비교하여 addr을 포함하는 exception_table_entry, e를 리턴한다. */
 	return e;
 }
 

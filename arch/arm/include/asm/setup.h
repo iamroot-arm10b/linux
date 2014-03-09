@@ -45,9 +45,12 @@ extern struct meminfo meminfo;
 
 #define for_each_bank(iter,mi)				\
 	for (iter = 0; iter < (mi)->nr_banks; iter++)
+/*! 20140309 nr_banks 수 만큼 for문을 돈다 */
 
 #define bank_pfn_start(bank)	__phys_to_pfn((bank)->start)
+/*! 20140309 bank->start 주소를 pfn으로 변환 */
 #define bank_pfn_end(bank)	__phys_to_pfn((bank)->start + (bank)->size)
+/*! 20140309 bank->start + size = 끝 주소를 pfn으로 변환 */
 #define bank_pfn_size(bank)	((bank)->size >> PAGE_SHIFT)
 #define bank_phys_start(bank)	(bank)->start
 #define bank_phys_end(bank)	((bank)->start + (bank)->size)

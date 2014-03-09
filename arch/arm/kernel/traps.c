@@ -795,6 +795,7 @@ EXPORT_SYMBOL(abort);
 
 void __init trap_init(void)
 {
+	/*! 20140309 여기 수행됨*/
 	return;
 }
 

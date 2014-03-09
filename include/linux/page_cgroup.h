@@ -101,6 +101,7 @@ static inline void page_cgroup_init(void)
 
 static inline void __init page_cgroup_init_flatmem(void)
 {
+    /*! 20140309 여기가 수행됨 */
 }
 
 #endif /* CONFIG_MEMCG */

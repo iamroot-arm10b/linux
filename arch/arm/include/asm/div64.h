@@ -70,6 +70,7 @@
  * sufficiently recent to perform proper long long constant propagation.
  * (It is unfortunate that gcc doesn't perform all this internally.)
  */
+/*! 20140309 여기가 수행됨 수행내용은 해당 페이지의 상단 주석 참고 */
 #define do_div(n, base)							\
 ({									\
 	unsigned int __r, __b = (base);					\

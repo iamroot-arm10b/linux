@@ -23,6 +23,10 @@
  */
 static int cmp_ex(const void *a, const void *b)
 {
+	/*! 20140309 
+	 * exception_table_entry의 insn 값을 비교하여
+	 * 앞의 인자가 뒤의 인자보다 크면 1, 작으면 -1, 같으면 0을 리턴
+	 */
 	const struct exception_table_entry *x = a, *y = b;
 
 	/* avoid overflow */
@@ -36,6 +40,7 @@ static int cmp_ex(const void *a, const void *b)
 void sort_extable(struct exception_table_entry *start,
 		  struct exception_table_entry *finish)
 {
+	/*! 20140309 lib/sort.c 참고 */
 	sort(start, finish - start, sizeof(struct exception_table_entry),
 	     cmp_ex, NULL);
 }
@@ -73,6 +78,7 @@ search_extable(const struct exception_table_entry *first,
 	       const struct exception_table_entry *last,
 	       unsigned long value)
 {
+	/*! 20140309 binary search 수행하여 insn에 value 값을 포함하는 exception_table_entry 를 찾는다  */
 	while (first <= last) {
 		const struct exception_table_entry *mid;
 

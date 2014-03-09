@@ -487,6 +487,7 @@ static void __init mm_init(void)
 	 * bigger than MAX_ORDER unless SPARSEMEM.
 	 */
 	page_cgroup_init_flatmem();
+	/*! 20140309 아무일안함 */
 	mem_init();
 	kmem_cache_init();
 	percpu_init_late();
@@ -593,8 +594,11 @@ asmlinkage void __init start_kernel(void)
 	 * pidhash table의 list head 를 위한 메모리를 할당하여 초기화한다.
 	 */
 	vfs_caches_init_early();
+	/*! 20140309 directory, inode hashtable을 위한 공간 할당 후 리스트초기화 */
 	sort_main_extable();
+	/*! 20140309 exception table의 exception_table_entry 의 insn 변수를 기준으로 오름차순으로 정렬한다. */
 	trap_init();
+	/*! 20140309 아무일안함 */
 	mm_init();
 
 	/*
