@@ -240,6 +240,8 @@ do {									\
 			__bad_size_call_parameter();break;		\
 	}								\
 } while (0)
+/*! 20140315 __verify_pcpu_ptr(&(variable)): complie 타임에 type 맞는지 체크 */
+/*! 20140315 stem##4(variable, __VA_ARGS__): __this_cpu_add_4(variable, __VA_ARGS__) 로 바뀜 */
 
 /*
  * Optimized manipulation for memory allocated through the per cpu
@@ -552,6 +554,7 @@ do {									\
 do {									\
 	*__this_cpu_ptr(&(pcp)) op val;					\
 } while (0)
+/*! 20140315 여기 실행 */
 
 #ifndef __this_cpu_write
 # ifndef __this_cpu_write_1
@@ -578,11 +581,13 @@ do {									\
 # endif
 # ifndef __this_cpu_add_4
 #  define __this_cpu_add_4(pcp, val)	__this_cpu_generic_to_op((pcp), (val), +=)
+/*! 20140315 여기 실행 */
 # endif
 # ifndef __this_cpu_add_8
 #  define __this_cpu_add_8(pcp, val)	__this_cpu_generic_to_op((pcp), (val), +=)
 # endif
 # define __this_cpu_add(pcp, val)	__pcpu_size_call(__this_cpu_add_, (pcp), (val))
+/*! 20140315 여기 실행 */
 #endif
 
 #ifndef __this_cpu_sub

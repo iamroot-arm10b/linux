@@ -50,6 +50,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 	__verify_pcpu_ptr((__p));					\
 	RELOC_HIDE((typeof(*(__p)) __kernel __force *)(__p), (__offset)); \
 })
+/*! 20140315 percpu를 초기화시키고 현재 cpu에 해당하는 percpu 주소값 */
 #endif
 
 /*

@@ -19,6 +19,7 @@ void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
 static inline void set_page_count(struct page *page, int v)
 {
 	atomic_set(&page->_count, v);
+	/*! 20140315 page->_count->counter = v */
 }
 
 /*
@@ -30,6 +31,7 @@ static inline void set_page_refcounted(struct page *page)
 	VM_BUG_ON(PageTail(page));
 	VM_BUG_ON(atomic_read(&page->_count));
 	set_page_count(page, 1);
+	/*! 20140315 page->_count->counter = 1 로 셋팅 */
 }
 
 static inline void __get_page_tail_foll(struct page *page,

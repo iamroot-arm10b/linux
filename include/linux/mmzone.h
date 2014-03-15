@@ -80,6 +80,7 @@ extern int page_group_by_mobility_disabled;
 static inline int get_pageblock_migratetype(struct page *page)
 {
 	return get_pageblock_flags_group(page, PB_migrate, PB_migrate_end);
+	/*! 20140315  PB_migrate:0, PB_migrate_end:2 */
 }
 
 struct free_area {
@@ -575,6 +576,9 @@ static inline bool zone_spans_pfn(const struct zone *zone, unsigned long pfn)
 static inline bool zone_is_initialized(struct zone *zone)
 {
 	return !!zone->wait_table;
+	/*! 20140315 mm/page_alloc.c 의 zone_wait_table_init 함수에서 다음과 같이 초기화 함
+	 * zone->wait_table = (wait_queue_head_t *)alloc_bootmem_node_nopanic(pgdat, alloc_size);
+	 */
 }
 
 static inline bool zone_is_empty(struct zone *zone)

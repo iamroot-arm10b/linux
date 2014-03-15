@@ -300,12 +300,14 @@ static inline int bad_range(struct zone *zone, struct page *page)
 
 static void bad_page(struct page *page)
 {
+	/*! 20140315 TODO: 나중에 다시 확인하자 */
 	static unsigned long resume;
 	static unsigned long nr_shown;
 	static unsigned long nr_unshown;
 
 	/* Don't complain about poisoned pages */
 	if (PageHWPoison(page)) {
+	/*! 20140315 항상 0 리턴 */
 		page_mapcount_reset(page); /* remove PageBuddy */
 		return;
 	}
@@ -329,6 +331,7 @@ static void bad_page(struct page *page)
 	}
 	if (nr_shown++ == 0)
 		resume = jiffies + 60 * HZ;
+		/*! 20140315 HZ: 200 => 1초에 200씩 증가 */
 
 	printk(KERN_ALERT "BUG: Bad page state in process %s  pfn:%05lx\n",
 		current->comm, page_to_pfn(page));
@@ -552,8 +555,10 @@ static inline void __free_one_page(struct page *page,
 	struct page *buddy;
 
 	VM_BUG_ON(!zone_is_initialized(zone));
+	/*! 20140315 zone->wait_table이 비어있으면 BUG 발생 */
 
 	if (unlikely(PageCompound(page)))
+		/*! 20140315 여기까지 스터디 함. */
 		if (unlikely(destroy_compound_page(page, order)))
 			return;
 
@@ -618,17 +623,25 @@ out:
 
 static inline int free_pages_check(struct page *page)
 {
+	/*! 20140315 free 할 페이지가 실제 사용중인지 확인 */
 	if (unlikely(page_mapcount(page) |
 		(page->mapping != NULL)  |
 		(atomic_read(&page->_count) != 0) |
 		(page->flags & PAGE_FLAGS_CHECK_AT_FREE) |
 		(mem_cgroup_bad_page_check(page)))) {
 		bad_page(page);
+		/*! 20140315 TODO: 나중에 다시 확인하기 */
 		return 1;
 	}
 	page_nid_reset_last(page);
+	/*! 20140315 아무것도 안함 */
 	if (page->flags & PAGE_FLAGS_CHECK_AT_PREP)
+	/*! 20140315 PAGE_FLAGS_CHECK_AT_PREP: 0x1fffff  */
 		page->flags &= ~PAGE_FLAGS_CHECK_AT_PREP;
+		/*! 20140315
+		 * node, zone 을 제외한 flag 부분을 모두 지운다.
+		 * 캐쉬를 고려하여 필요할 경우에만 지운다.
+		 */
 	return 0;
 }
 
@@ -700,6 +713,7 @@ static void free_one_page(struct zone *zone, struct page *page, int order,
 				int migratetype)
 {
 	spin_lock(&zone->lock);
+	/*! 20140315 해당 zone의 spin lock 획득 */
 	zone->all_unreclaimable = 0;
 	zone->pages_scanned = 0;
 
@@ -709,16 +723,20 @@ static void free_one_page(struct zone *zone, struct page *page, int order,
 	spin_unlock(&zone->lock);
 }
 
+/*! 20140315 page: free 하려는 struct page의 주소, 페이지 갯수: 2^order */
 static bool free_pages_prepare(struct page *page, unsigned int order)
 {
 	int i;
 	int bad = 0;
 
 	trace_mm_page_free(page, order);
+	/*! 20140315 리눅스 커널의 tracing enable 할때 특정 메모리에 찍어놓은 log를 볼 수 있다. */
 	kmemcheck_free_shadow(page, order);
+	/*! 20140315 위 두 함수는 Debug feature 이므로 생략 */
 
 	if (PageAnon(page))
 		page->mapping = NULL;
+	/*! 20140315 free 하려는 page가 ANON이면 page_mapping을 지운다. */
 	for (i = 0; i < (1 << order); i++)
 		bad += free_pages_check(page + i);
 	if (bad)
@@ -728,9 +746,12 @@ static bool free_pages_prepare(struct page *page, unsigned int order)
 		debug_check_no_locks_freed(page_address(page),PAGE_SIZE<<order);
 		debug_check_no_obj_freed(page_address(page),
 					   PAGE_SIZE << order);
+		/*! 20140315 두 함수 모두 아무것도 안함 */
 	}
 	arch_free_page(page, order);
+	/*! 20140315 아무것도 안함 */
 	kernel_map_pages(page, 1 << order, 0);
+	/*! 20140315 아무것도 안함 */
 
 	return true;
 }
@@ -742,11 +763,16 @@ static void __free_pages_ok(struct page *page, unsigned int order)
 
 	if (!free_pages_prepare(page, order))
 		return;
+	/*! 20140315 정상적으로 free할 수 있는 page인지 확인 */
 
 	local_irq_save(flags);
+	/*! 20140315 cpsr의 irq 관련된 내용을 flags 변수에 저장한다. */
 	__count_vm_events(PGFREE, 1 << order);
+	/*! 20140315 현재 this cpu의 PGFREE 값에 1 << order 를 더하는 것 */
 	migratetype = get_pageblock_migratetype(page);
+	/*! 20140315 현재 page가 속한 pageblock의 migratetype을 가져옴 */
 	set_freepage_migratetype(page, migratetype);
+	/*! 20140315 page->index 에 pageblock migratetype 설정 */
 	free_one_page(page_zone(page), page, order, migratetype);
 	local_irq_restore(flags);
 }
@@ -757,17 +783,22 @@ void __init __free_pages_bootmem(struct page *page, unsigned int order)
 	unsigned int loop;
 
 	prefetchw(page);
+	/*! 20140315 page 주소의 값을 L1 cache 에 미리 load 한다. */
 	for (loop = 0; loop < nr_pages; loop++) {
 		struct page *p = &page[loop];
 
 		if (loop + 1 < nr_pages)
 			prefetchw(p + 1);
 		__ClearPageReserved(p);
+		/*! 20140315 p->flags 의 pg_reserved bit를 0으로 clear한다. */
 		set_page_count(p, 0);
+		/*! 20140315 p->_count->counter = 0 으로 set */
 	}
 
 	page_zone(page)->managed_pages += 1 << order;
+	/*! 20140315 page가 속한 zone->managed_pages 갯수를 증가시킴 */
 	set_page_refcounted(page);
+	/*! 20140315 page->_count->counter = 0 으로 set */
 	__free_pages(page, order);
 }
 
@@ -2714,6 +2745,7 @@ EXPORT_SYMBOL(get_zeroed_page);
 void __free_pages(struct page *page, unsigned int order)
 {
 	if (put_page_testzero(page)) {
+	/*! 20140315 atomic하게 1을 뺀 값을 저장하고, 그 값이 0이면 true 리턴 */
 		if (order == 0)
 			free_hot_cold_page(page, 0);
 		else
@@ -5575,6 +5607,7 @@ void __init page_alloc_init(void)
 	 * { .notifier_call = page_alloc_cpu_notify, .priority = 0 };	\
 	 * register_cpu_notifier(&page_alloc_cpu_notify_nb);			\
 	 */
+	/*! 20140222 mutex lock을 쓰면서 cpu_chain list에 nb를 내림차순으로 등록한다. */
 }
 
 /*
@@ -6107,13 +6140,18 @@ unsigned long get_pageblock_flags_group(struct page *page,
 	unsigned long value = 1;
 
 	zone = page_zone(page);
+	/*! 20140315 page 에 해당하는 zone 구조체 포인터를 반환한다. */
 	pfn = page_to_pfn(page);
+	/*! 20140315 page에 대한 pfn을 구한다.  */
 	bitmap = get_pageblock_bitmap(zone, pfn);
+	/*! 20140315 mem_section->pageblock_flags(usemap)를 bitmap에 할당한다. */
 	bitidx = pfn_to_bitidx(zone, pfn);
+	/*! 20140315 usemap의 page index를 가져온다. */
 
 	for (; start_bitidx <= end_bitidx; start_bitidx++, value <<= 1)
 		if (test_bit(bitidx + start_bitidx, bitmap))
 			flags |= value;
+		/*! 20140315 bitidx에서의 하위 3bit를 flag에 설정 */
 
 	return flags;
 }

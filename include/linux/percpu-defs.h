@@ -27,6 +27,7 @@
 	const void __percpu *__vpp_verify = (typeof(ptr))NULL;		\
 	(void)__vpp_verify;						\
 } while (0)
+/*! 20140315 complie 타임에 type 맞는지 체크 */
 
 /*
  * s390 and alpha modules require percpu variables to be defined as

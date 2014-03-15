@@ -254,6 +254,7 @@ struct inode;
 static inline void set_freepage_migratetype(struct page *page, int migratetype)
 {
 	page->index = migratetype;
+	/*! 20140315 여기 실행 */
 }
 
 /* It's valid only if the page is free path or free_list */
@@ -289,6 +290,7 @@ static inline int put_page_testzero(struct page *page)
 {
 	VM_BUG_ON(atomic_read(&page->_count) == 0);
 	return atomic_dec_and_test(&page->_count);
+	/*! 20140315 atomic하게 1을 뺀 값을 저장하고, 그 값이 0이면 true 리턴 */
 }
 
 /*
@@ -381,12 +383,13 @@ static inline struct page *compound_head(struct page *page)
 static inline void page_mapcount_reset(struct page *page)
 {
 	atomic_set(&(page)->_mapcount, -1);
-	/*! 20131214 page->_mapcount 값을 -1로 초기화. 원자성 보장 */
+	/*! 20131214 page->_mapcount->counter 값을 -1로 초기화. 원자성 보장 */
 }
 
 static inline int page_mapcount(struct page *page)
 {
 	return atomic_read(&(page)->_mapcount) + 1;
+	/*! 20140315 page->_mapcount->counter(초기값: -1) 에 1을 더하여 리턴. */
 }
 
 static inline int page_count(struct page *page)
@@ -860,6 +863,7 @@ struct address_space *page_file_mapping(struct page *page)
 static inline int PageAnon(struct page *page)
 {
 	return ((unsigned long)page->mapping & PAGE_MAPPING_ANON) != 0;
+	/*! 20140315 PAGE_MAPPING_ANON: 1 (ANON: heap, stack에 할당되는 커널 페이지) */
 }
 
 /*

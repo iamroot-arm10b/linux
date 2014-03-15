@@ -136,6 +136,7 @@ enum pageflags {
 #define TESTPAGEFLAG(uname, lname)					\
 static inline int Page##uname(const struct page *page)			\
 			{ return test_bit(PG_##lname, &page->flags); }
+/*! 20140315 PageCompound 함수는 여기를 이용함 */
 
 #define SETPAGEFLAG(uname, lname)					\
 static inline void SetPage##uname(struct page *page)			\
@@ -278,6 +279,7 @@ TESTSCFLAG(HWPoison, hwpoison)
 #define __PG_HWPOISON (1UL << PG_hwpoison)
 #else
 PAGEFLAG_FALSE(HWPoison)
+/*! 20140315 항상 0 리턴 */
 #define __PG_HWPOISON 0
 #endif
 
@@ -360,6 +362,10 @@ static inline void ClearPageCompound(struct page *page)
  * pages on the LRU and/or pagecache.
  */
 TESTPAGEFLAG(Compound, compound)
+/*! 20140315
+ * static inline int PageCompound(const struct page *page)			\
+ *		{ return test_bit(PG_Compound, &page->flags); }
+ */
 __SETPAGEFLAG(Head, compound)  __CLEARPAGEFLAG(Head, compound)
 
 /*
@@ -516,6 +522,7 @@ static inline void ClearPageSlabPfmemalloc(struct page *page)
  * there has been a kernel bug or struct page corruption.
  */
 #define PAGE_FLAGS_CHECK_AT_PREP	((1 << NR_PAGEFLAGS) - 1)
+/*! 20140315 NR_PAGEFLAGS: 21 (컴파일해야 값이 셋팅됨), pageflag 를 mask하는 것 */
 
 #define PAGE_FLAGS_PRIVATE				\
 	(1 << PG_private | 1 << PG_private_2)

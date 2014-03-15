@@ -570,6 +570,7 @@ free_memmap(unsigned long start_pfn, unsigned long end_pfn)
 	 * Convert start_pfn/end_pfn to a struct page pointer.
 	 */
 	start_pg = pfn_to_page(start_pfn - 1) + 1;
+	/*! 20140315 struct page 의 시작주소 */
 	end_pg = pfn_to_page(end_pfn - 1) + 1;
 
 	/*
@@ -585,6 +586,7 @@ free_memmap(unsigned long start_pfn, unsigned long end_pfn)
 	 */
 	if (pg < pgend)
 		free_bootmem(pg, pgend - pg);
+	/*! 20140315 pgend - pg 만큼의 메모리를 free한다. */
 }
 
 /*
@@ -647,6 +649,10 @@ static void __init free_unused_memmap(struct meminfo *mi)
 		/*! 20140309 스터디 여기까지 */
 		free_memmap(prev_bank_end,
 			    ALIGN(prev_bank_end, PAGES_PER_SECTION));
+	/*! 20140315
+	 * PAGES_PER_SECTION = 64k
+	 * prev_bank_end ~ (64k align 된 prev_bank_end) 만큼의 메모리를 free한다.
+	 */
 #endif
 }
 
@@ -735,6 +741,7 @@ void __init mem_init(void)
 		};
 	 */
 	free_unused_memmap(&meminfo);
+	/*! 20140315 사용하지 않는 공간을 위해 할당했던 mem_map(struct page) 공간을 free한다. */
 	free_all_bootmem();
 
 #ifdef CONFIG_SA1111

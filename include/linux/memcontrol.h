@@ -385,6 +385,7 @@ static inline bool
 mem_cgroup_bad_page_check(struct page *page)
 {
 	return false;
+	/*! 20140315 여기 실행 */
 }
 
 static inline void

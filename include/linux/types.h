@@ -172,6 +172,7 @@ typedef phys_addr_t resource_size_t;
  */
 typedef unsigned long irq_hw_number_t;
 
+/*! 20140315 이 구조체 이용함 */
 typedef struct {
 	int counter;
 } atomic_t;

@@ -195,6 +195,7 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 
 	start = bdata->node_min_pfn;
 	end = bdata->node_low_pfn;
+	/*! 20140315 start: lowmem의 시작, end: lowmem의 끝주소의 pfn 값 */
 
 	bdebug("nid=%td start=%lx end=%lx\n",
 		bdata - bootmem_node_data, start, end);
@@ -206,18 +207,24 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 		map = bdata->node_bootmem_map;
 		idx = start - bdata->node_min_pfn;
 		shift = idx & (BITS_PER_LONG - 1);
+		/*! 20140315 BITS_PER_LONG: 32 */
+		/*! 20140315 shift: bit position, 해당 page의 bit */
 		/*
 		 * vec holds at most BITS_PER_LONG map bits,
 		 * bit 0 corresponds to start.
 		 */
 		vec = ~map[idx / BITS_PER_LONG];
+		/*! 20140315 idx가 속한 map의 값을 반전 */
 
 		if (shift) {
 			vec >>= shift;
+			/*! 20140315 반전된 값 중에 idx position을 0번 bit로 맞춘다. */
 			if (end - start >= BITS_PER_LONG)
 				vec |= ~map[idx / BITS_PER_LONG + 1] <<
 					(BITS_PER_LONG - shift);
+			/*! 20140315 idx가 속한 map + 1 의 값으로 shift시킨 만큼을 vec에 채운다. */
 		}
+		/*! 20140315 결국 현재 idx 위치에서부터 반전된 32bit를 뽑아서 vec에 넣는다. */
 		/*
 		 * If we have a properly aligned and fully unreserved
 		 * BITS_PER_LONG block of pages in front of us, free
@@ -259,6 +266,10 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 
 static int reset_managed_pages_done __initdata;
 
+/*! 20140315
+ * include/linux/mmzone.h 의 spanned_pages, present_pages, managed_pages 주석 참조
+ * managed_pages = present_pages - reserved_pages;
+ */
 static inline void __init reset_node_managed_pages(pg_data_t *pgdat)
 {
 	struct zone *z;
@@ -268,6 +279,7 @@ static inline void __init reset_node_managed_pages(pg_data_t *pgdat)
 
 	for (z = pgdat->node_zones; z < pgdat->node_zones + MAX_NR_ZONES; z++)
 		z->managed_pages = 0;
+	/*! 20140315 각 zone 별 managed_pages 를 0으로 초기화 */
 }
 
 void __init reset_all_zones_managed_pages(void)
@@ -275,7 +287,15 @@ void __init reset_all_zones_managed_pages(void)
 	struct pglist_data *pgdat;
 
 	for_each_online_pgdat(pgdat)
+	/*! 20140315
+	 * for (pgdat = first_online_pgdat();		\
+	 *	pgdat;					\
+	 *	pgdat = next_online_pgdat(pgdat))
+	 * pgdat = &contig_page_data : 한번만 실행된다.
+	 * node는 1개, zone은 2개(normal, highmem)
+	 */
 		reset_node_managed_pages(pgdat);
+		/*! 20140315 pgdat의 각 zone 별 managed_pages 를 0으로 초기화 */
 	reset_managed_pages_done = 1;
 }
 
@@ -290,8 +310,25 @@ unsigned long __init free_all_bootmem(void)
 	bootmem_data_t *bdata;
 
 	reset_all_zones_managed_pages();
+	/*! 20140315 pgdat의 각 zone 별 managed_pages 를 0으로 초기화 */
 
 	list_for_each_entry(bdata, &bdata_list, list)
+	/*! 20140315
+	 * for (pos = list_entry((head)->next, typeof(*pos), member);	\
+	 *	&pos->member != (head); 	\
+	 *	pos = list_entry(pos->member.next, typeof(*pos), member))
+	 *
+	 * struct bootmem_data 구조체를 bdata에 가져온다. for문은 한번만 수행됨.
+	 *
+	 * typedef struct bootmem_data {
+	 * 	unsigned long node_min_pfn;
+	 * 	unsigned long node_low_pfn;
+	 * 	void *node_bootmem_map;
+	 * 	unsigned long last_end_off;
+	 * 	unsigned long hint_idx;
+	 * 	struct list_head list;
+	 * } bootmem_data_t;
+	 */
 		total_pages += free_all_bootmem_core(bdata);
 
 	totalram_pages += total_pages;

@@ -12,6 +12,7 @@
 struct pglist_data *first_online_pgdat(void)
 {
 	return NODE_DATA(first_online_node);
+	/*! 20140315 return &contig_page_data */
 }
 
 struct pglist_data *next_online_pgdat(struct pglist_data *pgdat)

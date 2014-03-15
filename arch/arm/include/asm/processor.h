@@ -95,6 +95,11 @@ unsigned long get_wchan(struct task_struct *p);
 #define ARCH_HAS_PREFETCH
 static inline void prefetch(const void *ptr)
 {
+	/*! 20140315
+	 * pld: ptr 주소의 값을 L1 cache 에 미리 load 한다.
+	 * The PLD instruction brings the line into the	cache in Exclusive or Shared state 
+	 * and the PLDW instruction brings the line into the cache in Exclusive state.
+	 */
 	__asm__ __volatile__(
 		"pld\t%a0"
 		:
@@ -104,6 +109,7 @@ static inline void prefetch(const void *ptr)
 
 #define ARCH_HAS_PREFETCHW
 #define prefetchw(ptr)	prefetch(ptr)
+/*! 20140315 ptr 주소의 값을 L1 cache 에 미리 load 한다. */
 
 #define ARCH_HAS_SPINLOCK_PREFETCH
 #define spin_lock_prefetch(x) do { } while (0)

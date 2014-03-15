@@ -105,6 +105,7 @@ extern void debug_check_no_obj_freed(const void *address, unsigned long size);
 #else
 static inline void
 debug_check_no_obj_freed(const void *address, unsigned long size) { }
+/*! 20140315 여기 실행 */
 #endif
 
 #endif

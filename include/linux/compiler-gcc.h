@@ -36,6 +36,7 @@
   ({ unsigned long __ptr;					\
     __asm__ ("" : "=r"(__ptr) : "0"(ptr));		\
     (typeof(ptr)) (__ptr + (off)); })
+/*! 20140315 ptr의 type을 파악하여 ptr에 off 값을 더하여 리턴 */
 
 #ifdef __CHECKER__
 #define __must_be_array(arr) 0

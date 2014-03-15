@@ -64,6 +64,7 @@ static inline void debug_show_held_locks(struct task_struct *task)
 static inline void
 debug_check_no_locks_freed(const void *from, unsigned long len)
 {
+	/*! 20140315 여기 실행 */
 }
 
 static inline void

@@ -26,11 +26,10 @@
  * strex/ldrex monitor on some implementations. The reason we can use it for
  * atomic_set() is the clrex or dummy strex done on every exception return.
  */
-/*!
- * atomic 연산을 위한 매크로
- */
+/*! atomic 연산을 위한 매크로 */
 #define atomic_read(v)	(*(volatile int *)&(v)->counter)
 #define atomic_set(v,i)	(((v)->counter) = (i))
+/*! 20140315 여기 실행 */
 
 #if __LINUX_ARM_ARCH__ >= 6
 
@@ -232,7 +231,9 @@ static inline int __atomic_add_unless(atomic_t *v, int a, int u)
 #define atomic_dec(v)		atomic_sub(1, v)
 
 #define atomic_inc_and_test(v)	(atomic_add_return(1, v) == 0)
+/*! 20140315 atomic하게 1을 더한 값을 저장하고, 그 값이 0이면 true 리턴 */
 #define atomic_dec_and_test(v)	(atomic_sub_return(1, v) == 0)
+/*! 20140315 atomic하게 1을 뺀 값을 저장하고, 그 값이 0이면 true 리턴 */
 #define atomic_inc_return(v)    (atomic_add_return(1, v))
 /*! 20140222 atomic하게 1을 더한 값을 리턴 */
 #define atomic_dec_return(v)    (atomic_sub_return(1, v))
