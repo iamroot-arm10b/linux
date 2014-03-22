@@ -248,7 +248,9 @@ struct mmu_gather;
 struct inode;
 
 #define page_private(page)		((page)->private)
+/*! 20140322 여기 실행 */
 #define set_page_private(page, v)	((page)->private = (v))
+/*! 20140322 여기 실행 */
 
 /* It's valid only if the page is free path or free_list */
 static inline void set_freepage_migratetype(struct page *page, int migratetype)
@@ -453,18 +455,23 @@ static inline void init_page_count(struct page *page)
 static inline int PageBuddy(struct page *page)
 {
 	return atomic_read(&page->_mapcount) == PAGE_BUDDY_MAPCOUNT_VALUE;
+	/*! 20140322 PAGE_BUDDY_MAPCOUNT_VALUE: -128 */
+	/*! 20140322 page->_mapcount->counter를 읽어온다. */
+	/*! 20140322 page가 buddy system 안에 있고 free이면 true 리턴 */
 }
 
 static inline void __SetPageBuddy(struct page *page)
 {
 	VM_BUG_ON(atomic_read(&page->_mapcount) != -1);
 	atomic_set(&page->_mapcount, PAGE_BUDDY_MAPCOUNT_VALUE);
+	/*! 20140322 PAGE_BUDDY_MAPCOUNT_VALUE: -128 */
 }
 
 static inline void __ClearPageBuddy(struct page *page)
 {
 	VM_BUG_ON(!PageBuddy(page));
 	atomic_set(&page->_mapcount, -1);
+	/*! 20140322 page->_mapcount = -1 */
 }
 
 void put_page(struct page *page);
@@ -493,7 +500,9 @@ static inline compound_page_dtor *get_compound_page_dtor(struct page *page)
 
 static inline int compound_order(struct page *page)
 {
+	/*! 20140322 PG_compound 설정한 다음에 다시 보기로 함 */
 	if (!PageHead(page))
+		/*! 20140322 PG_compound, PG_reclaim 이 없으면 return 0 */
 		return 0;
 	return (unsigned long)page[1].lru.prev;
 }
@@ -625,12 +634,16 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
 #define ZONEID_PGOFF		((SECTIONS_PGOFF < ZONES_PGOFF)? \
 						SECTIONS_PGOFF : ZONES_PGOFF)
 #else
+/*! 20140322 여기가 실행된다.  */
 #define ZONEID_SHIFT		(NODES_SHIFT + ZONES_SHIFT)
+/*! 20140322 ZONEID_SHIFT: 2 */
 #define ZONEID_PGOFF		((NODES_PGOFF < ZONES_PGOFF)? \
 						NODES_PGOFF : ZONES_PGOFF)
+/*! 20140322 ZONEID_PGOFF: 26, NODES_PGOFF: 28, ZONES_PGOFF: 26 */
 #endif
 
 #define ZONEID_PGSHIFT		(ZONEID_PGOFF * (ZONEID_SHIFT != 0))
+/*! 20140322 ZONEID_PGSHIFT = 26 * 1 = 26 */
 
 #if SECTIONS_WIDTH+NODES_WIDTH+ZONES_WIDTH > BITS_PER_LONG - NR_PAGEFLAGS
 #error SECTIONS_WIDTH+NODES_WIDTH+ZONES_WIDTH > BITS_PER_LONG - NR_PAGEFLAGS
@@ -642,6 +655,7 @@ static inline pte_t maybe_mkwrite(pte_t pte, struct vm_area_struct *vma)
 #define SECTIONS_MASK		((1UL << SECTIONS_WIDTH) - 1)
 #define LAST_NID_MASK		((1UL << LAST_NID_WIDTH) - 1)
 #define ZONEID_MASK		((1UL << ZONEID_SHIFT) - 1)
+/*! 20140322 ZONEID_MASK: 3 */
 
 static inline enum zone_type page_zonenum(const struct page *page)
 {
@@ -665,6 +679,9 @@ static inline enum zone_type page_zonenum(const struct page *page)
 static inline int page_zone_id(struct page *page)
 {
 	return (page->flags >> ZONEID_PGSHIFT) & ZONEID_MASK;
+	/*! 20140322 ZONEID_PGSHIFT: 26, ZONEID_MASK: 3
+	 * 현재 page가 속한 zone ID, section ID 를 리턴
+	 */
 }
 
 static inline int zone_to_nid(struct zone *zone)
@@ -1867,6 +1884,7 @@ static inline bool page_is_guard(struct page *page)
 #else
 static inline unsigned int debug_guardpage_minorder(void) { return 0; }
 static inline bool page_is_guard(struct page *page) { return false; }
+/*! 20140322 여기 실행됨 */
 #endif /* CONFIG_DEBUG_PAGEALLOC */
 
 #if MAX_NUMNODES > 1

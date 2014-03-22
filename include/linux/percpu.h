@@ -548,6 +548,7 @@ do {									\
 #  define __this_cpu_read_8(pcp)	(*__this_cpu_ptr(&(pcp)))
 # endif
 # define __this_cpu_read(pcp)	__pcpu_size_call_return(__this_cpu_read_, (pcp))
+/*! 20140322 pcp의 크기에 맞는 __this_cpu_read_# 이 불린다. */
 #endif
 
 #define __this_cpu_generic_to_op(pcp, val, op)				\

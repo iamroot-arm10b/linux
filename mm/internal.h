@@ -152,6 +152,7 @@ static inline unsigned long page_order(struct page *page)
 {
 	/* PageBuddy() must be checked by the caller */
 	return page_private(page);
+	/*! 20140322 page->private 리턴 */
 }
 
 /* mm/util.c */

@@ -383,6 +383,7 @@ __SETPAGEFLAG(Head, compound)  __CLEARPAGEFLAG(Head, compound)
 
 static inline int PageHead(struct page *page)
 {
+	/*! 20140322 page->flags의 PG_compound, PG_reclaim 이 setting되어 있는지 체크 */
 	return ((page->flags & PG_head_tail_mask) == PG_head_mask);
 }
 

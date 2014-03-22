@@ -5,6 +5,7 @@
 #define VM_BUG_ON(cond) BUG_ON(cond)
 #else
 #define VM_BUG_ON(cond) BUILD_BUG_ON_INVALID(cond)
+/*! 20140322 condition이 true 인 경우 빌드타임에 오류 발생 */
 #endif
 
 #ifdef CONFIG_DEBUG_VIRTUAL

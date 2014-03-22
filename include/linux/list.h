@@ -92,6 +92,7 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 {
 	next->prev = prev;
 	prev->next = next;
+	/*! 20140322 다음 list의 이전을 prev 로, 이전 list의 다음을 next로 바꾸어 자신을 제외함 */
 }
 
 /**
@@ -104,6 +105,7 @@ static inline void __list_del(struct list_head * prev, struct list_head * next)
 static inline void __list_del_entry(struct list_head *entry)
 {
 	__list_del(entry->prev, entry->next);
+	/*! 20140322 entry를 list에서 제거한다. */
 }
 
 static inline void list_del(struct list_head *entry)

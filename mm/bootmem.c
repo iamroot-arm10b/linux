@@ -232,6 +232,7 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 		 */
 		if (IS_ALIGNED(start, BITS_PER_LONG) && vec == ~0UL) {
 			int order = ilog2(BITS_PER_LONG);
+			/*! 20140322 BITS_PER_LONG: 32, order: 5 */
 
 			__free_pages_bootmem(pfn_to_page(start), order);
 			count += BITS_PER_LONG;

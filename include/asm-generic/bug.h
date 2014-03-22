@@ -54,7 +54,7 @@ struct bug_entry {
 #ifndef HAVE_ARCH_BUG_ON
 #define BUG_ON(condition) do { if (unlikely(condition)) BUG(); } while(0)
 /*! 20130810
- * condition이 false 인 경우에BUG임을 화면에 찍고 panic("BUG!") 함수 실행
+ * condition이 true 인 경우에BUG임을 화면에 찍고 panic("BUG!") 함수 실행
  */
 #endif
 

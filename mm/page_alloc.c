@@ -294,6 +294,7 @@ static int bad_range(struct zone *zone, struct page *page)
 #else
 static inline int bad_range(struct zone *zone, struct page *page)
 {
+	/*! 20140322 여기 실행됨 */
 	return 0;
 }
 #endif
@@ -450,18 +451,23 @@ static inline void clear_page_guard_flag(struct page *page)
 #else
 static inline void set_page_guard_flag(struct page *page) { }
 static inline void clear_page_guard_flag(struct page *page) { }
+/*! 20140322 여기 실행됨 */
 #endif
 
 static inline void set_page_order(struct page *page, int order)
 {
 	set_page_private(page, order);
+	/*! 20140322 page->private = order */
 	__SetPageBuddy(page);
+	/*! 20140322 page->_mapcount: -128 (초기화:buddy로 사용하겠다는 것) */
 }
 
 static inline void rmv_page_order(struct page *page)
 {
 	__ClearPageBuddy(page);
+	/*! 20140322 page->_mapcount = -1 (buddy로 안쓰겠다는 것)*/
 	set_page_private(page, 0);
+	/*! 20140322 page->order = 0 */
 }
 
 /*
@@ -485,6 +491,7 @@ static inline unsigned long
 __find_buddy_index(unsigned long page_idx, unsigned int order)
 {
 	return page_idx ^ (1 << order);
+	/*! 20140322 page_idx를 buddy_index로 변환 */
 }
 
 /*
@@ -505,19 +512,24 @@ static inline int page_is_buddy(struct page *page, struct page *buddy,
 {
 	if (!pfn_valid_within(page_to_pfn(buddy)))
 		return 0;
+	/*! 20140322 a) zone 안에 hole 이 없으므로 항상 1 */
 
 	if (page_zone_id(page) != page_zone_id(buddy))
 		return 0;
+	/*! 20140322 d) page 의 zone id 와 buddy의 zone id 가 같은지 확인 */
 
 	if (page_is_guard(buddy) && page_order(buddy) == order) {
+		/*! 20140322 page_is_guard: false, page_order:buddy->private */
 		VM_BUG_ON(page_count(buddy) != 0);
 		return 1;
 	}
+	/*! 20140322 c) buddy의 order가 주어진 order와 같은지 확인 */
 
 	if (PageBuddy(buddy) && page_order(buddy) == order) {
 		VM_BUG_ON(page_count(buddy) != 0);
 		return 1;
 	}
+	/*! 20140322 b) buddy 가 buddy system 인지 확인 */
 	return 0;
 }
 
@@ -560,40 +572,61 @@ static inline void __free_one_page(struct page *page,
 	if (unlikely(PageCompound(page)))
 		/*! 20140315 여기까지 스터디 함. */
 		if (unlikely(destroy_compound_page(page, order)))
+			/*! 20140322 compound가 안켜져 있으면 실행된다. 지금은 실행안됨 */
 			return;
 
 	VM_BUG_ON(migratetype == -1);
 
 	page_idx = page_to_pfn(page) & ((1 << MAX_ORDER) - 1);
+	/*! 20140322 MAX_ORDER: 11, pfn의 하위 11bit(0~10)를 남긴다. */
 
+	/*! 20140322 VM_BUG_ON: 값이 true 이면 실행된다. */
 	VM_BUG_ON(page_idx & ((1 << order) - 1));
+	/*! 20140322 page_idx가 order로 정렬되어 있지 않은 경우 BUG */
 	VM_BUG_ON(bad_range(zone, page));
+	/*! 20140322 bad_range: 아무일도 안함. */
 
 	while (order < MAX_ORDER-1) {
 		buddy_idx = __find_buddy_index(page_idx, order);
+		/*! 20140322 page_idx에서 order의 buddy_index를 추출해낸다. */
 		buddy = page + (buddy_idx - page_idx);
+		/*! 20140322 buddy구조체의 시작주소 찾음 */
 		if (!page_is_buddy(page, buddy, order))
+		/*! 20140322 page가 free 이고 buddy 인지(order가 -128인지) 체크한다. */
+		/*! 20140322 page_is_buddy: page가 buddy에 있는 free page이면 true */
 			break;
 		/*
 		 * Our buddy is free or it is CONFIG_DEBUG_PAGEALLOC guard page,
 		 * merge with it and move up one order.
 		 */
 		if (page_is_guard(buddy)) {
+		/*! 20140322 page_is_guard: 항상 false */
 			clear_page_guard_flag(buddy);
+			/*! 20140322 아무일도 안한다.  */
 			set_page_private(page, 0);
+			/*! 20140322 page->private = 0 */
 			__mod_zone_freepage_state(zone, 1 << order,
 						  migratetype);
 		} else {
 			list_del(&buddy->lru);
+			/*! 20140322
+			 * lru: 운영체계의 페이지 교체 알고리즘 중 하나로서,
+			 * 기억장치 바깥으로 내보낼 페이지를 선정할 때, 최근에 다른 어떤 페이지보다도
+			 * 적게 사용된(읽혀지거나 기록되거나) 페이지를 고르는 알고리즘
+			 */
 			zone->free_area[order].nr_free--;
+			/*! 20140322 현재 buddy를 free area에서 제거한다. */
 			rmv_page_order(buddy);
+			/*! 20140322 buddy를 안쓰겠다고 설정 */
 		}
 		combined_idx = buddy_idx & page_idx;
 		page = page + (combined_idx - page_idx);
 		page_idx = combined_idx;
 		order++;
+		/*! 20140322 buddy가 fee인 경우에는 order를 증가시킨 후 다시 반복한다. */
 	}
 	set_page_order(page, order);
+	/*! 20140322 page 를 buddy 로 사용하겠다는 표시 */
 
 	/*
 	 * If this is not the largest possible page, check if the buddy
@@ -604,12 +637,16 @@ static inline void __free_one_page(struct page *page,
 	 * as a higher order page
 	 */
 	if ((order < MAX_ORDER-2) && pfn_valid_within(page_to_pfn(buddy))) {
+	/*! 20140322 MAX_ORDER-2 인 이유: 최상위 buddy에서는 할 수 없는 작업이기 때문 */
+	/*! 20140322 pfn_valid_within: zone 안에 hole 이 없으므로 항상 1 */
 		struct page *higher_page, *higher_buddy;
 		combined_idx = buddy_idx & page_idx;
 		higher_page = page + (combined_idx - page_idx);
 		buddy_idx = __find_buddy_index(combined_idx, order + 1);
 		higher_buddy = higher_page + (buddy_idx - combined_idx);
+		/*! 20140322 한단계 상위 page의 buddy를 찾는다 */
 		if (page_is_buddy(higher_page, higher_buddy, order + 1)) {
+		/*! 20140322 higher buddy가 free이면 향후 merge를 용이하게 하기 위해 free list의 tail에 넣는다. */
 			list_add_tail(&page->lru,
 				&zone->free_area[order].free_list[migratetype]);
 			goto out;
@@ -617,8 +654,10 @@ static inline void __free_one_page(struct page *page,
 	}
 
 	list_add(&page->lru, &zone->free_area[order].free_list[migratetype]);
+	/*! 20140322 최상위 buddy인 경우에는 list의 앞부분에 추가한다. */
 out:
 	zone->free_area[order].nr_free++;
+	/*! 20140322 zone의 free list 추가 */
 }
 
 static inline int free_pages_check(struct page *page)
@@ -717,9 +756,13 @@ static void free_one_page(struct zone *zone, struct page *page, int order,
 	zone->all_unreclaimable = 0;
 	zone->pages_scanned = 0;
 
+	/*! 20140322 page: page의 시작page, zone:page가 속한 zone, order: 5, migratetype: */
 	__free_one_page(page, zone, order, migratetype);
+	/*! 20140322 현재 page에서 free 시킬수 있는 최상위 buddy를 찾아서 free area 에 추가한다. */
 	if (unlikely(!is_migrate_isolate(migratetype)))
+	/*! 20140322 is_migrate_isolate: false */
 		__mod_zone_freepage_state(zone, 1 << order, migratetype);
+		/*! 20140322 현재 cpu의 zone->pageset->vm_stat_diff[NR_FREE_PAGES] += 1 << order */
 	spin_unlock(&zone->lock);
 }
 
@@ -774,7 +817,9 @@ static void __free_pages_ok(struct page *page, unsigned int order)
 	set_freepage_migratetype(page, migratetype);
 	/*! 20140315 page->index 에 pageblock migratetype 설정 */
 	free_one_page(page_zone(page), page, order, migratetype);
+	/*! 20140322 현재 page를 buddy free list에 추가한다. */
 	local_irq_restore(flags);
+	/*! 20140322 flags에 백업해둔 값으로 cpsr의 irq관련 flag를 복구한다. */
 }
 
 void __init __free_pages_bootmem(struct page *page, unsigned int order)
@@ -2750,7 +2795,10 @@ void __free_pages(struct page *page, unsigned int order)
 			free_hot_cold_page(page, 0);
 		else
 			__free_pages_ok(page, order);
+			/*! 20140322 현재 page를 order 승수의 buddy free list 에 추가한다. */
+			/*! 20140322 초기화 시 boot_mem block을 이 함수를 이용하여 buddy로 변환한다.  */
 	}
+	/*! 20140322 여기까지 스터디 */
 }
 
 EXPORT_SYMBOL(__free_pages);

@@ -17,6 +17,7 @@ static inline bool is_migrate_isolate_page(struct page *page)
 }
 static inline bool is_migrate_isolate(int migratetype)
 {
+	/*! 20140322 여기 실행됨 */
 	return false;
 }
 #endif

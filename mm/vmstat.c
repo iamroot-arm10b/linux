@@ -211,6 +211,7 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
 {
 	struct per_cpu_pageset __percpu *pcp = zone->pageset;
 	s8 __percpu *p = pcp->vm_stat_diff + item;
+	/*! 20140322 pcp->vm_stat_diff[item] 크기: 1byte */
 	long x;
 	long t;
 
@@ -223,6 +224,7 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
 		x = 0;
 	}
 	__this_cpu_write(*p, x);
+	/*! 20140322 현재 cpu에 해당하는 pcp->vm_stat_diff[item]에 x를 기록 */
 }
 EXPORT_SYMBOL(__mod_zone_page_state);
 

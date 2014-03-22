@@ -1294,6 +1294,7 @@ unsigned long __init node_memmap_size_bytes(int, unsigned long, unsigned long);
 #define pfn_valid_within(pfn) pfn_valid(pfn)
 #else
 #define pfn_valid_within(pfn) (1)
+/*! 20140322 여기 실행 */
 #endif
 
 #ifdef CONFIG_ARCH_HAS_HOLES_MEMORYMODEL

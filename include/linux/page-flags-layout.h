@@ -84,6 +84,7 @@
  * there.  This includes the case where there is no node, so it is implicit.
  */
 #if !(NODES_WIDTH > 0 || NODES_SHIFT == 0)
+/*! 20140322 NODES_WIDTH: 0, NODES_SHIFT: 0 */
 #define NODE_NOT_IN_PAGE_FLAGS
 #endif
 

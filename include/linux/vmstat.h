@@ -270,7 +270,9 @@ static inline void __mod_zone_freepage_state(struct zone *zone, int nr_pages,
 					     int migratetype)
 {
 	__mod_zone_page_state(zone, NR_FREE_PAGES, nr_pages);
+	/*! 20140322 현재 cpu의 zone->pageset->vm_stat_diff[NR_FREE_PAGES] += nr_pages */
 	if (is_migrate_cma(migratetype))
+		/*! 20140322 is_migrate_cma: 항상 false */
 		__mod_zone_page_state(zone, NR_FREE_CMA_PAGES, nr_pages);
 }
 
