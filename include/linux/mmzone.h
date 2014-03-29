@@ -69,6 +69,7 @@ enum {
 #  define is_migrate_cma(migratetype) unlikely((migratetype) == MIGRATE_CMA)
 #else
 #  define is_migrate_cma(migratetype) false
+/*! 20140329 항상 false */
 #endif
 
 #define for_each_migratetype_order(order, type) \
@@ -80,7 +81,8 @@ extern int page_group_by_mobility_disabled;
 static inline int get_pageblock_migratetype(struct page *page)
 {
 	return get_pageblock_flags_group(page, PB_migrate, PB_migrate_end);
-	/*! 20140315  PB_migrate:0, PB_migrate_end:2 */
+	/*! 20140315 PB_migrate:0, PB_migrate_end:2 */
+	/*! 20140329 page가 속한 page group의 pageblock bit의 flag를 가져온다. */
 }
 
 struct free_area {

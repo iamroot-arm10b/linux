@@ -400,6 +400,7 @@ extern void __free_memcg_kmem_pages(struct page *page, unsigned int order);
 extern void free_memcg_kmem_pages(unsigned long addr, unsigned int order);
 
 #define __free_page(page) __free_pages((page), 0)
+/*! 20140329 pcp->lists[migratetypes]의 앞에 free page를 추가한다. */
 #define free_page(addr) free_pages((addr), 0)
 
 void page_alloc_init(void);

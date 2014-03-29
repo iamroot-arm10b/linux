@@ -253,6 +253,7 @@ DEFINE_EVENT(mm_page, mm_page_alloc_zone_locked,
 	TP_ARGS(page, order, migratetype)
 );
 
+/*! 20140329 trace_mm_page_pcpu_drain는 여기가 실행된다. */
 DEFINE_EVENT_PRINT(mm_page, mm_page_pcpu_drain,
 
 	TP_PROTO(struct page *page, unsigned int order, int migratetype),

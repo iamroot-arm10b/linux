@@ -350,6 +350,7 @@ void ftrace_likely_update(struct ftrace_branch_data *f, int val, int expect);
  * handlers, all running on the same CPU.
  */
 #define ACCESS_ONCE(x) (*(volatile typeof(x) *)&(x))
+/*! 20140329 현재 상태의 값을 최적화 하지 않고 무조건 읽어온다. */
 
 /* Ignore/forbid kprobes attach on very low level functions marked by this attribute: */
 #ifdef CONFIG_KPROBES

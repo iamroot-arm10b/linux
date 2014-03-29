@@ -83,6 +83,7 @@ extern void __list_add(struct list_head *new,
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
+/*! 20140329 tail <-> head <-> new 가 된다. */
 static inline void list_add(struct list_head *new, struct list_head *head)
 {
 	__list_add(new, head, head->next);
@@ -209,6 +210,7 @@ static inline int list_is_last(const struct list_head *list,
 static inline int list_empty(const struct list_head *head)
 {
 	return head->next == head;
+	/*! 20140329 list가 비어있으면 1 리턴 */
 }
 
 /**

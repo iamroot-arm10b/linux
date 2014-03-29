@@ -672,8 +672,13 @@ static void __init free_highpages(void)
 
 	/* set highmem page free */
 	for_each_memblock(memory, mem) {
+	/*! 20140329 for (mem = memblock.memory.regions;
+	 *		mem < (memblock.memory.regions + memblock.memory.cnt);
+	 *		mem++)
+	 */
 		unsigned long start = memblock_region_memory_base_pfn(mem);
 		unsigned long end = memblock_region_memory_end_pfn(mem);
+		/*! 20140329  memblock의 시작주소와 끝주소에 해당하는 pfn을 start, end 에 할당한다. */
 
 		/* Ignore complete lowmem entries */
 		if (end <= max_low)
@@ -685,20 +690,29 @@ static void __init free_highpages(void)
 
 		/* Find and exclude any reserved regions */
 		for_each_memblock(reserved, res) {
+		/*! 20140329 for (res = memblock.reserved.regions;
+		 *		res < (memblock.reserved.regions + memblock.reserved.cnt);
+		 *		res++)
+		 */
 			unsigned long res_start, res_end;
 
 			res_start = memblock_region_reserved_base_pfn(res);
 			res_end = memblock_region_reserved_end_pfn(res);
+			/*! 20140329 reserved의 시작주소와 끝주소에 해당하는 pfn을 res_start, res_end 에 할당한다. */
 
 			if (res_end < start)
+				/*! 20140329 res_end가 start보다 작으면 영역의 앞부분이므로 pass */
 				continue;
 			if (res_start < start)
+				/*! 20140329 res_start가 start보다 작으면 res_start = start */
 				res_start = start;
 			if (res_start > end)
+				/*! 20140329 res_start가 start보다 크면 영역의 뒷부분이므로 res_start = end */
 				res_start = end;
 			if (res_end > end)
 				res_end = end;
 			if (res_start != start)
+				/*! 20140329 resered 사이의 free 공간만 buddy의 free list에 추가한다. */
 				free_area_high(start, res_start);
 			start = res_end;
 			if (start == end)
@@ -743,6 +757,7 @@ void __init mem_init(void)
 	free_unused_memmap(&meminfo);
 	/*! 20140315 사용하지 않는 공간을 위해 할당했던 mem_map(struct page) 공간을 free한다. */
 	free_all_bootmem();
+	/*! 20140329 할당되지 않은 bootmem page를 모두 buddy 시스템으로 전환한다. */
 
 #ifdef CONFIG_SA1111
 	/* now that our DMA memory is actually so designated, we can free it */

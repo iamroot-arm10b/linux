@@ -263,6 +263,7 @@ static inline void set_freepage_migratetype(struct page *page, int migratetype)
 static inline int get_freepage_migratetype(struct page *page)
 {
 	return page->index;
+	/*! 20140329 여기 실행됨 */
 }
 
 /*
@@ -1379,8 +1380,11 @@ extern void mem_init_print_info(const char *str);
 static inline void __free_reserved_page(struct page *page)
 {
 	ClearPageReserved(page);
+	/*! 20140329 reserved인 page의 &page->flags를 0으로 clear한다. */
 	init_page_count(page);
+	/*! 20140329 _count변수(사용가능 여부)를 1로 초기화 */
 	__free_page(page);
+	/*! 20140329 page의 pcp->lists[migratetypes]의 앞에 free page를 추가한다. */
 }
 
 static inline void free_reserved_page(struct page *page)

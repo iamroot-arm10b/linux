@@ -582,7 +582,7 @@ do {									\
 # endif
 # ifndef __this_cpu_add_4
 #  define __this_cpu_add_4(pcp, val)	__this_cpu_generic_to_op((pcp), (val), +=)
-/*! 20140315 여기 실행 */
+/*! 20140315 pcp에 val 더함. 각 CPU 별로 실행됨 */
 # endif
 # ifndef __this_cpu_add_8
 #  define __this_cpu_add_8(pcp, val)	__this_cpu_generic_to_op((pcp), (val), +=)
@@ -596,6 +596,7 @@ do {									\
 #endif
 
 #ifndef __this_cpu_inc
+/*! 20140329 여기 실행됨 */
 # define __this_cpu_inc(pcp)		__this_cpu_add((pcp), 1)
 #endif
 

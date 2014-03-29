@@ -219,6 +219,7 @@ static inline unsigned long memblock_region_memory_end_pfn(const struct memblock
 static inline unsigned long memblock_region_reserved_base_pfn(const struct memblock_region *reg)
 {
 	return PFN_DOWN(reg->base);
+	/*! 20140329 pfn단위로 내림정렬한다. */
 }
 
 /**
@@ -228,6 +229,7 @@ static inline unsigned long memblock_region_reserved_base_pfn(const struct membl
 static inline unsigned long memblock_region_reserved_end_pfn(const struct memblock_region *reg)
 {
 	return PFN_UP(reg->base + reg->size);
+	/*! 20140329 memblock의 end 주소의 pfn을 올림으로 align */
 }
 
 /*! 20131221 memblock type(reserved, memory)에서 블럭들을 region에 하나씩 읽어온다.  */

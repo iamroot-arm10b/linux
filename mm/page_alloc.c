@@ -723,28 +723,47 @@ static void free_pcppages_bulk(struct zone *zone, int count,
 				migratetype = 0;
 			list = &pcp->lists[migratetype];
 		} while (list_empty(list));
+		/*! 20140329 pcp->list의 비어있지 않은 list를 선택. */
 
 		/* This is the only non-empty list. Free them all. */
 		if (batch_free == MIGRATE_PCPTYPES)
+			/*! 20140329 pcp->lists[0] 인 경우 실행 */
 			batch_free = to_free;
 
 		do {
 			int mt;	/* migratetype of the to-be-freed page */
 
 			page = list_entry(list->prev, struct page, lru);
+			/*! 20140329 lru가 속한 page의 이전페이지(list의 마지막 page) 시작주소를 page에 할당 */
 			/* must delete as __free_one_page list manipulates */
 			list_del(&page->lru);
+			/*! 20140329 list의 마지막 페이지를 삭제 */
 			mt = get_freepage_migratetype(page);
 			/* MIGRATE_MOVABLE list may include MIGRATE_RESERVEs */
 			__free_one_page(page, zone, 0, mt);
+			/*! 20140329 현재 page에서 free 시킬수 있는 최상위 buddy를 찾아서 free area 에 추가한다. */
 			trace_mm_page_pcpu_drain(page, 0, mt);
+			/*! 20140329 include/trace/events/kmem.h 의 DEFINE_EVENT_PRINT 참고(debug 찍음)  */
 			if (likely(!is_migrate_isolate_page(page))) {
 				__mod_zone_page_state(zone, NR_FREE_PAGES, 1);
+				/*! 20140329 현재 cpu에 해당하는 pcp->vm_stat_diff[NR_FREE_PAGES] += 1 */
 				if (is_migrate_cma(mt))
+					/*! 20140329 is_migrate_cma: 항상 false */
 					__mod_zone_page_state(zone, NR_FREE_CMA_PAGES, 1);
 			}
 		} while (--to_free && --batch_free && !list_empty(list));
+		/*! 20140329 pcp->lists[migratetype] 의 마지막 page를 지운다. */
 	}
+	/*! 20140329
+	 * count 만큼의 page를 list[migratetype] 의 끝에서 하나씩 돌아가면서 삭제한다.
+	 * migratetype 중 하나의 list가 없는 경우에는 2개, 1개씩 삭제한다.
+	 * list_empty를 자주하면 check 빈도가 높아지므로 바람직하지 않기 때문..
+	 * 아래는 commit log
+	 * PCP list에서 라운드로빈 방식으로 페이지를 free 시킬때 비어있는 list를 만날수 있다.
+	 * 하나의 list에 더 많은 페이지가 있을경우 list_empty()가 원치않게 몇번 더 실행된다.
+	 * 이패치는 free page를 지움으로써 더 많은 페이지를 free하게 한다.
+	 * 즉, list_empty() 실행을 줄이기 위해서 batch_free를 증가시키는 방법을 쓴 것. 
+	 */
 	spin_unlock(&zone->lock);
 }
 
@@ -782,6 +801,7 @@ static bool free_pages_prepare(struct page *page, unsigned int order)
 	/*! 20140315 free 하려는 page가 ANON이면 page_mapping을 지운다. */
 	for (i = 0; i < (1 << order); i++)
 		bad += free_pages_check(page + i);
+		/*! 20140329 free 할 페이지가 실제 사용중인지 확인 */
 	if (bad)
 		return false;
 
@@ -845,6 +865,7 @@ void __init __free_pages_bootmem(struct page *page, unsigned int order)
 	set_page_refcounted(page);
 	/*! 20140315 page->_count->counter = 0 으로 set */
 	__free_pages(page, order);
+	/*! 20140329 현재 page를 order 승수의 buddy free list 에 추가한다. */
 }
 
 #ifdef CONFIG_CMA
@@ -1404,8 +1425,11 @@ void free_hot_cold_page(struct page *page, int cold)
 
 	migratetype = get_pageblock_migratetype(page);
 	set_freepage_migratetype(page, migratetype);
+	/*! 20140329 page가 속한 page group의 pageblock bit의 migratetype flag 가져와서 page에 셋팅 */
 	local_irq_save(flags);
+	/*! 20140329 cpsr의 irq 관련된 내용을 flags 변수에 저장한다. */
 	__count_vm_event(PGFREE);
+	/*! 20140329 현재 cpu의 vm_event_states.event[PGFREE]++ */
 
 	/*
 	 * We only track unmovable, reclaimable and movable on pcp lists.
@@ -1415,25 +1439,31 @@ void free_hot_cold_page(struct page *page, int cold)
 	 * excessively into the page allocator
 	 */
 	if (migratetype >= MIGRATE_PCPTYPES) {
+		/*! 20140329 MIGRATE_PCPTYPES: 3 */
 		if (unlikely(is_migrate_isolate(migratetype))) {
+			/*! 20140329 is_migrate_isolate: false */
 			free_one_page(zone, page, 0, migratetype);
 			goto out;
 		}
 		migratetype = MIGRATE_MOVABLE;
+		/*! 20140329 나중에 메모리를 옮겨 단편화를 해결하기 위한 용도로 셋팅한다. */
 	}
 
 	pcp = &this_cpu_ptr(zone->pageset)->pcp;
+	/*! 20140315 zone->pageset 의 pcp 값을 local 변수로 가져온다. */
 	if (cold)
 		list_add_tail(&page->lru, &pcp->lists[migratetype]);
 	else
 		list_add(&page->lru, &pcp->lists[migratetype]);
+	/*! 20140329 cold가 1이면 zone->pageset->pcp->list의 끝에, 아니면 list의 앞에 추가한다. */
 	pcp->count++;
 	if (pcp->count >= pcp->high) {
 		unsigned long batch = ACCESS_ONCE(pcp->batch);
 		free_pcppages_bulk(zone, batch, pcp);
+		/*! 20140329 zone의 page pcp->list에서 batch 수만큼 page를 삭제 */
 		pcp->count -= batch;
 	}
-
+	/*! 20140329 자주쓰는 hot한 페이지는 앞에, 안쓰는 cold 페이지는 끝에 추가한다. */
 out:
 	local_irq_restore(flags);
 }
@@ -2793,12 +2823,13 @@ void __free_pages(struct page *page, unsigned int order)
 	/*! 20140315 atomic하게 1을 뺀 값을 저장하고, 그 값이 0이면 true 리턴 */
 		if (order == 0)
 			free_hot_cold_page(page, 0);
+			/*! 20140329 pcp->lists[migratetypes]의 앞에 page를 추가한다. */
 		else
 			__free_pages_ok(page, order);
-			/*! 20140322 현재 page를 order 승수의 buddy free list 에 추가한다. */
 			/*! 20140322 초기화 시 boot_mem block을 이 함수를 이용하여 buddy로 변환한다.  */
+			/*! 20140322 여기까지 스터디 */
 	}
-	/*! 20140322 여기까지 스터디 */
+	/*! 20140329 buddy의 free page함수이고, 작은 page는 다르게 처리한다. */
 }
 
 EXPORT_SYMBOL(__free_pages);
@@ -5539,6 +5570,7 @@ EXPORT_SYMBOL(free_reserved_area);
 void free_highmem_page(struct page *page)
 {
 	__free_reserved_page(page);
+	/*! 20140329 여기까지 스터디 */
 	totalram_pages++;
 	page_zone(page)->managed_pages++;
 	totalhigh_pages++;

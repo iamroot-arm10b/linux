@@ -21,6 +21,7 @@
  */
 #define LIST_POISON1  ((void *) 0x00100100 + POISON_POINTER_DELTA)
 #define LIST_POISON2  ((void *) 0x00200200 + POISON_POINTER_DELTA)
+/*! 20140329 여기 참조 */
 
 /********** include/linux/timer.h **********/
 /*

@@ -30,6 +30,7 @@ DECLARE_PER_CPU(struct vm_event_state, vm_event_states);
 static inline void __count_vm_event(enum vm_event_item item)
 {
 	__this_cpu_inc(vm_event_states.event[item]);
+	/*! 20140329 현재 cpu의 vm_event_states.event[item]++ */
 }
 
 static inline void count_vm_event(enum vm_event_item item)

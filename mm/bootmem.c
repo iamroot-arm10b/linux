@@ -235,16 +235,21 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 			/*! 20140322 BITS_PER_LONG: 32, order: 5 */
 
 			__free_pages_bootmem(pfn_to_page(start), order);
+			/*! 20140329 start ~ end 의 page를 buddy로 쓸수 있게끔 초기화 한다. */
 			count += BITS_PER_LONG;
+			/*! 20140329 count: buddy로 초기화한 page 갯수 */
 			start += BITS_PER_LONG;
+			/*! 20140329 BITS_PER_LONG만큼을 한꺼번에 buddy로 초기화한다. */
 		} else {
 			unsigned long cur = start;
 
 			start = ALIGN(start + 1, BITS_PER_LONG);
+			/*! 20140329 start를 다음 block(BITS_PER_LONG)의 start를 지정하게 한다. */
 			while (vec && cur != start) {
 				if (vec & 1) {
 					page = pfn_to_page(cur);
 					__free_pages_bootmem(page, 0);
+					/*! 20140329 bootmem의 사용하지 않는 영역을 buddy의 free page list에 추가한다. */
 					count++;
 				}
 				vec >>= 1;
@@ -255,10 +260,12 @@ static unsigned long __init free_all_bootmem_core(bootmem_data_t *bdata)
 
 	page = virt_to_page(bdata->node_bootmem_map);
 	pages = bdata->node_low_pfn - bdata->node_min_pfn;
+	/*! 20140329 node_min_pfn: lowmem의 시작, node_low_pfn: lowmem의 끝주소의 pfn 값 */
 	pages = bootmem_bootmap_pages(pages);
 	count += pages;
 	while (pages--)
 		__free_pages_bootmem(page++, 0);
+	/*! 20140329 bootmem의 map으로 쓰이는 부분을 buddy의 free page list에 추가한다. */
 
 	bdebug("nid=%td released=%lx\n", bdata - bootmem_node_data, count);
 
@@ -331,6 +338,7 @@ unsigned long __init free_all_bootmem(void)
 	 * } bootmem_data_t;
 	 */
 		total_pages += free_all_bootmem_core(bdata);
+		/*! 20140329 buddy의 free page list에 추가한 lowmem 전체 page 갯수(reserved 제외) */
 
 	totalram_pages += total_pages;
 
