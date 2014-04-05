@@ -279,7 +279,7 @@ static inline int fls(int x)
 	return ret;
 	/*! 20131207
 	 * fls - find last (most-significant) bit set
-	 * Note fls(0) = 0, fls(1) = 1, fls(0x80000000) = 32.
+	 * Note fls(0) = 0, fls(1) = 1, fls(0x80000100) = 32.
 	 * 31번 bit(msb)부터 찾아가며 첫번째 1이 나오는 bit
 	 */
 }

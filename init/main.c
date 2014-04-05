@@ -489,6 +489,7 @@ static void __init mm_init(void)
 	page_cgroup_init_flatmem();
 	/*! 20140309 아무일안함 */
 	mem_init();
+	/*! 20140405 bootmem(lowmem), highmem 의 가용메모리를 buddy 시스템으로 변환한다. */
 	kmem_cache_init();
 	percpu_init_late();
 	pgtable_cache_init();
@@ -497,9 +498,7 @@ static void __init mm_init(void)
 
 asmlinkage void __init start_kernel(void)
 {
-	/*!
-	 * 2013/07/20 여기까지.
-	 */
+	/*! 2013/07/20 여기까지. */
 	char * command_line;
 	extern const struct kernel_param __start___param[], __stop___param[];
 

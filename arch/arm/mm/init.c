@@ -661,6 +661,7 @@ static inline void free_area_high(unsigned long pfn, unsigned long end)
 {
 	for (; pfn < end; pfn++)
 		free_highmem_page(pfn_to_page(pfn));
+	/*! 20140405 highmem page의 reserved가 아닌 공간을 모두 free시켜서 buddy시스템에 넣는다. */
 }
 #endif
 
@@ -722,6 +723,7 @@ static void __init free_highpages(void)
 		/* And now free anything which remains */
 		if (start < end)
 			free_area_high(start, end);
+		/*! 20140405 남아있는 memory의 free 공간을 buddy의 free list에 추가한다. */
 	}
 #endif
 }
@@ -765,8 +767,10 @@ void __init mem_init(void)
 #endif
 
 	free_highpages();
+	/*! 20140405 highmem 영역의 모든 free공간을 buddy의 free list에 추가한다.  */
 
 	mem_init_print_info(NULL);
+	/*! 20140405 지금까지 초기화한 memory 정보를 출력한다. */
 
 #define MLK(b, t) b, t, ((t) - (b)) >> 10
 #define MLM(b, t) b, t, ((t) - (b)) >> 20
@@ -775,6 +779,7 @@ void __init mem_init(void)
 	printk(KERN_NOTICE "Virtual kernel memory layout:\n"
 			"    vector  : 0x%08lx - 0x%08lx   (%4ld kB)\n"
 #ifdef CONFIG_HAVE_TCM
+/*! 20140405 실행안됨. (TCM: Tightly-coupled memory) */
 			"    DTCM    : 0x%08lx - 0x%08lx   (%4ld kB)\n"
 			"    ITCM    : 0x%08lx - 0x%08lx   (%4ld kB)\n"
 #endif
@@ -830,6 +835,7 @@ void __init mem_init(void)
 #ifdef CONFIG_HIGHMEM
 	BUILD_BUG_ON(PKMAP_BASE + LAST_PKMAP * PAGE_SIZE > PAGE_OFFSET);
 	BUG_ON(PKMAP_BASE + LAST_PKMAP * PAGE_SIZE	> PAGE_OFFSET);
+	/*! 20140405 PKMAP_BASE:3G-2M LAST_PKMAP:512, PAGE_SIZE:4k, PAGE_OFFSET:0xC0000000 이어야 한다. */
 #endif
 
 	if (PAGE_SIZE >= 16384 && get_num_physpages() <= 128) {
@@ -840,6 +846,14 @@ void __init mem_init(void)
 		 * it on by default.
 		 */
 		sysctl_overcommit_memory = OVERCOMMIT_ALWAYS;
+		/*! 20140405 OVERCOMMIT_ALWAYS: 1, page갯수가 적을 경우 할당못할 수 있으므로 메모리 있는 경우  */
+		/*! 20140405 OVERCOMMIT
+		 * 0 : heuristic에 따라 overcommit 할 수 있고, 하지 않을 수도 있다.(디폴트) 
+		 *     메모리 요구가 있을 때 여유 공간이 없는 경우 실행중인 프로세스를 강제 종료 메모리를 억지로 확보함.
+		 * 1 : 항상 overcommit 함. 메모리를 다 사용했는데도 충분한 메모리가있는 것처럼 처리 됨. 그 외에는 0과 같음.
+		 * 2 : overcommit하지 않음. 메모리가 부족할 경우 메모리 확보시 에러 발생시킴.
+		 * (참고 http://mimul.com/pebble/default/2013/05/10/1368171783727.html)
+		 */
 	}
 }
 

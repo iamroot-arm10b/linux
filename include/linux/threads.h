@@ -18,6 +18,7 @@
 
 /* Places which use this should consider cpumask_var_t. */
 #define NR_CPUS		CONFIG_NR_CPUS
+/*! 20140405 NR_CPUS: CONFIG_NR_CPUS에는 2이지만 setup_nr_cpu_ids()에서 nr_cpu_ids는 4로 변경됨 */
 
 #define MIN_THREADS_LEFT_FOR_ROOT 4
 

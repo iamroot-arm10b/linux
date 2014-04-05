@@ -212,6 +212,7 @@ struct callback_head {
 	void (*func)(struct callback_head *head);
 };
 #define rcu_head callback_head
+/*! 20140405 rcu_head = callback_head */
 
 #endif /*  __ASSEMBLY__ */
 #endif /* _LINUX_TYPES_H */

@@ -5571,8 +5571,12 @@ void free_highmem_page(struct page *page)
 {
 	__free_reserved_page(page);
 	/*! 20140329 여기까지 스터디 */
+	/*! 20140405 highmem 에 속해있는 page를 free시킴 */
 	totalram_pages++;
+	/*! 20140405 전체 page 갯수 증가 */
 	page_zone(page)->managed_pages++;
+	/*! 20140405 free시킨 page가 속해있는 zone의 managed_pages 증가
+	  - buddy시스템에서 관리하는 page 갯수. 커널이 실제 사용가능한 공간 */
 	totalhigh_pages++;
 }
 #endif
@@ -5626,6 +5630,7 @@ void __init mem_init_print_info(const char *str)
 	       totalhigh_pages << (PAGE_SHIFT-10),
 #endif
 	       str ? ", " : "", str ? str : "");
+	/*! 20140405 초기화한 memory 정보를 출력한다. */
 }
 
 /**

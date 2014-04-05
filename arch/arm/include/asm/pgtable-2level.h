@@ -84,6 +84,7 @@
 #define PGDIR_SHIFT		21
 
 #define PMD_SIZE		(1UL << PMD_SHIFT)
+/*! 20140405 PMD_SIZE = 2M = 2097152 */
 #define PMD_MASK		(~(PMD_SIZE-1))
 #define PGDIR_SIZE		(1UL << PGDIR_SHIFT)
 #define PGDIR_MASK		(~(PGDIR_SIZE-1))

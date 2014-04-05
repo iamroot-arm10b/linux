@@ -202,6 +202,7 @@ static inline int __nodes_subset(const nodemask_t *src1p,
 static inline int __nodes_empty(const nodemask_t *srcp, int nbits)
 {
 	return bitmap_empty(srcp->bits, nbits);
+	/*! 20140405 여기 실행됨 */
 }
 
 #define nodes_full(nodemask) __nodes_full(&(nodemask), MAX_NUMNODES)
@@ -368,6 +369,7 @@ static inline void __nodes_fold(nodemask_t *dstp, const nodemask_t *origp,
 #define for_each_node_mask(node, mask)			\
 	if (!nodes_empty(mask))				\
 		for ((node) = 0; (node) < 1; (node)++)
+/*! 20140405 NUMA가 아니므로 MAX_NUMNODES: 1 */
 #endif /* MAX_NUMNODES */
 
 /*
@@ -494,6 +496,7 @@ static inline int node_random(const nodemask_t *mask)
 
 #define for_each_node(node)	   for_each_node_state(node, N_POSSIBLE)
 #define for_each_online_node(node) for_each_node_state(node, N_ONLINE)
+/*! 20140405 for ((node) = 0; (node) < 1; (node)++) */
 
 /*
  * For nodemask scrach area.

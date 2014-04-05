@@ -320,6 +320,7 @@ static inline size_t slab_ksize(const struct kmem_cache *s)
 static inline int order_objects(int order, unsigned long size, int reserved)
 {
 	return ((PAGE_SIZE << order) - reserved) / size;
+	/*! 20140405 return 819 = ( 4096 << 3 - 0) / 40 */
 }
 
 static inline struct kmem_cache_order_objects oo_make(int order,
@@ -1213,6 +1214,7 @@ static unsigned long kmem_cache_flags(unsigned long object_size,
 	if (slub_debug && (!slub_debug_slabs ||
 		!strncmp(slub_debug_slabs, name, strlen(slub_debug_slabs))))
 		flags |= slub_debug;
+	/*! 20140405 slub_debug를 추가할지를 정한다. 우리는 추가안함.  */
 
 	return flags;
 }
@@ -1426,6 +1428,7 @@ static void __free_slab(struct kmem_cache *s, struct page *page)
 
 #define need_reserve_slab_rcu						\
 	(sizeof(((struct page *)NULL)->lru) < sizeof(struct rcu_head))
+/*! 20140405 page->lru: list_head 구조체(size:8), rcu_head: callback_head 구조체(size:8) */
 
 static void rcu_free_slab(struct rcu_head *h)
 {
@@ -2670,6 +2673,7 @@ EXPORT_SYMBOL(kmem_cache_free);
  */
 static int slub_min_order;
 static int slub_max_order = PAGE_ALLOC_COSTLY_ORDER;
+/*! 20140405 PAGE_ALLOC_COSTLY_ORDER: 3 */
 static int slub_min_objects;
 
 /*
@@ -2711,11 +2715,13 @@ static inline int slab_order(int size, int min_objects,
 	int min_order = slub_min_order;
 
 	if (order_objects(min_order, size, reserved) > MAX_OBJS_PER_PAGE)
+	/*! 20140405 order_objects: 4096, MAX_OBJS_PER_PAGE: 32767 */
 		return get_order(size * MAX_OBJS_PER_PAGE) - 1;
 
 	for (order = max(min_order,
 				fls(min_objects * size - 1) - PAGE_SHIFT);
 			order <= max_order; order++) {
+	/*! 20140405 order:0, fls:10, PAGE_SHIFT:12, max_order:3 */
 
 		unsigned long slab_size = PAGE_SIZE << order;
 
@@ -2723,11 +2729,17 @@ static inline int slab_order(int size, int min_objects,
 			continue;
 
 		rem = (slab_size - reserved) % size;
+		/*! 20140405 rem: 16 => slab_size: 4096 << order, reserved:0, size:40 */
 
 		if (rem <= slab_size / fract_leftover)
+			/*! 20140405 fract_leftover: 16 */
 			break;
 
 	}
+	/*! 20140405
+	 * size만큼씩 할당했을 때 낭비되는 공간을 최소화시킬 수 있는 slab size의 order를 구하는 함수
+	 * slab_order의 최대값은 max_order 가 된다.
+	 */
 
 	return order;
 }
@@ -2750,16 +2762,23 @@ static inline int calculate_order(int size, int reserved)
 	min_objects = slub_min_objects;
 	if (!min_objects)
 		min_objects = 4 * (fls(nr_cpu_ids) + 1);
+		/*! 20140405 min_objects: 4 * ( fls(4) + 1) = 16 */
+		/*! 20140405 hackbench 를 이용하였을 때 가장 성능이 좋은 것으로 확인된 공식이라고 한다. */
 	max_objects = order_objects(slub_max_order, size, reserved);
+	/*! 20140405 max_objects: 819 <= slub_max_order: 3, size:40, reserved: 0 */
 	min_objects = min(min_objects, max_objects);
+	/*! 20140405 min_objects: 16 */
 
 	while (min_objects > 1) {
 		fraction = 16;
 		while (fraction >= 4) {
 			order = slab_order(size, min_objects,
 					slub_max_order, fraction, reserved);
+			/*! 20140405 최초값 size:40, min_objects:16, slub_max_order:3, fraction:16, reserved: 0 */
 			if (order <= slub_max_order)
+				/*! 20140405 order: 0 이므로 여기 실행됨 */
 				return order;
+				/*! 20140405 낭비되는 공간의 전체 slab 크기의 1/fraction 이하가 되는 order를 찾아서 리턴 */
 			fraction /= 2;
 		}
 		min_objects--;
@@ -2770,6 +2789,7 @@ static inline int calculate_order(int size, int reserved)
 	 * lets see if we can place a single object there.
 	 */
 	order = slab_order(size, 1, slub_max_order, 1, reserved);
+	/*! 20140405 min_objects를 줄여가면서 faction이 16, 8, 4 를 할당하다가 안되면 둘다 1을 넣어서 order를 구한다.  */
 	if (order <= slub_max_order)
 		return order;
 
@@ -2777,6 +2797,7 @@ static inline int calculate_order(int size, int reserved)
 	 * Doh this slab cannot be placed using slub_max_order.
 	 */
 	order = slab_order(size, 1, MAX_ORDER, 1, reserved);
+	/*! 20140405 그럼에도 불구하고 실패하면 MAX_ORDER(11)를 넣어서 다시 시도한다. */
 	if (order < MAX_ORDER)
 		return order;
 	return -ENOSYS;
@@ -2930,11 +2951,13 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	 * the slab may touch the object after free or before allocation
 	 * then we should never poison the object itself.
 	 */
+	/*! 20140405 SLAB_POISON: 0x00000800UL, SLAB_DESTROY_BY_RCU: 0x00080000UL */
 	if ((flags & SLAB_POISON) && !(flags & SLAB_DESTROY_BY_RCU) &&
 			!s->ctor)
 		s->flags |= __OBJECT_POISON;
 	else
 		s->flags &= ~__OBJECT_POISON;
+	/*! 20140405 __OBJECT_POISON: 0x80000000UL */
 
 
 	/*
@@ -2942,6 +2965,7 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	 * end of the object and the free pointer. If not then add an
 	 * additional word to have some bytes to store Redzone information.
 	 */
+	/*! 20140405 SLAB_RED_ZONE: 0x00000400UL */
 	if ((flags & SLAB_RED_ZONE) && size == s->object_size)
 		size += sizeof(void *);
 #endif
@@ -2952,6 +2976,7 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	 */
 	s->inuse = size;
 
+	/*! 20140405 SLAB_POISON: 0x00000800UL, SLAB_DESTROY_BY_RCU: 0x00080000UL */
 	if (((flags & (SLAB_DESTROY_BY_RCU | SLAB_POISON)) ||
 		s->ctor)) {
 		/*
@@ -2967,6 +2992,7 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	}
 
 #ifdef CONFIG_SLUB_DEBUG
+	/*! 20140405 SLAB_STORE_USER: 0x00010000UL */
 	if (flags & SLAB_STORE_USER)
 		/*
 		 * Need to store information about allocs and frees after
@@ -2974,6 +3000,7 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 		 */
 		size += 2 * sizeof(struct track);
 
+	/*! 20140405 SLAB_RED_ZONE: 0x00000400UL */
 	if (flags & SLAB_RED_ZONE)
 		/*
 		 * Add some empty padding so that we can catch
@@ -2996,6 +3023,7 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 		order = forced_order;
 	else
 		order = calculate_order(size, s->reserved);
+		/*! 20140405 최적의 slab order를 계산한다. */
 
 	if (order < 0)
 		return 0;
@@ -3003,16 +3031,23 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	s->allocflags = 0;
 	if (order)
 		s->allocflags |= __GFP_COMP;
+		/*! 20140405 order > 0 인 경우 Add compound page metadata */
 
 	if (s->flags & SLAB_CACHE_DMA)
 		s->allocflags |= GFP_DMA;
+		/*! 20140405 SLAB_CACHE_DMA: 0x00004000UL 인 경우 Use GFP_DMA memory */
 
 	if (s->flags & SLAB_RECLAIM_ACCOUNT)
 		s->allocflags |= __GFP_RECLAIMABLE;
+		/*! 20140405 SLAB_RECLAIM_ACCOUNT: 0x00020000UL 인 경우 Page is reclaimable */
 
 	/*
 	 * Determine the number of objects per slab
 	 */
+	/*! 20140405 oo_objects는 해당 order(0,1,2,3)에 object가 몇개 들어가는지를 계산한다. 
+	  * 세부적인 내용은 다음주에 분석하겠음
+	  * 2014-04-05 여기까지 스터디
+	  */
 	s->oo = oo_make(order, size, s->reserved);
 	s->min = oo_make(get_order(size), size, s->reserved);
 	if (oo_objects(s->oo) > oo_objects(s->max))
@@ -3024,10 +3059,12 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 static int kmem_cache_open(struct kmem_cache *s, unsigned long flags)
 {
 	s->flags = kmem_cache_flags(s->size, flags, s->name, s->ctor);
+	/*! 20140405 slub_debug flag를 추가할지 확인한다. 우리는 추가안함. */
 	s->reserved = 0;
 
 	if (need_reserve_slab_rcu && (s->flags & SLAB_DESTROY_BY_RCU))
 		s->reserved = sizeof(struct rcu_head);
+		/*! 20140405 여기 실행안됨. kmem_cache->reserved: 마지막 slab에 예약된 bytes */
 
 	if (!calculate_sizes(s, -1))
 		goto error;
@@ -3607,6 +3644,7 @@ void __init kmem_cache_init(void)
 		boot_kmem_cache_node;
 
 	if (debug_guardpage_minorder())
+		/*! 20140405 항상 0 리턴하므로 실행안함 */
 		slub_max_order = 0;
 
 	kmem_cache_node = &boot_kmem_cache_node;
@@ -3614,6 +3652,7 @@ void __init kmem_cache_init(void)
 
 	create_boot_cache(kmem_cache_node, "kmem_cache_node",
 		sizeof(struct kmem_cache_node), SLAB_HWCACHE_ALIGN);
+	/*! 20140405 sizeof(struct kmem_cache_node): 40byte */
 
 	register_hotmemory_notifier(&slab_memory_callback_nb);
 

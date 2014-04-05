@@ -144,6 +144,7 @@ size_t ksize(const void *);
 #define KMALLOC_SHIFT_LOW ilog2(ARCH_DMA_MINALIGN)
 #else
 #define ARCH_KMALLOC_MINALIGN __alignof__(unsigned long long)
+/*! 20140405 ARCH_KMALLOC_MINALIGN: 8byte */
 #endif
 
 #ifdef CONFIG_SLOB
@@ -294,6 +295,7 @@ static __always_inline int kmalloc_index(size_t size)
 #endif
 
 #ifdef CONFIG_SLUB
+/*! 20140405 여기가 실행된다. */
 #include <linux/slub_def.h>
 #endif
 

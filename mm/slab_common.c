@@ -125,9 +125,11 @@ unsigned long calculate_alignment(unsigned long flags,
 	 */
 	if (flags & SLAB_HWCACHE_ALIGN) {
 		unsigned long ralign = cache_line_size();
+		/*! 20140405 ralign: 64 */
 		while (size <= ralign / 2)
 			ralign /= 2;
 		align = max(align, ralign);
+		/*! 20140405 size가 40인 경우, align: 64 */
 	}
 
 	if (align < ARCH_SLAB_MINALIGN)
@@ -296,7 +298,9 @@ void __init create_boot_cache(struct kmem_cache *s, const char *name, size_t siz
 
 	s->name = name;
 	s->size = s->object_size = size;
+	/*! 20140405 size: meta data를 포함한 크기(116byte), object_size: meta data를 포함하지 않은 크기 */
 	s->align = calculate_alignment(flags, ARCH_KMALLOC_MINALIGN, size);
+	/*! 20140405 s->align: 64 */
 	err = __kmem_cache_create(s, flags);
 
 	if (err)

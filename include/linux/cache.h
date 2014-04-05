@@ -63,6 +63,7 @@
 
 #ifndef CONFIG_ARCH_HAS_CACHE_LINE_SIZE
 #define cache_line_size()	L1_CACHE_BYTES
+/*! 20140405 L1_CACHE_BYTES: 64 */
 #endif
 
 #endif /* __LINUX_CACHE_H */

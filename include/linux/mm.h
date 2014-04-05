@@ -1420,6 +1420,7 @@ static inline unsigned long get_num_physpages(void)
 
 	for_each_online_node(nid)
 		phys_pages += node_present_pages(nid);
+	/*! 20140405 phys_pages 의 갯수 구함 */
 
 	return phys_pages;
 }
@@ -1887,6 +1888,7 @@ static inline bool page_is_guard(struct page *page)
 }
 #else
 static inline unsigned int debug_guardpage_minorder(void) { return 0; }
+/*! 20140405 여기 실행됨 */
 static inline bool page_is_guard(struct page *page) { return false; }
 /*! 20140322 여기 실행됨 */
 #endif /* CONFIG_DEBUG_PAGEALLOC */

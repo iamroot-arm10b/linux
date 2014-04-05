@@ -4,6 +4,7 @@
 #include <asm/kmap_types.h>
 
 #define PKMAP_BASE		(PAGE_OFFSET - PMD_SIZE)
+/*! 20140405 PAGE_OFFSET: 0xC0000000, PMD_SIZE: 2M */
 #define LAST_PKMAP		PTRS_PER_PTE
 #define LAST_PKMAP_MASK		(LAST_PKMAP - 1)
 #define PKMAP_NR(virt)		(((virt) - PKMAP_BASE) >> PAGE_SHIFT)
