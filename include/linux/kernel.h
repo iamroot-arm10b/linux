@@ -171,6 +171,7 @@ extern int _cond_resched(void);
 # define might_sleep() do { might_resched(); } while (0)
 #endif
 
+/*! 20140412 컴파일 옵션과 조건(cond)에 따라 리스케쥴링 될 수 있다.  */
 #define might_sleep_if(cond) do { if (cond) might_sleep(); } while (0)
 
 /*

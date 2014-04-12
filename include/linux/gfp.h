@@ -140,6 +140,7 @@ struct vm_area_struct;
 			__GFP_NORETRY|__GFP_MEMALLOC|__GFP_NOMEMALLOC)
 
 /* Control slab gfp mask during early boot */
+/*! 20140412 WAIT, IO, FS를 제외하고 0~24 비트를 모두 켠 값  */
 #define GFP_BOOT_MASK (__GFP_BITS_MASK & ~(__GFP_WAIT|__GFP_IO|__GFP_FS))
 
 /* Control allocation constraints */
@@ -164,6 +165,7 @@ static inline int allocflags_to_migratetype(gfp_t gfp_flags)
 	if (unlikely(page_group_by_mobility_disabled))
 		return MIGRATE_UNMOVABLE;
 
+	/*! 20140412 __GFP_MOVABLE, __GFP_RECLAIMABLE에 따라 migratetype 반환  */
 	/* Group based on mobility */
 	return (((gfp_flags & __GFP_MOVABLE) != 0) << 1) |
 		((gfp_flags & __GFP_RECLAIMABLE) != 0);
@@ -312,6 +314,7 @@ static inline int gfp_zonelist(gfp_t flags)
  * For the normal case of non-DISCONTIGMEM systems the NODE_DATA() gets
  * optimized to &contig_page_data at compile-time.
  */
+/*! 20140412 해당 node의 zonelist 시작주소를 반환 */
 static inline struct zonelist *node_zonelist(int nid, gfp_t flags)
 {
 	return NODE_DATA(nid)->node_zonelists + gfp_zonelist(flags);

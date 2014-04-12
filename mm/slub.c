@@ -116,6 +116,7 @@
 
 static inline int kmem_cache_debug(struct kmem_cache *s)
 {
+	/*! 20140412 DEBUG 옵션이 있을 경우 flags 체크  */
 #ifdef CONFIG_SLUB_DEBUG
 	return unlikely(s->flags & SLAB_DEBUG_FLAGS);
 #else
@@ -126,6 +127,9 @@ static inline int kmem_cache_debug(struct kmem_cache *s)
 static inline bool kmem_cache_has_cpu_partial(struct kmem_cache *s)
 {
 #ifdef CONFIG_SLUB_CPU_PARTIAL
+	/*! 20140412 CONFIG_SLUB_CPU_PARTIAL가 있으면 참을 반환
+	 * 다만 특정 DEBUG flags가 있으면 false를 리턴
+	 */
 	return !kmem_cache_debug(s);
 #else
 	return false;
@@ -317,15 +321,20 @@ static inline size_t slab_ksize(const struct kmem_cache *s)
 	return s->size;
 }
 
+/* order에 해당하는 PAGE 크기에 들어가는 object 갯수를 구한다. */
 static inline int order_objects(int order, unsigned long size, int reserved)
 {
 	return ((PAGE_SIZE << order) - reserved) / size;
-	/*! 20140405 return 819 = ( 4096 << 3 - 0) / 40 */
+	/*! 20140405 ex) order가 3, 크기가 40인 경우 : return 819 = ( 4096 << 3 - 0) / 40
+	 * order가 0, 구조체 크기가 40인 경우 : 102
+	 */
 }
 
+/*! 20140412 order와 object를 저장한다.  */
 static inline struct kmem_cache_order_objects oo_make(int order,
 		unsigned long size, int reserved)
 {
+	/*! 20140412 order를 상위 비트, 하위 16비트에 object 수를 저장한다.   */
 	struct kmem_cache_order_objects x = {
 		(order << OO_SHIFT) + order_objects(order, size, reserved)
 	};
@@ -333,11 +342,13 @@ static inline struct kmem_cache_order_objects oo_make(int order,
 	return x;
 }
 
+/*! 20140412 oo 방식의 상위 비트인 order만 구한다.  */
 static inline int oo_order(struct kmem_cache_order_objects x)
 {
 	return x.x >> OO_SHIFT;
 }
 
+/*! 20140412 oo 방식의 하위 비트에서 object만 구한다.  */
 static inline int oo_objects(struct kmem_cache_order_objects x)
 {
 	return x.x & OO_MASK;
@@ -1271,6 +1282,7 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x) {}
 static inline struct page *alloc_slab_page(gfp_t flags, int node,
 					struct kmem_cache_order_objects oo)
 {
+	/*! 20140412 oo 에서 상위 16비트의 order를 구함  */
 	int order = oo_order(oo);
 
 	flags |= __GFP_NOTRACK;
@@ -1289,6 +1301,7 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
 
 	flags &= gfp_allowed_mask;
 
+	/*! 20140412 __GFP_WAIT 플래그 설정시 인터럽트 허용 */
 	if (flags & __GFP_WAIT)
 		local_irq_enable();
 
@@ -1298,6 +1311,7 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
 	 * Let the initial higher-order allocation fail under memory pressure
 	 * so we fall-back to the minimum order allocation.
 	 */
+	/*! 20140412 할당이 한번 실패하면 포기하겠다는 의미로 이해함  */
 	alloc_gfp = (flags | __GFP_NOWARN | __GFP_NORETRY) & ~__GFP_NOFAIL;
 
 	page = alloc_slab_page(alloc_gfp, node, oo);
@@ -2852,6 +2866,7 @@ static void early_kmem_cache_node_alloc(int node)
 	struct page *page;
 	struct kmem_cache_node *n;
 
+	/*! 20140412 kmem_cache_node의 크기보다 작으면 panic  */
 	BUG_ON(kmem_cache_node->size < sizeof(struct kmem_cache_node));
 
 	page = new_slab(kmem_cache_node, GFP_NOWAIT, node);
@@ -2898,6 +2913,9 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 {
 	int node;
 
+	/*! 20140412 NUMA가 아닌 경우 node는 하나다.
+	 * N_NORMAL_MEMORY에 해당하는 node를 순회한다
+	 */
 	for_each_node_state(node, N_NORMAL_MEMORY) {
 		struct kmem_cache_node *n;
 
@@ -2919,6 +2937,7 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 	return 1;
 }
 
+/*! 20140412 MIN_PARTIAL과 MAX_PARTIAL을 한계값으로 가지는 min을 구한다.  */
 static void set_min_partial(struct kmem_cache *s, unsigned long min)
 {
 	if (min < MIN_PARTIAL)
@@ -2932,6 +2951,7 @@ static void set_min_partial(struct kmem_cache *s, unsigned long min)
  * calculate_sizes() determines the order and the distribution of data within
  * a slab object.
  */
+/*! 20140412 결과값이 0이면 에러(구하지 못했음)  */
 static int calculate_sizes(struct kmem_cache *s, int forced_order)
 {
 	unsigned long flags = s->flags;
@@ -3048,11 +3068,15 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	  * 세부적인 내용은 다음주에 분석하겠음
 	  * 2014-04-05 여기까지 스터디
 	  */
+	/*! 20140412 현재 order를 order objects 방식으로 저장  */
 	s->oo = oo_make(order, size, s->reserved);
+	/*! 20140412 size에 대한 최소 order와 objects를 저장  */
 	s->min = oo_make(get_order(size), size, s->reserved);
+	/*! 20140412 최대값을 갱신한다.  */
 	if (oo_objects(s->oo) > oo_objects(s->max))
 		s->max = s->oo;
 
+	/* object 값의 존재 여부를 반환 */
 	return !!oo_objects(s->oo);
 }
 
@@ -3066,12 +3090,16 @@ static int kmem_cache_open(struct kmem_cache *s, unsigned long flags)
 		s->reserved = sizeof(struct rcu_head);
 		/*! 20140405 여기 실행안됨. kmem_cache->reserved: 마지막 slab에 예약된 bytes */
 
+	/*! 20140412 order 계산에 실패하면 에러값 반환  */
 	if (!calculate_sizes(s, -1))
 		goto error;
 	if (disable_higher_order_debug) {
 		/*
 		 * Disable debugging flags that store metadata if the min slab
 		 * order increased.
+		 */
+		/*! 20140412 size와 object_size의 order가 다를 경우
+		 * DEBUG_METADATA_FLAGS를 날린다.
 		 */
 		if (get_order(s->size) > get_order(s->object_size)) {
 			s->flags &= ~DEBUG_METADATA_FLAGS;
@@ -3112,7 +3140,9 @@ static int kmem_cache_open(struct kmem_cache *s, unsigned long flags)
 	 *    to keep some capacity around for frees.
 	 */
 	if (!kmem_cache_has_cpu_partial(s))
+		/*! 20140412 partial을 지원하지 않으면  */
 		s->cpu_partial = 0;
+	/*! 20140412 kmem_cahce 구조체의 크기에 따라 최대 갯수를 구한다.  */
 	else if (s->size >= PAGE_SIZE)
 		s->cpu_partial = 2;
 	else if (s->size >= 1024)
@@ -3650,6 +3680,7 @@ void __init kmem_cache_init(void)
 	kmem_cache_node = &boot_kmem_cache_node;
 	kmem_cache = &boot_kmem_cache;
 
+	/*! 20140412 kmem_cache_node는 kmem_cache 구조체로 선언된다. */
 	create_boot_cache(kmem_cache_node, "kmem_cache_node",
 		sizeof(struct kmem_cache_node), SLAB_HWCACHE_ALIGN);
 	/*! 20140405 sizeof(struct kmem_cache_node): 40byte */

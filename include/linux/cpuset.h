@@ -222,6 +222,7 @@ static inline void set_mems_allowed(nodemask_t nodemask)
 {
 }
 
+/*! 20140412 이쪽 실행, CGROUP 관련 기능으로 예상함 */
 static inline unsigned int get_mems_allowed(void)
 {
 	return 0;

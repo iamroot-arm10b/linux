@@ -9,6 +9,7 @@
 /*
  * Runtime evaluation of get_order()
  */
+/*! 20140412 page의 order를 구한다.  */
 static inline __attribute_const__
 int __get_order(unsigned long size)
 {
@@ -46,6 +47,7 @@ int __get_order(unsigned long size)
  * This function may be used to initialise variables with compile time
  * evaluations of constants.
  */
+/*! 20140412 크기 n의 page에 대한 order를 구한다.  */
 #define get_order(n)						\
 (								\
 	__builtin_constant_p(n) ? (				\

@@ -88,6 +88,7 @@ EXPORT_PER_CPU_SYMBOL(_numa_mem_);
 /*
  * Array of node states.
  */
+/*! 20140412 각각의 [INDEX]에 해당하는 index에 대입한다.  */
 nodemask_t node_states[NR_NODE_STATES] __read_mostly = {
 	[N_POSSIBLE] = NODE_MASK_ALL,
 	[N_ONLINE] = { { [0] = 1UL } },
@@ -1720,6 +1721,7 @@ late_initcall(fail_page_alloc_debugfs);
 
 #else /* CONFIG_FAIL_PAGE_ALLOC */
 
+/*! 20140412 여기 수행됨  */
 static inline bool should_fail_alloc_page(gfp_t gfp_mask, unsigned int order)
 {
 	return false;
@@ -2711,9 +2713,12 @@ struct page *
 __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 			struct zonelist *zonelist, nodemask_t *nodemask)
 {
+	/*! 20140412 	gfp_mask = __GFP_NOWARN | __GFP_NORETRY | __GFP_NOTRACK */
+	/*! 20140412 첫번째 zoneref는 high다. (high, normal, null)  */
 	enum zone_type high_zoneidx = gfp_zone(gfp_mask);
 	struct zone *preferred_zone;
 	struct page *page = NULL;
+	/*! 20140412 migratetype= 0 = UNMOVABLE  */
 	int migratetype = allocflags_to_migratetype(gfp_mask);
 	unsigned int cpuset_mems_cookie;
 	int alloc_flags = ALLOC_WMARK_LOW|ALLOC_CPUSET;
@@ -2723,8 +2728,12 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 
 	lockdep_trace_alloc(gfp_mask);
 
+	/*! 20140412 __GFP_WAIT인 경우 리스케쥴링 될 수 있다.
+	 * 하지만 우리의 경우 해당 옵션이 꺼져있다.
+	 */
 	might_sleep_if(gfp_mask & __GFP_WAIT);
 
+	/*! 20140412 항상 false. */
 	if (should_fail_alloc_page(gfp_mask, order))
 		return NULL;
 
@@ -2733,6 +2742,7 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	 * valid zone. It's possible to have an empty zonelist as a result
 	 * of GFP_THISNODE and a memoryless node
 	 */
+	/*! 20140412 zone이 있는지 확인 */
 	if (unlikely(!zonelist->_zonerefs->zone))
 		return NULL;
 
@@ -2740,6 +2750,7 @@ __alloc_pages_nodemask(gfp_t gfp_mask, unsigned int order,
 	 * Will only have any effect when __GFP_KMEMCG is set.  This is
 	 * verified in the (always inline) callee
 	 */
+	/*! 20140412 무조건 true  */
 	if (!memcg_kmem_newpage_charge(gfp_mask, &memcg, order))
 		return NULL;
 
@@ -2747,6 +2758,7 @@ retry_cpuset:
 	cpuset_mems_cookie = get_mems_allowed();
 
 	/* The preferred zone is used for statistics later */
+	/*! 20140412 삼항연산자에서 참 값이 생략되면 원래값(nodemask)가 대입된다. */
 	first_zones_zonelist(zonelist, high_zoneidx,
 				nodemask ? : &cpuset_current_mems_allowed,
 				&preferred_zone);
@@ -3891,6 +3903,9 @@ void __ref build_all_zonelists(pg_data_t *pgdat, struct zone *zone)
 	 * more accurate, but expensive to check per-zone. This check is
 	 * made on memory-hotadd so a system can start with mobility
 	 * disabled and enable it later
+	 */
+	/*! 20140412 vm_total_pages은 free한 page 갯수, pageblocks은 1024 단위라서
+	 * 우리는 page_group_by_mobility_disabled = 0 으로 예상한다.
 	 */
 	if (vm_total_pages < (pageblock_nr_pages * MIGRATE_TYPES))
 		page_group_by_mobility_disabled = 1;

@@ -572,6 +572,7 @@ static inline bool memcg_kmem_enabled(void)
 	return false;
 }
 
+/*! 20140412 CONFIG_MEMCG_KMEM=n, 이쪽 실행  */
 static inline bool
 memcg_kmem_newpage_charge(gfp_t gfp, struct mem_cgroup **memcg, int order)
 {

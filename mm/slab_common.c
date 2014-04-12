@@ -298,7 +298,7 @@ void __init create_boot_cache(struct kmem_cache *s, const char *name, size_t siz
 
 	s->name = name;
 	s->size = s->object_size = size;
-	/*! 20140405 size: meta data를 포함한 크기(116byte), object_size: meta data를 포함하지 않은 크기 */
+	/*! 20140405 size: meta data를 포함한 크기, object_size: meta data를 포함하지 않은 크기 */
 	s->align = calculate_alignment(flags, ARCH_KMALLOC_MINALIGN, size);
 	/*! 20140405 s->align: 64 */
 	err = __kmem_cache_create(s, flags);
