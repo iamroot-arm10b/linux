@@ -1373,6 +1373,7 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
 	void *p;
 	int order;
 
+	/*! 20140412 flags: GFP_NOWAIT */
 	BUG_ON(flags & GFP_SLAB_BUG_MASK);
 
 	page = allocate_slab(s,
@@ -3076,7 +3077,7 @@ static int calculate_sizes(struct kmem_cache *s, int forced_order)
 	if (oo_objects(s->oo) > oo_objects(s->max))
 		s->max = s->oo;
 
-	/* object 값의 존재 여부를 반환 */
+	/*! 20140412 object 값의 존재 여부를 반환 */
 	return !!oo_objects(s->oo);
 }
 

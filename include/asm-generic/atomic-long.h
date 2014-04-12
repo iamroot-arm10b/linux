@@ -29,6 +29,7 @@ static inline long atomic_long_read(atomic_long_t *l)
 	atomic64_t *v = (atomic64_t *)l;
 
 	return (long)atomic64_read(v);
+	/*! 20140412 현재 zone의 free page 갯수를 읽어서 리턴 */
 }
 
 static inline void atomic_long_set(atomic_long_t *l, long i)

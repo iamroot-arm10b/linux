@@ -908,6 +908,10 @@ static inline void expand(struct zone *zone, struct page *page,
 {
 	unsigned long size = 1 << high;
 
+	/*! 20140412
+	 * low: 처음에 요청했던 order, high: 실제로 할당받은 order
+	 * size: 할당받은 buddy의 크기(page 갯수)
+	 */
 	while (high > low) {
 		area--;
 		high--;
@@ -932,9 +936,12 @@ static inline void expand(struct zone *zone, struct page *page,
 		}
 #endif
 		list_add(&page[size].lru, &area->free_list[migratetype]);
+		/*! 20140412 buddy에서 바로 아래 order의 free_list에 뒤쪽의 남는 공간을 추가한다. */
 		area->nr_free++;
 		set_page_order(&page[size], high);
+		/*! 20140412 page[size]를 high order로 buddy에 추가한다. */
 	}
+	/*! 20140412 area = &(zone->free_area[n]) => n이 high부터 low까지의 buddy를 추가 */
 }
 
 /*
@@ -1002,8 +1009,12 @@ struct page *__rmqueue_smallest(struct zone *zone, unsigned int order,
 		rmv_page_order(page);
 		area->nr_free--;
 		expand(zone, page, order, current_order, area, migratetype);
+		/*! 20140412 요청한 크기보다 할당받은 buddy의 크기가 큰 경우,
+		 * 필요한 크기를 제외한 나머지 page들을 하위 order의 buddy에 추가한다.
+		 */
 		return page;
 	}
+	/*! 20140412 필요한 최소 page를 buddy free_list에서 지운 후 해당 page를 리턴한다. */
 
 	return NULL;
 }
@@ -1123,6 +1134,7 @@ __rmqueue_fallback(struct zone *zone, int order, int start_migratetype)
 						--current_order) {
 		for (i = 0;; i++) {
 			migratetype = fallbacks[start_migratetype][i];
+			/*! 20140412 buddy의 해당 migratetype에서 사용가능한 migratetype을 추출한다. */
 
 			/* MIGRATE_RESERVE handled later if necessary */
 			if (migratetype == MIGRATE_RESERVE)
@@ -1131,10 +1143,13 @@ __rmqueue_fallback(struct zone *zone, int order, int start_migratetype)
 			area = &(zone->free_area[current_order]);
 			if (list_empty(&area->free_list[migratetype]))
 				continue;
+			/*! 20140412 migratetype의 free_list 가 비어있지 않으면 아래 수행 */
 
 			page = list_entry(area->free_list[migratetype].next,
 					struct page, lru);
+			/*! 20140412 할당할 page 구조체를 가져온다. */
 			area->nr_free--;
+			/*! 20140412 스터디 여기까지 */
 
 			/*
 			 * If breaking a large block of pages, move all free
@@ -1200,6 +1215,7 @@ static struct page *__rmqueue(struct zone *zone, unsigned int order,
 
 retry_reserve:
 	page = __rmqueue_smallest(zone, order, migratetype);
+	/*! 20140412 필요한 최소 page를 buddy free_list에서 할당받는다. */
 
 	if (unlikely(!page) && migratetype != MIGRATE_RESERVE) {
 		page = __rmqueue_fallback(zone, order, migratetype);
@@ -1590,6 +1606,7 @@ struct page *buffered_rmqueue(struct zone *preferred_zone,
 	unsigned long flags;
 	struct page *page;
 	int cold = !!(gfp_flags & __GFP_COLD);
+	/*! 20140412 cold: 0 */
 
 again:
 	if (likely(order == 0)) {
@@ -1600,6 +1617,7 @@ again:
 		pcp = &this_cpu_ptr(zone->pageset)->pcp;
 		list = &pcp->lists[migratetype];
 		if (list_empty(list)) {
+			/*! 20140412 list가 비어있는 경우 */
 			pcp->count += rmqueue_bulk(zone, 0,
 					pcp->batch, list,
 					migratetype, cold);
@@ -1773,6 +1791,7 @@ bool zone_watermark_ok(struct zone *z, int order, unsigned long mark,
 {
 	return __zone_watermark_ok(z, order, mark, classzone_idx, alloc_flags,
 					zone_page_state(z, NR_FREE_PAGES));
+	/*! 20140412 zone_page_state(z, NR_FREE_PAGES): 현재 zone의 free page 갯수 */
 }
 
 bool zone_watermark_ok_safe(struct zone *z, int order, unsigned long mark,
@@ -1970,6 +1989,7 @@ get_page_from_freelist(gfp_t gfp_mask, nodemask_t *nodemask, unsigned int order,
 	int did_zlc_setup = 0;		/* just call zlc_setup() one time */
 
 	classzone_idx = zone_idx(preferred_zone);
+	/*! 20140412 preferred_zone의 index를 가져온다.  */
 zonelist_scan:
 	/*
 	 * Scan zonelist, looking for a zone with enough free.
@@ -1977,9 +1997,16 @@ zonelist_scan:
 	 */
 	for_each_zone_zonelist_nodemask(zone, z, zonelist,
 						high_zoneidx, nodemask) {
+	/*! 20140412
+	 * for (z = first_zones_zonelist(zlist, highidx, nodemask, &zone);
+	 *	zone;
+	 *	z = next_zones_zonelist(++z, highidx, nodemask, &zone))
+	 */
+		/*! 20140412 IS_ENABLED(CONFIG_NUMA): 0 */
 		if (IS_ENABLED(CONFIG_NUMA) && zlc_active &&
 			!zlc_zone_worth_trying(zonelist, z, allowednodes))
 				continue;
+		/*! 20140412 cpuset_zone_allowed_softwall(zone, gfp_mask): 항상 1 */
 		if ((alloc_flags & ALLOC_CPUSET) &&
 			!cpuset_zone_allowed_softwall(zone, gfp_mask))
 				continue;
@@ -2009,18 +2036,28 @@ zonelist_scan:
 		 * will require awareness of zones in the
 		 * dirty-throttling and the flusher threads.
 		 */
+		/*! 20140412 아래 if문은 실행안됨
+		 * int alloc_flags = ALLOC_WMARK_LOW|ALLOC_CPUSET
+		 * gfp_mask = __GFP_NOWARN | __GFP_NORETRY | __GFP_NOTRACK
+		 */
 		if ((alloc_flags & ALLOC_WMARK_LOW) &&
 		    (gfp_mask & __GFP_WRITE) && !zone_dirty_ok(zone))
 			goto this_zone_full;
 
 		BUILD_BUG_ON(ALLOC_NO_WATERMARKS < NR_WMARK);
 		if (!(alloc_flags & ALLOC_NO_WATERMARKS)) {
+			/*! 20140412 이 if문은 실행됨 */
 			unsigned long mark;
 			int ret;
 
 			mark = zone->watermark[alloc_flags & ALLOC_WMARK_MASK];
+			/*! 20140412
+			 * zone->watermark 에 어떤 값이 있나? 
+			 */
+			/*! 20140412 현재 order: 0, mark: 0 */
 			if (zone_watermark_ok(zone, order, mark,
 				    classzone_idx, alloc_flags))
+				/*! 20140412 여기가 실행됨 */
 				goto try_this_zone;
 
 			if (IS_ENABLED(CONFIG_NUMA) &&
@@ -2758,7 +2795,7 @@ retry_cpuset:
 	cpuset_mems_cookie = get_mems_allowed();
 
 	/* The preferred zone is used for statistics later */
-	/*! 20140412 삼항연산자에서 참 값이 생략되면 원래값(nodemask)가 대입된다. */
+	/*! 20140412 삼항연산자에서 참 값이 생략되면 원래값(nodemask)이 대입된다. */
 	first_zones_zonelist(zonelist, high_zoneidx,
 				nodemask ? : &cpuset_current_mems_allowed,
 				&preferred_zone);

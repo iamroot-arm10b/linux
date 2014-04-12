@@ -163,6 +163,7 @@ static inline int cpuset_node_allowed_hardwall(int node, gfp_t gfp_mask)
 
 static inline int cpuset_zone_allowed_softwall(struct zone *z, gfp_t gfp_mask)
 {
+	/*! 20140412 여기 실행됨 */
 	return 1;
 }
 

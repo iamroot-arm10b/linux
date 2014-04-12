@@ -285,6 +285,7 @@ static inline u64 atomic64_read(const atomic64_t *v)
 	: "=&r" (result)
 	: "r" (&v->counter), "Qo" (v->counter)
 	);
+	/*! 20140412 현재 zone의 free page 갯수 */
 
 	return result;
 }
