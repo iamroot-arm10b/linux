@@ -330,6 +330,7 @@ static inline void arch_free_page(struct page *page, int order) { }
 #endif
 #ifndef HAVE_ARCH_ALLOC_PAGE
 static inline void arch_alloc_page(struct page *page, int order) { }
+/*! 20140419 아무것도 안함 */
 #endif
 
 struct page *

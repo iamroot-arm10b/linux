@@ -1290,6 +1290,7 @@ static inline struct page *alloc_slab_page(gfp_t flags, int node,
 	if (node == NUMA_NO_NODE)
 		return alloc_pages(flags, order);
 	else
+		/*! 20140419 여기 진입함 */
 		return alloc_pages_exact_node(node, flags, order);
 }
 
@@ -2921,6 +2922,7 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 		struct kmem_cache_node *n;
 
 		if (slab_state == DOWN) {
+			/*! 20140419 여기 진입함 */
 			early_kmem_cache_node_alloc(node);
 			continue;
 		}
@@ -3156,6 +3158,7 @@ static int kmem_cache_open(struct kmem_cache *s, unsigned long flags)
 #ifdef CONFIG_NUMA
 	s->remote_node_defrag_ratio = 1000;
 #endif
+	/*! 20140419 여기 진입함 */
 	if (!init_kmem_cache_nodes(s))
 		goto error;
 
@@ -3650,6 +3653,7 @@ static struct kmem_cache * __init bootstrap(struct kmem_cache *static_cache)
 	 * up.  Even if it weren't true, IRQs are not up so we couldn't fire
 	 * IPIs around.
 	 */
+	/*! 20140419 여기 진입함 */
 	__flush_cpu_slab(s, smp_processor_id());
 	for_each_node_state(node, N_NORMAL_MEMORY) {
 		struct kmem_cache_node *n = get_node(s, node);
@@ -3817,6 +3821,7 @@ int __kmem_cache_create(struct kmem_cache *s, unsigned long flags)
 {
 	int err;
 
+	/*! 20140419 여기 진입함 */
 	err = kmem_cache_open(s, flags);
 	if (err)
 		return err;

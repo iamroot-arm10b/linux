@@ -245,6 +245,7 @@ PAGEFLAG(Readahead, reclaim)		/* Reminder to do async read-ahead */
  * available at this point.
  */
 #define PageHighMem(__p) is_highmem(page_zone(__p))
+	/*! 20140419 highmem 이면 1 리턴 */
 #else
 PAGEFLAG_FALSE(HighMem)
 #endif

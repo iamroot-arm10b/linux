@@ -13,6 +13,7 @@
 /* Optimization barrier */
 /* The "volatile" is due to gcc bugs */
 #define barrier() __asm__ __volatile__("": : :"memory")
+/*! 20140419 메모리의 상태가 변경되었으므로 컴파일러 최적화를 막음. */
 
 /*
  * This macro obfuscates arithmetic on a variable address so that gcc

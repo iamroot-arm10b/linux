@@ -185,7 +185,10 @@ alloc_zeroed_user_highpage_movable(struct vm_area_struct *vma,
 static inline void clear_highpage(struct page *page)
 {
 	void *kaddr = kmap_atomic(page);
+	/*! 20140419 필요한 page의 va 를 받아옴 */
+	/*! 20140419 TODO:slap, buddy 끝나고 다시 보기로 함 */
 	clear_page(kaddr);
+	/*! 20140419 kaddr의 실제 영역 0으로 초기화 */
 	kunmap_atomic(kaddr);
 }
 

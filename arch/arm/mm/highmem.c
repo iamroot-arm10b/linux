@@ -44,8 +44,10 @@ void *kmap_atomic(struct page *page)
 	int type;
 
 	pagefault_disable();
+	/*! 20140419 선점 금지 */
 	if (!PageHighMem(page))
 		return page_address(page);
+	/*! 20140419 highmem이 아니면 page_address_map의 page_address 리턴 */
 
 #ifdef CONFIG_DEBUG_HIGHMEM
 	/*

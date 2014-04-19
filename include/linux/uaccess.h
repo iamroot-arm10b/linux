@@ -16,11 +16,13 @@
 static inline void pagefault_disable(void)
 {
 	inc_preempt_count();
+	/*! 20140419 선점 막아거 pagefault가 안되도록 함 */
 	/*
 	 * make sure to have issued the store before a pagefault
 	 * can hit.
 	 */
 	barrier();
+	/*! 20140419 지금까지의 명령어가 다 실행된 후에 다음으로 넘어감 */
 }
 
 static inline void pagefault_enable(void)

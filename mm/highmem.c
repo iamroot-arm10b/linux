@@ -341,6 +341,7 @@ static struct page_address_slot {
 static struct page_address_slot *page_slot(const struct page *page)
 {
 	return &page_address_htable[hash_ptr(page, PA_HASH_ORDER)];
+	/*! 20140419 hash값을 이용해 page_address_htable값을 리턴 */
 }
 
 /**
@@ -357,8 +358,10 @@ void *page_address(const struct page *page)
 
 	if (!PageHighMem(page))
 		return lowmem_page_address(page);
+	/*! 20140419 highmem이 아니면 lowmem의 va 리턴 */
 
 	pas = page_slot(page);
+	/*! 20140419 hash값 이용해서 page address slot 주소를 구함 */
 	ret = NULL;
 	spin_lock_irqsave(&pas->lock, flags);
 	if (!list_empty(&pas->lh)) {
@@ -369,11 +372,13 @@ void *page_address(const struct page *page)
 				ret = pam->virtual;
 				goto done;
 			}
+			/*! 20140419 pas->lh를 탐색하면서 주어진 page와 같은 pam->page의 virtual address를 찾음 */
 		}
 	}
 done:
 	spin_unlock_irqrestore(&pas->lock, flags);
 	return ret;
+	/*! 20140419 page_address_map의 virtual address 반환 */
 }
 
 EXPORT_SYMBOL(page_address);

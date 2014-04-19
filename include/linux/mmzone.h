@@ -875,6 +875,7 @@ static inline int zone_movable_is_highmem(void)
 #if defined(CONFIG_HIGHMEM) && defined(CONFIG_HAVE_MEMBLOCK_NODE_MAP)
 	return movable_zone == ZONE_HIGHMEM;
 #else
+	/*! 20140419 여기 실행. */
 	return 0;
 #endif
 }
@@ -899,9 +900,11 @@ static inline int is_highmem(struct zone *zone)
 {
 #ifdef CONFIG_HIGHMEM
 	int zone_off = (char *)zone - (char *)zone->zone_pgdat->node_zones;
+	/*! 20140419 현재 zone의 offset 을 구함. */
 	return zone_off == ZONE_HIGHMEM * sizeof(*zone) ||
 	       (zone_off == ZONE_MOVABLE * sizeof(*zone) &&
 		zone_movable_is_highmem());
+	/*! 20140419 zone이 highmem 이면 1 리턴 */
 #else
 	return 0;
 #endif

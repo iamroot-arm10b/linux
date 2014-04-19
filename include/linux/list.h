@@ -62,6 +62,7 @@ extern void __list_add(struct list_head *new,
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
+/*! 20140329 tail <-> head <-> new 가 된다. */
 static inline void list_add(struct list_head *new, struct list_head *head)
 {
 	__list_add(new, head, head->next);
@@ -75,6 +76,11 @@ static inline void list_add(struct list_head *new, struct list_head *head)
  *
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
+ */
+/*! 20131026
+ * head 앞쪽에 넣는다.
+ * tail <-> head 에서
+ * tail <-> new <-> head 가 된다.
  */
 static inline void list_add_tail(struct list_head *new, struct list_head *head)
 {
@@ -162,6 +168,7 @@ static inline void list_move(struct list_head *list, struct list_head *head)
 {
 	__list_del_entry(list);
 	list_add(list, head);
+	/*! 20140419 list를 지우고 head에 추가 */
 }
 
 /**
@@ -428,6 +435,7 @@ static inline void list_splice_tail_init(struct list_head *list,
 	for (pos = list_entry((head)->next, typeof(*pos), member);	\
 	     &pos->member != (head); 	\
 	     pos = list_entry(pos->member.next, typeof(*pos), member))
+/*! 20140419 pos의 member를 끝까지 탐색 */
 
 /**
  * list_for_each_entry_reverse - iterate backwards over list of given type.

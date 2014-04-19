@@ -248,15 +248,15 @@ struct mmu_gather;
 struct inode;
 
 #define page_private(page)		((page)->private)
-/*! 20140322 여기 실행 */
+/*! 20140322 page_private: buddy의 order */
 #define set_page_private(page, v)	((page)->private = (v))
-/*! 20140322 여기 실행 */
+/*! 20140322 buddy의 order를 v로 set */
 
 /* It's valid only if the page is free path or free_list */
 static inline void set_freepage_migratetype(struct page *page, int migratetype)
 {
 	page->index = migratetype;
-	/*! 20140315 여기 실행 */
+	/*! 20140315 page의 migratetype을 설정 */
 }
 
 /* It's valid only if the page is free path or free_list */
@@ -812,6 +812,7 @@ static inline void set_page_links(struct page *page, enum zone_type zone,
 static __always_inline void *lowmem_page_address(const struct page *page)
 {
 	return __va(PFN_PHYS(page_to_pfn(page)));
+	/*! 20140419 lowmem의 virture page 주소 리턴 */
 }
 
 #if defined(CONFIG_HIGHMEM) && !defined(WANT_PAGE_VIRTUAL)
@@ -1792,6 +1793,7 @@ extern bool kernel_page_present(struct page *page);
 #else
 static inline void
 kernel_map_pages(struct page *page, int numpages, int enable) {}
+/*! 20140419 아무것도 안함 */
 #ifdef CONFIG_HIBERNATION
 static inline bool kernel_page_present(struct page *page) { return true; }
 #endif /* CONFIG_HIBERNATION */

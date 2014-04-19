@@ -141,6 +141,7 @@ extern void __cpu_copy_user_highpage(struct page *to, struct page *from,
 	__cpu_copy_user_highpage(to, from, vaddr, vma)
 
 #define clear_page(page)	memset((void *)(page), 0, PAGE_SIZE)
+/*! 20140419 page의 실제 영역을 0으로 초기화 */
 extern void copy_page(void *to, const void *from);
 
 #ifdef CONFIG_KUSER_HELPERS
