@@ -204,6 +204,7 @@ PAGEFLAG(LRU, lru) __CLEARPAGEFLAG(LRU, lru)
 PAGEFLAG(Active, active) __CLEARPAGEFLAG(Active, active)
 	TESTCLEARFLAG(Active, active)
 __PAGEFLAG(Slab, slab)
+/*! 20140426 static inline void SetPageSlab(struct page *page)  { set_bit(PG_slab, &page->flags); } */
 PAGEFLAG(Checked, checked)		/* Used by some filesystems */
 PAGEFLAG(Pinned, pinned) TESTSCFLAG(Pinned, pinned)	/* Xen */
 PAGEFLAG(SavePinned, savepinned);			/* Xen */
@@ -480,6 +481,7 @@ static inline void SetPageSlabPfmemalloc(struct page *page)
 {
 	VM_BUG_ON(!PageSlab(page));
 	SetPageActive(page);
+	/*! 20140426 Active flag 설정 */
 }
 
 static inline void __ClearPageSlabPfmemalloc(struct page *page)

@@ -2614,6 +2614,7 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
 	bool sync_migration = false;
 	bool deferred_compaction = false;
 	bool contended_compaction = false;
+	/*! 20140426 TODO: 나중에 보기로 함 */
 
 	/*
 	 * In the slowpath, we sanity check order to avoid ever trying to
@@ -2881,7 +2882,10 @@ retry_cpuset:
 		 * can deadlock because I/O on the device might not
 		 * complete.
 		 */
+		/*! 20140426 메모리가 모자라서 page를 할당 못받으면 여기 실행 */
 		gfp_mask = memalloc_noio_flags(gfp_mask);
+		/*! 20140426 PF_MEMALLOC_NOIO 가 설정되어 있으면 gfp_mask의 __GFP_IO를 지운다. */
+		/*! 20140426 TODO:__alloc_pages_slowpath는 나중에 보기로 함. 부팅시에는 항상 page를 할당받기 때문 */
 		page = __alloc_pages_slowpath(gfp_mask, order,
 				zonelist, high_zoneidx, nodemask,
 				preferred_zone, migratetype);
@@ -2897,9 +2901,11 @@ out:
 	 * check if the cpuset changed during allocation and if so, retry.
 	 */
 	if (unlikely(!put_mems_allowed(cpuset_mems_cookie) && !page))
+		/*! 20140426 put_mems_allowed가 항상 true이므로 실행안됨 */
 		goto retry_cpuset;
 
 	memcg_kmem_commit_charge(page, memcg, order);
+	/*! 20140426 아무일도 안함 */
 
 	return page;
 }

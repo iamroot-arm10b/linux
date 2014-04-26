@@ -586,6 +586,7 @@ static inline void memcg_kmem_uncharge_pages(struct page *page, int order)
 static inline void
 memcg_kmem_commit_charge(struct page *page, struct mem_cgroup *memcg, int order)
 {
+	/*! 20140426 여기가 실행됨 */
 }
 
 static inline int memcg_cache_id(struct mem_cgroup *memcg)

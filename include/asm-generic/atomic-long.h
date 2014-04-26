@@ -58,6 +58,7 @@ static inline void atomic_long_add(long i, atomic_long_t *l)
 	atomic64_t *v = (atomic64_t *)l;
 
 	atomic64_add(i, v);
+	/*! 20140426 v = i + v */
 }
 
 static inline void atomic_long_sub(long i, atomic_long_t *l)

@@ -221,7 +221,9 @@ void __mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
 	t = __this_cpu_read(pcp->stat_threshold);
 
 	if (unlikely(x > t || x < -t)) {
+		/*! 20140426 x가 t(threshold)값을 넘었을때 x를 pcp가 아닌 zone에 반영 */
 		zone_page_state_add(x, zone, item);
+		/*! 20140426 zone->vm_stat[item]과 vm_stat[item]에 x를 더한다. */
 		x = 0;
 	}
 	__this_cpu_write(*p, x);
@@ -374,6 +376,7 @@ EXPORT_SYMBOL(dec_zone_page_state);
 /*
  * Use interrupt disable to serialize counter updates
  */
+/*! 20140426 여기 실행됨 */
 void mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
 					int delta)
 {
@@ -381,6 +384,7 @@ void mod_zone_page_state(struct zone *zone, enum zone_stat_item item,
 
 	local_irq_save(flags);
 	__mod_zone_page_state(zone, item, delta);
+	/*! 20140426 zone->pageset->vm_stat_diff[item] 또는 zone->vm_stat[item]에 delta를 더한다. */
 	local_irq_restore(flags);
 }
 EXPORT_SYMBOL(mod_zone_page_state);

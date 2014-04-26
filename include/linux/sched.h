@@ -1663,6 +1663,7 @@ extern void thread_group_cputime_adjusted(struct task_struct *p, cputime_t *ut, 
 /* __GFP_IO isn't allowed if PF_MEMALLOC_NOIO is set in current->flags */
 static inline gfp_t memalloc_noio_flags(gfp_t flags)
 {
+	/*! 20140426 PF_MEMALLOC_NOIO 가 설정되어 있으면 flags의 __GFP_IO를 지운다. */
 	if (unlikely(current->flags & PF_MEMALLOC_NOIO))
 		flags &= ~__GFP_IO;
 	return flags;

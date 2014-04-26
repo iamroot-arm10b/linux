@@ -88,6 +88,7 @@ bool kmemcheck_is_obj_initialized(unsigned long addr, size_t size);
 
 #else
 #define kmemcheck_enabled 0
+/*! 20140426 여기 실행됨 */
 
 static inline void
 kmemcheck_alloc_shadow(struct page *page, int order, gfp_t flags, int node)

@@ -342,6 +342,7 @@ __alloc_pages(gfp_t gfp_mask, unsigned int order,
 		struct zonelist *zonelist)
 {
 	return __alloc_pages_nodemask(gfp_mask, order, zonelist, NULL);
+	/*! 20140426 order 크기의 page 할당 */
 }
 
 static inline struct page *alloc_pages_node(int nid, gfp_t gfp_mask,
@@ -360,6 +361,7 @@ static inline struct page *alloc_pages_exact_node(int nid, gfp_t gfp_mask,
 	VM_BUG_ON(nid < 0 || nid >= MAX_NUMNODES || !node_online(nid));
 
 	return __alloc_pages(gfp_mask, order, node_zonelist(nid, gfp_mask));
+	/*! 20140426 order 크기의 page 할당 */
 }
 
 #ifdef CONFIG_NUMA

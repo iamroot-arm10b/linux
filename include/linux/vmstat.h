@@ -103,7 +103,9 @@ static inline void zone_page_state_add(long x, struct zone *zone,
 				 enum zone_stat_item item)
 {
 	atomic_long_add(x, &zone->vm_stat[item]);
+	/*! 20140426 zone->vm_stat[item] += x */
 	atomic_long_add(x, &vm_stat[item]);
+	/*! 20140426 vm_stat[item] += x */
 }
 
 static inline unsigned long global_page_state(enum zone_stat_item item)

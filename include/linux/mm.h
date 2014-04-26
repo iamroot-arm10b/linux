@@ -501,7 +501,7 @@ static inline compound_page_dtor *get_compound_page_dtor(struct page *page)
 
 static inline int compound_order(struct page *page)
 {
-	/*! 20140322 PG_compound 설정한 다음에 다시 보기로 함 */
+	/*! 20140322 TODO:PG_compound 설정한 나중에 다시 보기로 함 */
 	if (!PageHead(page))
 		/*! 20140322 PG_compound, PG_reclaim 이 없으면 return 0 */
 		return 0;

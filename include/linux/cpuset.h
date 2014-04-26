@@ -231,6 +231,7 @@ static inline unsigned int get_mems_allowed(void)
 
 static inline bool put_mems_allowed(unsigned int seq)
 {
+	/*! 20140426 여기 실행됨 */
 	return true;
 }
 

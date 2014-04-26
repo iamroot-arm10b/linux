@@ -230,6 +230,7 @@ static inline void stat(const struct kmem_cache *s, enum stat_item si)
 #ifdef CONFIG_SLUB_STATS
 	__this_cpu_inc(s->cpu_slab->stat[si]);
 #endif
+	/*! 20140426 아무것도 안함 */
 }
 
 /********************************************************************
@@ -239,6 +240,7 @@ static inline void stat(const struct kmem_cache *s, enum stat_item si)
 static inline struct kmem_cache_node *get_node(struct kmem_cache *s, int node)
 {
 	return s->node[node];
+	/*! 20140426 kmem_cache->node[node] 값을 리턴 */
 }
 
 /* Verify that a pointer has an address that is valid within a slab page */
@@ -262,6 +264,7 @@ static inline int check_valid_pointer(struct kmem_cache *s,
 static inline void *get_freepointer(struct kmem_cache *s, void *object)
 {
 	return *(void **)(object + s->offset);
+	/*! 20140426 다음 object의 시작주소를 리턴 */
 }
 
 static void prefetch_freepointer(const struct kmem_cache *s, void *object)
@@ -284,6 +287,7 @@ static inline void *get_freepointer_safe(struct kmem_cache *s, void *object)
 static inline void set_freepointer(struct kmem_cache *s, void *object, void *fp)
 {
 	*(void **)(object + s->offset) = fp;
+	/*! 20140426 objects + s->offset 한 주소에 fp 대입 */
 }
 
 /* Loop over all objects in a slab */
@@ -342,13 +346,13 @@ static inline struct kmem_cache_order_objects oo_make(int order,
 	return x;
 }
 
-/*! 20140412 oo 방식의 상위 비트인 order만 구한다.  */
+/*! 20140412 oo 방식의 상위 16bit(buddy에 쓰이는 order)를 리턴한다. */
 static inline int oo_order(struct kmem_cache_order_objects x)
 {
 	return x.x >> OO_SHIFT;
 }
 
-/*! 20140412 oo 방식의 하위 비트에서 object만 구한다.  */
+/*! 20140412 oo 방식의 하위 16bit(object 갯수)를 리턴한다. */
 static inline int oo_objects(struct kmem_cache_order_objects x)
 {
 	return x.x & OO_MASK;
@@ -1020,6 +1024,7 @@ static inline unsigned long node_nr_slabs(struct kmem_cache_node *n)
 static inline void inc_slabs_node(struct kmem_cache *s, int node, int objects)
 {
 	struct kmem_cache_node *n = get_node(s, node);
+	/*! 20140426 자신의 node값을 가져온다. */
 
 	/*
 	 * May be called early in order to allocate a slab for the
@@ -1030,6 +1035,7 @@ static inline void inc_slabs_node(struct kmem_cache *s, int node, int objects)
 	if (likely(n)) {
 		atomic_long_inc(&n->nr_slabs);
 		atomic_long_add(objects, &n->total_objects);
+		/*! 20140426 n->nr_slabs++, n->total_objects += objects */
 	}
 }
 static inline void dec_slabs_node(struct kmem_cache *s, int node, int objects)
@@ -1263,6 +1269,7 @@ static inline unsigned long node_nr_slabs(struct kmem_cache_node *n)
 							{ return 0; }
 static inline void inc_slabs_node(struct kmem_cache *s, int node,
 							int objects) {}
+/*! 20140426 CONFIG_SLUB_DEBUG가 꺼져있다고 가정하면 여기 실행됨 */
 static inline void dec_slabs_node(struct kmem_cache *s, int node,
 							int objects) {}
 
@@ -1290,8 +1297,8 @@ static inline struct page *alloc_slab_page(gfp_t flags, int node,
 	if (node == NUMA_NO_NODE)
 		return alloc_pages(flags, order);
 	else
-		/*! 20140419 여기 진입함 */
 		return alloc_pages_exact_node(node, flags, order);
+		/*! 20140426 order 크기의 page 할당 */
 }
 
 static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
@@ -1316,6 +1323,7 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
 	alloc_gfp = (flags | __GFP_NOWARN | __GFP_NORETRY) & ~__GFP_NOFAIL;
 
 	page = alloc_slab_page(alloc_gfp, node, oo);
+	/*! 20140426 oo(상위 16bit)에 설정되어 있는 order 크기의 page를 buddy에서 할당받음 */
 	if (unlikely(!page)) {
 		oo = s->min;
 		/*
@@ -1323,11 +1331,14 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
 		 * Try a lower order alloc if possible
 		 */
 		page = alloc_slab_page(flags, node, oo);
+		/*! 20140426 page 할당에 실패했을 경우, flags와 order를 변경하여 다시 할당 */
 
 		if (page)
 			stat(s, ORDER_FALLBACK);
+			/*! 20140426 아무것도 안함 */
 	}
 
+	/*! 20140426 kmemcheck_enabled가 0이므로 실행안됨 */
 	if (kmemcheck_enabled && page
 		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
 		int pages = 1 << oo_order(oo);
@@ -1350,10 +1361,15 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
 		return NULL;
 
 	page->objects = oo_objects(oo);
+	/*! 20140426 page->objects: slab으로 할당할 object의 갯수 */
 	mod_zone_page_state(page_zone(page),
 		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
 		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
 		1 << oo_order(oo));
+	/*! 20140426
+	 * page가 속한 zone의 vm_stat[NR_SLAB_RECLAIMABLE or NR_SLAB_UNRECLAIMABLE]에
+	 * (1 << oo_order(oo))(buddy에 쓰이는 order)를 더한다.
+	 */
 
 	return page;
 }
@@ -1362,8 +1378,10 @@ static void setup_object(struct kmem_cache *s, struct page *page,
 				void *object)
 {
 	setup_object_debug(s, page, object);
+	/*! 20140426 CONFIG_SLUB_DEBUG: y이지만 debug이므로 pass */
 	if (unlikely(s->ctor))
 		s->ctor(object);
+		/*! 20140426 아직 설정한 적 없으므로 NULL */
 }
 
 static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
@@ -1379,34 +1397,55 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
 
 	page = allocate_slab(s,
 		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
+	/*! 20140426 slab으로 사용할 page 할당받음 */
 	if (!page)
 		goto out;
 
 	order = compound_order(page);
+	/*! 20140426 PG_compound가 설정 안되어 있으므로 order: 0 */
 	inc_slabs_node(s, page_to_nid(page), page->objects);
+	/*! 20140426 s->node의 정보를 update한다. */
 	memcg_bind_pages(s, order);
+	/*! 20140426 아무것도 안함 */
 	page->slab_cache = s;
+	/*! 20140426 할당받은 page의 slab_cache를 현재 kmem_cache로 설정한다. */
 	__SetPageSlab(page);
+	/*! 20140426 page->flags에 PG_slab을 설정한다. 현재 struct page가 slab으로 사용됨을 표시 */
 	if (page->pfmemalloc)
+		/*! 20140426 ALLOC_NO_WATERMARKS 가 설정안되어 있으므로 실행안됨.
+		 * get_page_from_freelist 함수에서 확인
+		 */
 		SetPageSlabPfmemalloc(page);
 
 	start = page_address(page);
+	/*! 20140426 page의 va를 가져온다. */
 
 	if (unlikely(s->flags & SLAB_POISON))
 		memset(start, POISON_INUSE, PAGE_SIZE << order);
+		/*! 20140426 현재 할당받은 page 크기만큼 POISON_INUSE로 채움. */
 
 	last = start;
 	for_each_object(p, s, start, page->objects) {
+	/*! 20140426 page->objects: 102, (s)->size: 40이라 가정한다. 
+	 * for (p = (start); p < (start) + (page->objects) * (s)->size; p += (s)->size)
+	 */
 		setup_object(s, page, last);
+		/*! 20140426 s->ctor 함수가 있으면 실행. 없으면 아무동작 안함 */
 		set_freepointer(s, last, p);
+		/*! 20140426 각 slab objects의 첫 4byte를 해당 slab의 시작주소(va)로 초기화 */
 		last = p;
 	}
 	setup_object(s, page, last);
 	set_freepointer(s, last, NULL);
+	/*! 20140426 마지막 slab을 NULL로 셋팅 */
 
 	page->freelist = start;
 	page->inuse = page->objects;
 	page->frozen = 1;
+	/*! 20140426
+	 * page->freelist에 초기화한 page의 시작주소를 할당
+	 * page->inuse: page->frozen이 1이므로, 사용가능한 slab의 갯수
+	 */
 out:
 	return page;
 }
@@ -1500,6 +1539,7 @@ static inline void add_partial(struct kmem_cache_node *n,
 		list_add_tail(&page->lru, &n->partial);
 	else
 		list_add(&page->lru, &n->partial);
+	/*! 20140426 list 추가 */
 }
 
 /*
@@ -2823,6 +2863,7 @@ static void
 init_kmem_cache_node(struct kmem_cache_node *n)
 {
 	n->nr_partial = 0;
+	/*! 20140426 n->nr_partial: 실제 사용하는 slab 갯수 */
 	spin_lock_init(&n->list_lock);
 	INIT_LIST_HEAD(&n->partial);
 #ifdef CONFIG_SLUB_DEBUG
@@ -2872,9 +2913,11 @@ static void early_kmem_cache_node_alloc(int node)
 	BUG_ON(kmem_cache_node->size < sizeof(struct kmem_cache_node));
 
 	page = new_slab(kmem_cache_node, GFP_NOWAIT, node);
+	/*! 20140426 buddy에서 page를 할당받아 새로운 slab으로 초기화한다. */
 
 	BUG_ON(!page);
 	if (page_to_nid(page) != node) {
+		/*! 20140426 NUMA가 아니므로 여기는 실행되지 않음 */
 		printk(KERN_ERR "SLUB: Unable to allocate memory from "
 				"node %d\n", node);
 		printk(KERN_ERR "SLUB: Allocating a useless per node structure "
@@ -2882,19 +2925,26 @@ static void early_kmem_cache_node_alloc(int node)
 	}
 
 	n = page->freelist;
+	/*! 20140426 첫번째 slab object를 kmem_cache_node로 쓰겠다는 것 */
 	BUG_ON(!n);
 	page->freelist = get_freepointer(kmem_cache_node, n);
+	/*! 20140426 page->freelist의 변수를 두번째 slab object의 시작위치를 가리키게 한다. */
 	page->inuse = 1;
 	page->frozen = 0;
+	/*! 20140426 page->frozen이 0으므로, 실제 사용하는 slab의 갯수 */
 	kmem_cache_node->node[node] = n;
 #ifdef CONFIG_SLUB_DEBUG
 	init_object(kmem_cache_node, n, SLUB_RED_ACTIVE);
 	init_tracking(kmem_cache_node, n);
+	/*! 20140426 DEBUG는 생략함 */
 #endif
 	init_kmem_cache_node(n);
+	/*! 20140426 n의 nr_partial, list_lock, partial를 초기화 한다. */
 	inc_slabs_node(kmem_cache_node, node, page->objects);
+	/*! 20140426 CONFIG_SLUB_DEBUG가 꺼져있으면 아무것도 안함 */
 
 	add_partial(n, page, DEACTIVATE_TO_HEAD);
+	/*! 20140426 n의 list에 page 추가 */
 }
 
 static void free_kmem_cache_nodes(struct kmem_cache *s)
@@ -2922,8 +2972,9 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 		struct kmem_cache_node *n;
 
 		if (slab_state == DOWN) {
-			/*! 20140419 여기 진입함 */
 			early_kmem_cache_node_alloc(node);
+			/*! 20140426 early slab을 초기화: slab을 관리하기 위한 kmem_cache_node 초기화 */
+			/*! 20140426 여기까지 스터디 */
 			continue;
 		}
 		n = kmem_cache_alloc_node(kmem_cache_node,
@@ -3653,7 +3704,6 @@ static struct kmem_cache * __init bootstrap(struct kmem_cache *static_cache)
 	 * up.  Even if it weren't true, IRQs are not up so we couldn't fire
 	 * IPIs around.
 	 */
-	/*! 20140419 여기 진입함 */
 	__flush_cpu_slab(s, smp_processor_id());
 	for_each_node_state(node, N_NORMAL_MEMORY) {
 		struct kmem_cache_node *n = get_node(s, node);
@@ -3691,6 +3741,7 @@ void __init kmem_cache_init(void)
 	/*! 20140405 sizeof(struct kmem_cache_node): 40byte */
 
 	register_hotmemory_notifier(&slab_memory_callback_nb);
+	/*! 20140426 아무것도 안함 */
 
 	/* Able to allocate the per node structures */
 	slab_state = PARTIAL;
