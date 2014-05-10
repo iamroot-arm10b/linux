@@ -476,6 +476,7 @@ static inline void *__kmalloc_node(size_t size, gfp_t flags, int node)
 
 void *kmem_cache_alloc(struct kmem_cache *, gfp_t);
 
+/*! 20140510 NUMA가 아니면서 SLOB이 아니면 이 함수 실행  */
 static inline void *kmem_cache_alloc_node(struct kmem_cache *cachep,
 					gfp_t flags, int node)
 {

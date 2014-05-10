@@ -1273,6 +1273,7 @@ static inline void inc_slabs_node(struct kmem_cache *s, int node,
 static inline void dec_slabs_node(struct kmem_cache *s, int node,
 							int objects) {}
 
+/*! 20140510 debug feature가 꺼져있으면 이쪽 실행 */
 static inline int slab_pre_alloc_hook(struct kmem_cache *s, gfp_t flags)
 							{ return 0; }
 
@@ -2401,6 +2402,7 @@ static __always_inline void *slab_alloc_node(struct kmem_cache *s,
 	struct page *page;
 	unsigned long tid;
 
+	/*! 20140510 hook은 실행하지 않는다.  */
 	if (slab_pre_alloc_hook(s, gfpflags))
 		return NULL;
 
@@ -2417,6 +2419,7 @@ redo:
 	 * on a different processor between the determination of the pointer
 	 * and the retrieval of the tid.
 	 */
+	/*! 20140510 선점 금지  */
 	preempt_disable();
 	c = __this_cpu_ptr(s->cpu_slab);
 
@@ -2475,6 +2478,7 @@ static __always_inline void *slab_alloc(struct kmem_cache *s,
 	return slab_alloc_node(s, gfpflags, NUMA_NO_NODE, addr);
 }
 
+/*! 20140510 이쪽 실행  */
 void *kmem_cache_alloc(struct kmem_cache *s, gfp_t gfpflags)
 {
 	void *ret = slab_alloc(s, gfpflags, _RET_IP_);
