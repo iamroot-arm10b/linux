@@ -91,7 +91,6 @@ __mutex_lock_slowpath(atomic_t *lock_count);
  *
  * This function is similar to (but not equivalent to) down().
  */
-/*! 20140208 나중에 보기로 함 */
 void __sched mutex_lock(struct mutex *lock)
 {
 	might_sleep();

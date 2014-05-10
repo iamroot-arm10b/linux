@@ -341,6 +341,7 @@ static inline void spin_lock_irq(spinlock_t *lock)
 do {								\
 	raw_spin_lock_irqsave(spinlock_check(lock), flags);	\
 } while (0)
+/*! 20140510 cpsr의 irq 정보를 가져오고 interrupt를 disable하며, spinlock을 획득한다. */
 
 #define spin_lock_irqsave_nested(lock, flags, subclass)			\
 do {									\
@@ -366,6 +367,7 @@ static inline void spin_unlock_irq(spinlock_t *lock)
 static inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
 {
 	raw_spin_unlock_irqrestore(&lock->rlock, flags);
+	/*! 20140104 irq enable / cpsr의 irq info flag 원상복구 / spinlock 릴리즈 */
 }
 
 static inline int spin_trylock_bh(spinlock_t *lock)

@@ -410,6 +410,7 @@ static void pcpu_depopulate_chunk(struct pcpu_chunk *chunk, int off, int size)
 
 static struct pcpu_chunk *pcpu_create_chunk(void)
 {
+	/*! 20140510 여기가 실행될 것으로 추정. */
 	struct pcpu_chunk *chunk;
 	struct vm_struct **vms;
 

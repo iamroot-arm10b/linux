@@ -65,7 +65,7 @@ do { \
  * 다른 thread가 동작하는 것을 막는다. 계속 현재 thread만 수행되도록 한다.
  * 인터럽트를 막지는 않는다.
  * preempt_count = 0 인 경우 preemption enable / 1 이상인 경우 preemption disable
- * 스케쥴링 나오면 자세히 봅시다.
+ * TODO: 다음에, 나중에 스케쥴링 나오면 자세히 봅시다.
  */
 #define preempt_disable() \
 do { \

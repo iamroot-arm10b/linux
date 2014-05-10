@@ -2402,10 +2402,12 @@ static __always_inline void *slab_alloc_node(struct kmem_cache *s,
 	struct page *page;
 	unsigned long tid;
 
+	/*! 20140510 여기는 다시 분석해야 함. 안봤음 */
 	/*! 20140510 hook은 실행하지 않는다.  */
 	if (slab_pre_alloc_hook(s, gfpflags))
 		return NULL;
 
+	/*! 20140510 cgroup은 실행하지 않는다.  */
 	s = memcg_kmem_get_cache(s, gfpflags);
 redo:
 	/*
@@ -2419,7 +2421,7 @@ redo:
 	 * on a different processor between the determination of the pointer
 	 * and the retrieval of the tid.
 	 */
-	/*! 20140510 선점 금지  */
+	/*! 20140510 선점 금지 */
 	preempt_disable();
 	c = __this_cpu_ptr(s->cpu_slab);
 
@@ -2981,6 +2983,7 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 			/*! 20140426 여기까지 스터디 */
 			continue;
 		}
+		/*! 20140510 현재 slab_state가 DOWN이기 때문에 다음은 실행되지 않는다. */
 		n = kmem_cache_alloc_node(kmem_cache_node,
 						GFP_KERNEL, node);
 
@@ -3213,9 +3216,9 @@ static int kmem_cache_open(struct kmem_cache *s, unsigned long flags)
 #ifdef CONFIG_NUMA
 	s->remote_node_defrag_ratio = 1000;
 #endif
-	/*! 20140419 여기 진입함 */
 	if (!init_kmem_cache_nodes(s))
 		goto error;
+	/*! 20140510 전역 kmem_cache(slab) 초기화 */
 
 	if (alloc_kmem_cache_cpus(s))
 		return 0;

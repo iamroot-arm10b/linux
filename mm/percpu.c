@@ -204,12 +204,13 @@ static int __pcpu_size_to_slot(int size)
 	/*! 20140125 fls: 31번 bit(msb)부터 찾아가며 첫번째 1이 나오는 bit의 자릿수(1~32) */
 	return max(highbit - PCPU_SLOT_BASE_SHIFT + 2, 1);
 	/*! 20140125 size가 12kb(0x3000)인 경우에 highbit:14 이므로 return 11 */
+	/*! 20140510 PCPU_SLOT_BASE_SHIFT: 5 */
 }
 
 static int pcpu_size_to_slot(int size)
 {
 	if (size == pcpu_unit_size)
-		/*! 20140125 pcpu_unit_size:  */
+		/*! 20140125 pcpu_unit_size: 32kb(0x8000) */
 		return pcpu_nr_slots - 1;
 	return __pcpu_size_to_slot(size);
 	/*! 20140125 size가 12kb인 경우에 return 11 */
@@ -364,6 +365,7 @@ static int pcpu_need_to_extend(struct pcpu_chunk *chunk)
 	int new_alloc;
 
 	if (chunk->map_alloc >= chunk->map_used + 2)
+		/*! 20140510 map_alloc: 128 (할당할 수 있는 갯수), map_used: 2 (사용한 갯수) */
 		return 0;
 
 	new_alloc = PCPU_DFL_MAP_ALLOC;
@@ -371,6 +373,7 @@ static int pcpu_need_to_extend(struct pcpu_chunk *chunk)
 		new_alloc *= 2;
 
 	return new_alloc;
+	/*! 20140510 map을 할당할 수 있는 갯수보다 사용갯수가 더 커지면 2배로 확장한다. */
 }
 
 /**
@@ -448,6 +451,7 @@ static void pcpu_split_block(struct pcpu_chunk *chunk, int i,
 			     int head, int tail)
 {
 	int nr_extra = !!head + !!tail;
+	/*! 20140510 head, tail을 0이나 1로 바꿈 */
 
 	BUG_ON(chunk->map_alloc < chunk->map_used + nr_extra);
 
@@ -459,11 +463,17 @@ static void pcpu_split_block(struct pcpu_chunk *chunk, int i,
 	if (head) {
 		chunk->map[i + 1] = chunk->map[i] - head;
 		chunk->map[i++] = head;
+		/*! 20140510 head가 있으면 i자리에 head를 넣고 i를 head 뒤로 이동 */
 	}
 	if (tail) {
 		chunk->map[i++] -= tail;
 		chunk->map[i] = tail;
+		/*! 20140510 tail이 있으면 원래 i의 뒷자리에 tail을 넣는다. */
 	}
+	/*! 20140510 chunk->map 을 아래와 같이 확장한다.
+	 *		[.][.][.][i][x][x]
+	 * 		[.][.][.][head][i-head-tail][tail][x][x]
+	 */
 }
 
 /**
@@ -487,7 +497,9 @@ static void pcpu_split_block(struct pcpu_chunk *chunk, int i,
  */
 static int pcpu_alloc_area(struct pcpu_chunk *chunk, int size, int align)
 {
+	/*! 20140510 size: 16, align: 8 */
 	int oslot = pcpu_chunk_slot(chunk);
+	/*! 20140510 oslot: 11 */
 	int max_contig = 0;
 	int i, off;
 
@@ -500,8 +512,10 @@ static int pcpu_alloc_area(struct pcpu_chunk *chunk, int size, int align)
 		BUG_ON(i == 0 && head != 0);
 
 		if (chunk->map[i] < 0)
+			/*! 20140510 map[i]가 음수면 사용중인 공간의 크기이므로 pass */
 			continue;
 		if (chunk->map[i] < head + size) {
+			/*! 20140510 비어있는 공간이 head+size보다 작으면 continue */
 			max_contig = max(chunk->map[i], max_contig);
 			continue;
 		}
@@ -514,12 +528,18 @@ static int pcpu_alloc_area(struct pcpu_chunk *chunk, int size, int align)
 		 */
 		if (head && (head < sizeof(int) || chunk->map[i - 1] > 0)) {
 			if (chunk->map[i - 1] > 0)
+				/*! 20140510 head != 0 && 이전 map이 비어있는 공간을 나타낼때 수행 */
 				chunk->map[i - 1] += head;
+				/*! 20140510 이전 map에 head를 더해 비어있는 공간을 늘린다. */
 			else {
+				/*! 20140510 head != 0 && head < 4 && 이전 map이 사용중인 공간을 나타낼때 수행 */
 				chunk->map[i - 1] -= head;
+				/*! 20140510 이전 map에 head를 빼 사용중인 공간을 늘린다. */
 				chunk->free_size -= head;
+				/*! 20140510 free_size 변수를 수정 */
 			}
 			chunk->map[i] -= head;
+			/*! 20140510 현재 map에 head를 빼 사용중인 공간을 늘린다. */
 			off += head;
 			head = 0;
 		}
@@ -528,10 +548,12 @@ static int pcpu_alloc_area(struct pcpu_chunk *chunk, int size, int align)
 		tail = chunk->map[i] - head - size;
 		if (tail < sizeof(int))
 			tail = 0;
+		/*! 20140510 tail: 사용중이거나 비어있어도 4보다 작은경우 0 */
 
 		/* split if warranted */
 		if (head || tail) {
 			pcpu_split_block(chunk, i, head, tail);
+			/*! 20140510 chunk->map을 최대 3부분으로 분리한다. */
 			if (head) {
 				i++;
 				off += head;
@@ -539,10 +561,12 @@ static int pcpu_alloc_area(struct pcpu_chunk *chunk, int size, int align)
 			}
 			if (tail)
 				max_contig = max(chunk->map[i + 1], max_contig);
+			/*! 20140510 분리된 부분이 max_contig보다 크면 max_contig값에 셋팅된다. */
 		}
 
 		/* update hint and mark allocated */
 		if (is_last)
+			/*! 20140510 chunk->map배열의 마지막이면 실행 */
 			chunk->contig_hint = max_contig; /* fully scanned */
 		else
 			chunk->contig_hint = max(chunk->contig_hint,
@@ -552,11 +576,13 @@ static int pcpu_alloc_area(struct pcpu_chunk *chunk, int size, int align)
 		chunk->map[i] = -chunk->map[i];
 
 		pcpu_chunk_relocate(chunk, oslot);
+		/*! 20140125 pcpu_chunk를 list로 연결한다. */
 		return off;
 	}
 
 	chunk->contig_hint = max_contig;	/* fully scanned */
 	pcpu_chunk_relocate(chunk, oslot);
+	/*! 20140125 pcpu_chunk를 list로 연결한다. */
 
 	/* tell the upper layer that this chunk has no matching area */
 	return -1;
@@ -666,6 +692,7 @@ static int __init pcpu_verify_alloc_info(const struct pcpu_alloc_info *ai);
 #ifdef CONFIG_NEED_PER_CPU_KM
 #include "percpu-km.c"
 #else
+/*! 20140510 SMP가 켜져있으면 percpu-vm.c 가 실행됨 */
 #include "percpu-vm.c"
 #endif
 
@@ -728,9 +755,11 @@ static void __percpu *pcpu_alloc(size_t size, size_t align, bool reserved)
 
 	mutex_lock(&pcpu_alloc_mutex);
 	spin_lock_irqsave(&pcpu_lock, flags);
+	/*! 20140510 cpsr의 irq 정보를 가져오고 interrupt를 disable하며, spinlock을 획득한다. */
 
 	/* serve reserved allocations from the reserved chunk if available */
 	if (reserved && pcpu_reserved_chunk) {
+		/*! 20140510 현재 reserved 가 false여서 여기 실행안됨 */
 		chunk = pcpu_reserved_chunk;
 
 		if (size > chunk->contig_hint) {
@@ -757,12 +786,22 @@ static void __percpu *pcpu_alloc(size_t size, size_t align, bool reserved)
 
 restart:
 	/* search through normal chunks */
+	/*! 20140510 slot:초기값은 2 (size가 16이기 때문) */
+	/*! 20140510 pcpu_nr_slots: 14 (pcpu_setup_first_chunk 함수에서 셋팅함: pcpu_unit_size가 32kb) */
 	for (slot = pcpu_size_to_slot(size); slot < pcpu_nr_slots; slot++) {
 		list_for_each_entry(chunk, &pcpu_slot[slot], list) {
+		/*! 20140510 chunk의 list를 끝까지 탐색
+		 * for (chunk = list_entry((&pcpu_slot[slot])->next, typeof(*chunk), list);	\
+		 *	&chunk->list != (&pcpu_slot[slot]); 	\
+		 *	chunk = list_entry(chunk->list.next, typeof(*chunk), list))
+		 * chunk->list 가 head를 가리키므로 pass 됨.
+		 */
 			if (size > chunk->contig_hint)
+				/*! 20140510 chunk->contig_hint: 12k */
 				continue;
 
 			new_alloc = pcpu_need_to_extend(chunk);
+			/*! 20140510 chunk->map_alloc보다 map_used가 더 크면 map_alloc을 2배로 확장한다. */
 			if (new_alloc) {
 				spin_unlock_irqrestore(&pcpu_lock, flags);
 				if (pcpu_extend_area_map(chunk,
@@ -778,7 +817,10 @@ restart:
 				goto restart;
 			}
 
+			/*! 20140510 align: 8 */
 			off = pcpu_alloc_area(chunk, size, align);
+			/*! 20140510 pcpu_chunk에서 size만큼의 공간을 할당받음 */
+			/*! 20140510 여기까지 스터디함. */
 			if (off >= 0)
 				goto area_found;
 		}
@@ -786,6 +828,7 @@ restart:
 
 	/* hmmm... no space left, create a new chunk */
 	spin_unlock_irqrestore(&pcpu_lock, flags);
+	/*! 20140510 cpsr의 irq info flag 원상복구, irq enable, spinlock 릴리즈 */
 
 	chunk = pcpu_create_chunk();
 	if (!chunk) {
@@ -1382,6 +1425,7 @@ int __init pcpu_setup_first_chunk(const struct pcpu_alloc_info *ai,
 
 	/* init dynamic chunk if necessary */
 	if (dyn_size) {
+		/*! 20140510 dyn_size: 12k 이므로 여기서 dchunk 설정함 */
 		dchunk = alloc_bootmem(pcpu_chunk_struct_size);
 		INIT_LIST_HEAD(&dchunk->list);
 		dchunk->base_addr = base_addr;

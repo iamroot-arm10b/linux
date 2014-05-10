@@ -610,10 +610,10 @@ static inline void memcg_cache_list_add(struct mem_cgroup *memcg,
 {
 }
 
-/*! 20140510 cgroup 관련 기능은 패스  */
 static inline struct kmem_cache *
 memcg_kmem_get_cache(struct kmem_cache *cachep, gfp_t gfp)
 {
+	/*! 20140510 cgroup(control group:cpu, memory 등) 관련 기능은 패스  */
 	return cachep;
 }
 
