@@ -3742,13 +3742,12 @@ void __init kmem_cache_init(void)
 	kmem_cache_node = &boot_kmem_cache_node;
 	kmem_cache = &boot_kmem_cache;
 
+	/*! 20140405 sizeof(struct kmem_cache_node): 40byte */
 	/*! 20140412 kmem_cache_node는 kmem_cache 구조체로 선언된다. */
 	create_boot_cache(kmem_cache_node, "kmem_cache_node",
 		sizeof(struct kmem_cache_node), SLAB_HWCACHE_ALIGN);
-	/*! 20140405 sizeof(struct kmem_cache_node): 40byte */
 
 	register_hotmemory_notifier(&slab_memory_callback_nb);
-	/*! 20140426 아무것도 안함 */
 
 	/* Able to allocate the per node structures */
 	slab_state = PARTIAL;

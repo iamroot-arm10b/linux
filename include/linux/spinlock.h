@@ -245,7 +245,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 /*! 20140222 여기 실행 */
 #define raw_spin_unlock_irq(lock)	_raw_spin_unlock_irq(lock)
 
-/*! 20140104 irq enable / cpsr의 irq info flag 원복 / spinlock 릴리즈 */
+/*! 20140104 spinlock 릴리즈, cpsr의 irq info flag 원복, irq enable */
 #define raw_spin_unlock_irqrestore(lock, flags)		\
 	do {							\
 		typecheck(unsigned long, flags);		\
@@ -367,7 +367,7 @@ static inline void spin_unlock_irq(spinlock_t *lock)
 static inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
 {
 	raw_spin_unlock_irqrestore(&lock->rlock, flags);
-	/*! 20140104 irq enable / cpsr의 irq info flag 원상복구 / spinlock 릴리즈 */
+	/*! 20140104 spinlock 릴리즈, cpsr의 irq info flag 원상복구, irq enable(선점 허용) */
 }
 
 static inline int spin_trylock_bh(spinlock_t *lock)

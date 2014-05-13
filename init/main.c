@@ -507,42 +507,35 @@ asmlinkage void __init start_kernel(void)
 	 * lockdep hash:
 	 */
 	lockdep_init();
-	/*!
-	 * lockdep은 사용하는 부분이 나오면 나중에 다시 보자
-	 */
+	/*! lockdep은 사용하는 부분이 나오면 나중에 다시 보자 */
 	smp_setup_processor_id();
-	/*!
-	 * 현재 부팅중인 프로세서의 식별 및 smp 지원 여부 체크
-	 */
+	/*! 현재 부팅중인 프로세서의 식별 및 smp 지원 여부 체크 */
 	debug_objects_early_init();
-	/*!
-	 * debug feature 는 추후 디테일하게 분석 예정
-	 */
+	/*! debug feature 는 나중에 디테일하게 분석 예정 */
 
 	/*
 	 * Set up the the initial canary ASAP:
 	 */
 	boot_init_stack_canary();
-	/*!
-	 * 까나리는 스택에 특정 값을 넣어서 오염도나 공격여부를 체크한다.
-	 */
+	/*! 까나리는 스택에 특정 값을 넣어서 오염도나 공격여부를 체크한다. */
 
 	cgroup_init_early();
+	/*! 아무일도 안함 */
 
 	local_irq_disable();
-	/* 인터럽트 금지 */
+	/*! 인터럽트 금지 */
 	early_boot_irqs_disabled = true;
 
 /*
  * Interrupts are still disabled. Do necessary setups, then
  * enable them
  */
-	/*! 현재 CPU의 online, active, present, possible bit를 set */
 	boot_cpu_init();
-	/*! 20130803 페이지 address를 위한 배열과 spin lock 초기화 */
+	/*! 현재 CPU의 online, active, present, possible bit를 set */
 	page_address_init();
-	/*! 20130803 리눅스 버전 출력 */
+	/*! 20130803 페이지 address를 위한 배열과 spin lock 초기화 */
 	pr_notice("%s", linux_banner);
+	/*! 20130803 리눅스 버전 출력 */
 	/*! 20130803 setup_arch 시작 */
 	setup_arch(&command_line);
 	/*! 20140111 아키텍처에 종속적인 설정 셋팅(메모리, device tree 등의 관련 자료구조 초기화)  */

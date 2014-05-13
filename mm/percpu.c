@@ -759,7 +759,7 @@ static void __percpu *pcpu_alloc(size_t size, size_t align, bool reserved)
 
 	/* serve reserved allocations from the reserved chunk if available */
 	if (reserved && pcpu_reserved_chunk) {
-		/*! 20140510 현재 reserved 가 false여서 여기 실행안됨 */
+	/*! 20140510 현재 reserved 가 false여서 여기 실행안됨 */
 		chunk = pcpu_reserved_chunk;
 
 		if (size > chunk->contig_hint) {
@@ -828,7 +828,6 @@ restart:
 
 	/* hmmm... no space left, create a new chunk */
 	spin_unlock_irqrestore(&pcpu_lock, flags);
-	/*! 20140510 cpsr의 irq info flag 원상복구, irq enable, spinlock 릴리즈 */
 
 	chunk = pcpu_create_chunk();
 	if (!chunk) {
