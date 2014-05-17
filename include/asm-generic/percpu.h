@@ -51,6 +51,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 	RELOC_HIDE((typeof(*(__p)) __kernel __force *)(__p), (__offset)); \
 })
 /*! 20140315 percpu를 초기화시키고 현재 cpu에 해당하는 percpu 주소값 */
+/*! 20140517 (typeof(__p)) (__p + (__offset)) */
 #endif
 
 /*
@@ -64,6 +65,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 
 #ifndef __this_cpu_ptr
 #define __this_cpu_ptr(ptr) SHIFT_PERCPU_PTR(ptr, __my_cpu_offset)
+/*! 20140517 현재 cpu의 percpu공간에서 ptr 주소를 얻는다. */
 #endif
 #ifdef CONFIG_DEBUG_PREEMPT
 #define this_cpu_ptr(ptr) SHIFT_PERCPU_PTR(ptr, my_cpu_offset)

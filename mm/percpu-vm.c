@@ -311,9 +311,14 @@ static int pcpu_populate_chunk(struct pcpu_chunk *chunk, int off, int size)
 	/* quick path, check whether all pages are already there */
 	rs = page_start;
 	pcpu_next_pop(chunk, &rs, &re, page_end);
+	/*! 20140517  populate bitmap에서 offset 위치에 해당하는 공간이 있는지 확인한다.
+	 * rs: page_start ~ page_end 에서 첫번째 1의 위치
+	 * re: page_start ~ page_end 에서 첫번째 0의 위치 
+	 */
 	if (rs == page_start && re == page_end)
 		goto clear;
 
+	/*! 20140517 TODO: 나중에 아래부분 하기로 하고 goto clear 로 감. */
 	/* need to allocate and map pages, this chunk can't be immutable */
 	WARN_ON(chunk->immutable);
 
@@ -341,6 +346,7 @@ static int pcpu_populate_chunk(struct pcpu_chunk *chunk, int off, int size)
 	bitmap_copy(chunk->populated, populated, pcpu_unit_pages);
 clear:
 	for_each_possible_cpu(cpu)
+		/*! 20140517 각 cpu별 off 위치에서 size만큼 0으로 초기화한다 */
 		memset((void *)pcpu_chunk_addr(chunk, cpu, 0) + off, 0, size);
 	return 0;
 

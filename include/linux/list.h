@@ -509,6 +509,7 @@ static inline void list_splice_tail_init(struct list_head *list,
 		n = list_entry(pos->member.next, typeof(*pos), member);	\
 	     &pos->member != (head); 					\
 	     pos = n, n = list_entry(n->member.next, typeof(*n), member))
+/*! 20140517 head부터 list 탐색 */
 
 /**
  * list_for_each_entry_safe_continue - continue list iteration safe against removal

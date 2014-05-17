@@ -302,6 +302,7 @@ void __init create_boot_cache(struct kmem_cache *s, const char *name, size_t siz
 	s->align = calculate_alignment(flags, ARCH_KMALLOC_MINALIGN, size);
 	/*! 20140405 s->align: 64 */
 	err = __kmem_cache_create(s, flags);
+	/*! 20140517 kmem_cache 관련 자료구조 초기화 */
 
 	if (err)
 		panic("Creation of kmalloc slab %s size=%zu failed. Reason %d\n",

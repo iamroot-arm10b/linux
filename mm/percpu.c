@@ -84,6 +84,7 @@
 	(void __percpu *)((unsigned long)(addr) -			\
 			  (unsigned long)pcpu_base_addr	+		\
 			  (unsigned long)__per_cpu_start)
+/*! 20140517 percpu 섹션에서 시작하는 주소를 구한다.  */
 #endif
 #ifndef __pcpu_ptr_to_addr
 #define __pcpu_ptr_to_addr(ptr)						\
@@ -247,6 +248,11 @@ static unsigned long pcpu_chunk_addr(struct pcpu_chunk *chunk,
 {
 	return (unsigned long)chunk->base_addr + pcpu_unit_offsets[cpu] +
 		(page_idx << PAGE_SHIFT);
+	/*! 20140517
+	 * base 에서 unit_offset 을 더하면 pcpu 공간이 나오고, 
+	 * base + pcpu_uint_offset 하면 어떤 CPU 인지 선택하는 것이고,
+	 * offset으로 위치를 찾아서 size만큼 초기화한다.
+	 */
 }
 
 static void __maybe_unused pcpu_next_unpop(struct pcpu_chunk *chunk,
@@ -260,7 +266,9 @@ static void __maybe_unused pcpu_next_pop(struct pcpu_chunk *chunk,
 					 int *rs, int *re, int end)
 {
 	*rs = find_next_bit(chunk->populated, end, *rs);
+	/*! 20140517 chunk->populated bitmap에서 rs 부터 end 사이에서 첫번째 1의 위치(offset)를 rs에 셋팅 */
 	*re = find_next_zero_bit(chunk->populated, end, *rs + 1);
+	/*! 20140517 chunk->populated bitmap에서 rs + 1 부터 end 사이에서 첫번째 0의 위치(offset)를 re에 셋팅 */
 }
 
 /*
@@ -844,6 +852,11 @@ area_found:
 
 	/* populate, map and clear the area */
 	if (pcpu_populate_chunk(chunk, off, size)) {
+	/*! 20140517 실제 할당받을 영역을 0으로 초기화한다.
+	 * 영역이 부족하면 할당한다.
+	 */
+
+		/*! 20140517 초기화 실패시 free한다. */
 		spin_lock_irqsave(&pcpu_lock, flags);
 		pcpu_free_area(chunk, off);
 		err = "failed to populate";
@@ -854,8 +867,10 @@ area_found:
 
 	/* return address relative to base address */
 	ptr = __addr_to_pcpu_ptr(chunk->base_addr + off);
+	/*! 20140517 percpu 섹션 기준 주소를 구한다.  */
 	kmemleak_alloc_percpu(ptr, size);
 	return ptr;
+	/*! 20140517 주소 반환 */
 
 fail_unlock:
 	spin_unlock_irqrestore(&pcpu_lock, flags);
@@ -888,6 +903,9 @@ fail_unlock_mutex:
 void __percpu *__alloc_percpu(size_t size, size_t align)
 {
 	return pcpu_alloc(size, align, false);
+	/*! 20140517 size만큼 percpu에서 공간을 할당한다. (cpu 갯수만큼)
+	 * 공간이 없으면 새로 할당한다.
+	 */
 }
 EXPORT_SYMBOL_GPL(__alloc_percpu);
 

@@ -47,6 +47,7 @@ static inline unsigned long __my_cpu_offset(void)
 	asm("mrc p15, 0, %0, c13, c0, 4" : "=r" (off) : "Q" (*sp));
 
 	return off;
+	/*! 20140517 각 cpu의 section으로부터의 percpu offset를 리턴한다.  */
 }
 #define __my_cpu_offset __my_cpu_offset()
 #else

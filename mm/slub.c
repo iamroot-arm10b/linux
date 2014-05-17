@@ -364,6 +364,7 @@ static inline int oo_objects(struct kmem_cache_order_objects x)
 static __always_inline void slab_lock(struct page *page)
 {
 	bit_spin_lock(PG_locked, &page->flags);
+	/*! 20140517 page에 대한 PG_locked bit락을 획득한다. */
 }
 
 static __always_inline void slab_unlock(struct page *page)
@@ -389,6 +390,7 @@ static inline bool __cmpxchg_double_slab(struct kmem_cache *s, struct page *page
 #endif
 	{
 		slab_lock(page);
+		/*! 20140517 여기까지 */
 		if (page->freelist == freelist_old && page->counters == counters_old) {
 			page->freelist = freelist_new;
 			page->counters = counters_new;
@@ -1569,6 +1571,9 @@ static inline void *acquire_slab(struct kmem_cache *s,
 	unsigned long counters;
 	struct page new;
 
+	/*! 20140517 현재 아래와 같은 인자로 호출되었다.
+	*/
+
 	/*
 	 * Zap the freelist and set the frozen bit.
 	 * The old freelist is the list of objects for the
@@ -1576,10 +1581,16 @@ static inline void *acquire_slab(struct kmem_cache *s,
 	 */
 	freelist = page->freelist;
 	counters = page->counters;
+	/*! 20140517 최초 호출시
+	 *  page->freelist는 할당된 slab 공간의 첫번째 free object을 가르킨다.
+	 *  page->counters = NULL
+	 */
 	new.counters = counters;
 	*objects = new.objects - new.inuse;
+	/*! 20140517 new는 local변수이기 때문에 *objests = 0 */
 	if (mode) {
 		new.inuse = page->objects;
+		/*! 20140517 page->objects : slab의 object 총개수 */
 		new.freelist = NULL;
 	} else {
 		new.freelist = freelist;
@@ -1587,6 +1598,15 @@ static inline void *acquire_slab(struct kmem_cache *s,
 
 	VM_BUG_ON(new.frozen);
 	new.frozen = 1;
+	/*! 20140517 object = NULL이고, 아래와 같이 호출된 경우,
+	 * new변수(struct page)는 아래와 같이 설정됨   
+	 *	t = acquire_slab(s, n, page, object == NULL, &objects);
+	 *
+	 * new.counts = 0,
+	 * new.inuse = page->objects
+	 * new.freelist = NULL
+	 * new.frozen = 1
+	  */
 
 	if (!__cmpxchg_double_slab(s, page,
 			freelist, counters,
@@ -1624,9 +1644,16 @@ static void *get_partial_node(struct kmem_cache *s, struct kmem_cache_node *n,
 
 	spin_lock(&n->list_lock);
 	list_for_each_entry_safe(page, page2, &n->partial, lru) {
+	/*! 20140517 
+	for (page = list_entry((&n->partial)->next, typeof(*page), lru),	\
+		page2 = list_entry(page->lru.next, typeof(*page), lru);		\
+		&page->lru != (&n->partial); 					\
+		page = page2, page2 = list_entry(page2->lru.next, typeof(*page2), lru))
+	*/
 		void *t;
 
 		if (!pfmemalloc_match(page, flags))
+		/*! 20140517 true가 리턴됨 */
 			continue;
 
 		t = acquire_slab(s, n, page, object == NULL, &objects);
@@ -1725,6 +1752,7 @@ static void *get_partial(struct kmem_cache *s, gfp_t flags, int node,
 {
 	void *object;
 	int searchnode = (node == NUMA_NO_NODE) ? numa_node_id() : node;
+	/*! 20140517 node == NUMA_NO_NODE이면, numa_node_id() = 0 을 리턴한다 */
 
 	object = get_partial_node(s, get_node(s, searchnode), c, flags);
 	if (object || node != NUMA_NO_NODE)
@@ -1766,6 +1794,7 @@ static inline unsigned long tid_to_event(unsigned long tid)
 static inline unsigned int init_tid(int cpu)
 {
 	return cpu;
+	/*! 20140517 cpu 번호를 그대로 리턴 */
 }
 
 static inline void note_cmpxchg_failure(const char *n,
@@ -1798,6 +1827,7 @@ static void init_kmem_cache_cpus(struct kmem_cache *s)
 
 	for_each_possible_cpu(cpu)
 		per_cpu_ptr(s->cpu_slab, cpu)->tid = init_tid(cpu);
+		/*! 20140517 각 cpu별로 cpu_slab->tid를 cpu 번호로 설정한다. */
 }
 
 /*
@@ -2223,8 +2253,10 @@ static inline void *new_slab_objects(struct kmem_cache *s, gfp_t flags,
 static inline bool pfmemalloc_match(struct page *page, gfp_t gfpflags)
 {
 	if (unlikely(PageSlabPfmemalloc(page)))
+		/*! 20140517 page에 PG_Active flag가 설정되면 여기가 실행된다 */
 		return gfp_pfmemalloc_allowed(gfpflags);
 
+	/*! 20140517 현재 PG_Active flag설정되지 않으므로 true리턴됨 */
 	return true;
 }
 
@@ -2293,9 +2325,11 @@ static void *__slab_alloc(struct kmem_cache *s, gfp_t gfpflags, int node,
 	 * pointer.
 	 */
 	c = this_cpu_ptr(s->cpu_slab);
+	/*! 20140517 현재 cpu의 cpu_slab pointer를 얻어온다. */
 #endif
 
 	page = c->page;
+	/*! 20140517 처음 실행시는 null 이기 때문에 new_slab 실행 */
 	if (!page)
 		goto new_slab;
 redo:
@@ -2350,6 +2384,7 @@ load_freelist:
 	return freelist;
 
 new_slab:
+	/*! 20140517 여기 실행 */
 
 	if (c->partial) {
 		page = c->page = c->partial;
@@ -2359,6 +2394,7 @@ new_slab:
 		goto redo;
 	}
 
+	/*! 20140517 최초 실행으로 partial이 없을 경우 아래쪽 실행 */
 	freelist = new_slab_objects(s, gfpflags, node, &c);
 
 	if (unlikely(!freelist)) {
@@ -2402,12 +2438,11 @@ static __always_inline void *slab_alloc_node(struct kmem_cache *s,
 	struct page *page;
 	unsigned long tid;
 
-	/*! 20140510 여기는 다시 분석해야 함. 안봤음 */
-	/*! 20140510 hook은 실행하지 않는다.  */
+	/*! 20140517 hook은 실행하지 않는다.  */
 	if (slab_pre_alloc_hook(s, gfpflags))
 		return NULL;
 
-	/*! 20140510 cgroup은 실행하지 않는다.  */
+	/*! 20140517 cgroup은 실행하지 않는다.  */
 	s = memcg_kmem_get_cache(s, gfpflags);
 redo:
 	/*
@@ -2421,9 +2456,10 @@ redo:
 	 * on a different processor between the determination of the pointer
 	 * and the retrieval of the tid.
 	 */
-	/*! 20140510 선점 금지 */
+	/*! 20140517 선점 금지 */
 	preempt_disable();
 	c = __this_cpu_ptr(s->cpu_slab);
+	/*! 20140517 현재 cpu의 percpu cpu_slab 변수 포인터를 얻는다 */
 
 	/*
 	 * The transaction ids are globally unique per cpu and per operation on
@@ -2432,11 +2468,14 @@ redo:
 	 * linked list in between.
 	 */
 	tid = c->tid;
+	/*! 20140517 cpu번호 */
 	preempt_enable();
+	/*! 20140517 선점 허용 */
 
 	object = c->freelist;
 	page = c->page;
 	if (unlikely(!object || !page || !node_match(page, node)))
+		/*! 20140517 object 또는 page가 null이면 이쪽 실행 */
 		object = __slab_alloc(s, gfpflags, node, addr, c);
 
 	else {
@@ -2891,10 +2930,13 @@ static inline int alloc_kmem_cache_cpus(struct kmem_cache *s)
 	s->cpu_slab = __alloc_percpu(sizeof(struct kmem_cache_cpu),
 				     2 * sizeof(void *));
 
+	/*! 20140517 kmem_cache_cpu 자료구조인 cpu_slab을 위해 percpu 공간을 할당한다. */
 	if (!s->cpu_slab)
 		return 0;
+	/*! 20140517 할당받지 못했으면 리턴 0 */
 
 	init_kmem_cache_cpus(s);
+	/*! 20140517 kmem_cache_cpu의 cpu 멤버를 cpu 번호로 초기화 */
 
 	return 1;
 }
@@ -2983,10 +3025,12 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 			/*! 20140426 여기까지 스터디 */
 			continue;
 		}
-		/*! 20140510 현재 slab_state가 DOWN이기 때문에 다음은 실행되지 않는다. */
+
+		/*! 20140517 slab_state가 DOWN이 아니면 아래가 실행된다
+		 *  현재 kmem_cache_node slab이 생성되어 slab_state=PARTIAL이다. */
 		n = kmem_cache_alloc_node(kmem_cache_node,
 						GFP_KERNEL, node);
-
+		/*! 20140517 include/linux/slab.h - kmem_cache_alloc_node() 실행됨 */
 		if (!n) {
 			free_kmem_cache_nodes(s);
 			return 0;
@@ -3221,9 +3265,11 @@ static int kmem_cache_open(struct kmem_cache *s, unsigned long flags)
 	/*! 20140510 전역 kmem_cache(slab) 초기화 */
 
 	if (alloc_kmem_cache_cpus(s))
+	/*! 20140517 pcpu kmem_cache_cpu 자료구조를 위한 공간 할당 및 초기화 */
 		return 0;
 
 	free_kmem_cache_nodes(s);
+	/*! 20140517 실패시 free한다.  */
 error:
 	if (flags & SLAB_PANIC)
 		panic("Cannot create slab %s size=%lu realsize=%u "
@@ -3746,16 +3792,21 @@ void __init kmem_cache_init(void)
 	/*! 20140412 kmem_cache_node는 kmem_cache 구조체로 선언된다. */
 	create_boot_cache(kmem_cache_node, "kmem_cache_node",
 		sizeof(struct kmem_cache_node), SLAB_HWCACHE_ALIGN);
+	/*! 20140517 kmem_cache_node를 위한 자료구조 초기화 */
 
 	register_hotmemory_notifier(&slab_memory_callback_nb);
 
 	/* Able to allocate the per node structures */
 	slab_state = PARTIAL;
+	/*! 20140517 드디어 slub 상태 partial. kmem_cache_node 사용가능 */
 
 	create_boot_cache(kmem_cache, "kmem_cache",
 			offsetof(struct kmem_cache, node) +
 				nr_node_ids * sizeof(struct kmem_cache_node *),
 		       SLAB_HWCACHE_ALIGN);
+	/*! 20140517 kmem_cache slab을 위한 자료구조 초기화.
+	 * node는 갯수만큼 할당한다.
+	 */
 
 	kmem_cache = bootstrap(&boot_kmem_cache);
 
@@ -3875,11 +3926,13 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 }
 
 int __kmem_cache_create(struct kmem_cache *s, unsigned long flags)
+/*! 20140517 kmem_cache 관련 자료구조 초기화 */
 {
 	int err;
 
 	/*! 20140419 여기 진입함 */
 	err = kmem_cache_open(s, flags);
+	/*! 20140517 (percpu) kmem_cache를 위한 자료구조 할당 및 초기화 */
 	if (err)
 		return err;
 
@@ -3887,6 +3940,7 @@ int __kmem_cache_create(struct kmem_cache *s, unsigned long flags)
 	if (slab_state <= UP)
 		return 0;
 
+	/*! 20140517 FULL일 때만 아래 실행 */
 	memcg_propagate_slab_attrs(s);
 	mutex_unlock(&slab_mutex);
 	err = sysfs_slab_add(s);
