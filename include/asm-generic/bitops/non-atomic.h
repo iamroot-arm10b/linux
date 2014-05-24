@@ -7,9 +7,7 @@
  * __set_bit - Set a bit in memory
  * @nr: the bit to set
  * @addr: the address to start counting from
- *
- * Unlike set_bit(), this function is non-atomic and may be reordered.
- * If it's called on the same region of memory simultaneously, the effect
+ * * Unlike set_bit(), this function is non-atomic and may be reordered.  * If it's called on the same region of memory simultaneously, the effect
  * may be that only one operation succeeds.
  */
 static inline void __set_bit(int nr, volatile unsigned long *addr)
@@ -24,9 +22,12 @@ static inline void __set_bit(int nr, volatile unsigned long *addr)
 static inline void __clear_bit(int nr, volatile unsigned long *addr)
 {
 	unsigned long mask = BIT_MASK(nr);
+	/*! 20140524 mask = 1 << (PG_locked % 32) (nr = PG_locked라고 가정) */
 	unsigned long *p = ((unsigned long *)addr) + BIT_WORD(nr);
+	/*! 20140524 BIT_WORKD(nr) = (PG_locked / 32) */
 
 	*p &= ~mask;
+	/*! 20140524 addr의 nr번째 bit을 clear 한다 */
 }
 
 /**

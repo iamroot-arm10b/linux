@@ -481,6 +481,7 @@ static inline void *kmem_cache_alloc_node(struct kmem_cache *cachep,
 					gfp_t flags, int node)
 {
 	return kmem_cache_alloc(cachep, flags);
+	/*! 20140524 cachep slab에서 object 할당 */
 }
 #endif /* !CONFIG_NUMA && !CONFIG_SLOB */
 
@@ -537,6 +538,9 @@ extern void *__kmalloc_node_track_caller(size_t, gfp_t, int, unsigned long);
 static inline void *kmem_cache_zalloc(struct kmem_cache *k, gfp_t flags)
 {
 	return kmem_cache_alloc(k, flags | __GFP_ZERO);
+	/*! 20140524 slab에서 object 할당 받아서 0으로 초기화
+	 *  => __GFP_ZERO flag 추가
+	 */
 }
 
 /**

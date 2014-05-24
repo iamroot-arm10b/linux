@@ -91,8 +91,10 @@ static inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
 #endif
 #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
 	__clear_bit_unlock(bitnum, addr);
+	/*! 20140524 bitnum = PG_locked, addr = &page->flags */
 #endif
 	preempt_enable();
+	/*! 20140524 선점 허용, bit_spin_lock()에서 선점 disable한다 */
 	__release(bitlock);
 }
 

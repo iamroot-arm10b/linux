@@ -40,6 +40,7 @@ do {					\
 	smp_mb();			\
 	__clear_bit(nr, addr);		\
 } while (0)
+/*! 20140524 addr의 nr번째 bit을 clear 한다 */
 
 #endif /* _ASM_GENERIC_BITOPS_LOCK_H_ */
 
