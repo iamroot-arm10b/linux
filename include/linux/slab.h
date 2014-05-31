@@ -200,6 +200,7 @@ struct kmem_cache {
  * passes the request to the page allocator.
  */
 #define KMALLOC_SHIFT_HIGH	(PAGE_SHIFT + 1)
+/*! 20140531 KMALLOC_SHIFT_HIGH: 12 + 1 */
 #define KMALLOC_SHIFT_MAX	(MAX_ORDER + PAGE_SHIFT)
 #ifndef KMALLOC_SHIFT_LOW
 #define KMALLOC_SHIFT_LOW	3
@@ -232,6 +233,7 @@ struct kmem_cache {
 #ifndef KMALLOC_MIN_SIZE
 #define KMALLOC_MIN_SIZE (1 << KMALLOC_SHIFT_LOW)
 #endif
+/*! 20140531 CONFIG_SLUB가 y이므로 KMALLOC_SHIFT_LOW: 3, KMALLOC_MIN_SIZE: 8 */
 
 #ifndef CONFIG_SLOB
 extern struct kmem_cache *kmalloc_caches[KMALLOC_SHIFT_HIGH + 1];

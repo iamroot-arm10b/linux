@@ -464,6 +464,7 @@ static inline int num_node_state(enum node_states state)
 	return 1;
 }
 
+/*! 20140531 여기 실행 */
 #define for_each_node_state(node, __state) \
 	for ( (node) = 0; (node) == 0; (node) = 1)
 

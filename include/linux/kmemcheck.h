@@ -98,6 +98,7 @@ kmemcheck_alloc_shadow(struct page *page, int order, gfp_t flags, int node)
 static inline void
 kmemcheck_free_shadow(struct page *page, int order)
 {
+	/*! 20140531 여기 실행 */
 }
 
 static inline void

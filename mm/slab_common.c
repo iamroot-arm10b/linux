@@ -315,12 +315,15 @@ struct kmem_cache *__init create_kmalloc_cache(const char *name, size_t size,
 				unsigned long flags)
 {
 	struct kmem_cache *s = kmem_cache_zalloc(kmem_cache, GFP_NOWAIT);
+	/*! 20140531 kmalloc을 위한 kmem_cache object 할당 */
 
 	if (!s)
 		panic("Out of memory when creating slab %s\n", name);
 
 	create_boot_cache(s, name, size, flags);
+	/*! 20140531 kmalloc cache 크기대로 cache 초기화*/
 	list_add(&s->list, &slab_caches);
+	/*! 20140531 slab 리스트 연결 */
 	s->refcount = 1;
 	return s;
 }
@@ -422,13 +425,16 @@ void __init create_kmalloc_caches(unsigned long flags)
 	 */
 	BUILD_BUG_ON(KMALLOC_MIN_SIZE > 256 ||
 		(KMALLOC_MIN_SIZE & (KMALLOC_MIN_SIZE - 1)));
+	/*! 20140531 BUG_ON은 pass. KMALLOC_MIN_SIZE: 8 */
 
 	for (i = 8; i < KMALLOC_MIN_SIZE; i += 8) {
 		int elem = size_index_elem(i);
+		/*! 20140531 (i-1)/8 , index를 변경함. */
 
 		if (elem >= ARRAY_SIZE(size_index))
 			break;
 		size_index[elem] = KMALLOC_SHIFT_LOW;
+		/*! 20140531 설정된 KMALLOC_MIN_SIZE 에 따라 최소값의 하한값을 설정한다. 우리는 해당없음 */
 	}
 
 	if (KMALLOC_MIN_SIZE >= 64) {
@@ -450,7 +456,9 @@ void __init create_kmalloc_caches(unsigned long flags)
 		for (i = 128 + 8; i <= 192; i += 8)
 			size_index[size_index_elem(i)] = 8;
 	}
+	/*! 20140531 size_index 를 KMALLOC_MIN_SIZE에 맞게 재설정한다. */
 	for (i = KMALLOC_SHIFT_LOW; i <= KMALLOC_SHIFT_HIGH; i++) {
+		/*! 20140531 KMALLOC_SHIFT_LOW: 3, KMALLOC_SHIFT_HIGH: 13 */
 		if (!kmalloc_caches[i]) {
 			kmalloc_caches[i] = create_kmalloc_cache(NULL,
 							1 << i, flags);
@@ -466,7 +474,9 @@ void __init create_kmalloc_caches(unsigned long flags)
 
 		if (KMALLOC_MIN_SIZE <= 64 && !kmalloc_caches[2] && i == 7)
 			kmalloc_caches[2] = create_kmalloc_cache(NULL, 192, flags);
+		/*! 20140531 kmalloc_caches 배열의 각 SIZE별 slab을 나타내는 kmem_cache 구조체 등록 */
 	}
+	/*! 20140531 여기까지 스터디 */
 
 	/* Kmalloc array is now usable */
 	slab_state = UP;

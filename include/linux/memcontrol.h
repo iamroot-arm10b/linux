@@ -581,6 +581,7 @@ memcg_kmem_newpage_charge(gfp_t gfp, struct mem_cgroup **memcg, int order)
 
 static inline void memcg_kmem_uncharge_pages(struct page *page, int order)
 {
+	/*! 20140531 여기실행. memcg: memory control group */
 }
 
 static inline void

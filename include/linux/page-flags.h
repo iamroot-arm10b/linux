@@ -202,6 +202,7 @@ PAGEFLAG(Referenced, referenced) TESTCLEARFLAG(Referenced, referenced)
 PAGEFLAG(Dirty, dirty) TESTSCFLAG(Dirty, dirty) __CLEARPAGEFLAG(Dirty, dirty)
 PAGEFLAG(LRU, lru) __CLEARPAGEFLAG(LRU, lru)
 PAGEFLAG(Active, active) __CLEARPAGEFLAG(Active, active)
+/*! 20140531 static inline void __ClearPageActive(struct page *page) { __clear_bit(PG_active, &page->flags); } */
 	TESTCLEARFLAG(Active, active)
 __PAGEFLAG(Slab, slab)
 /*! 20140426 static inline void SetPageSlab(struct page *page)  { set_bit(PG_slab, &page->flags); } */
@@ -488,6 +489,7 @@ static inline void __ClearPageSlabPfmemalloc(struct page *page)
 {
 	VM_BUG_ON(!PageSlab(page));
 	__ClearPageActive(page);
+	/*! 20140531 &page->flags 의 PG_active 자리의 bit를 clear한다. */
 }
 
 static inline void ClearPageSlabPfmemalloc(struct page *page)

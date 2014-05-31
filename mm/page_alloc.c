@@ -2978,7 +2978,9 @@ EXPORT_SYMBOL(free_pages);
 void __free_memcg_kmem_pages(struct page *page, unsigned int order)
 {
 	memcg_kmem_uncharge_pages(page, order);
+	/*! 20140531 아무일도 안함 */
 	__free_pages(page, order);
+	/*! 20140531 slab으로 사용하던 page를 buddy에 반환 */
 }
 
 void free_memcg_kmem_pages(unsigned long addr, unsigned int order)
