@@ -76,6 +76,7 @@ struct llist_node {
 static inline void init_llist_head(struct llist_head *list)
 {
 	list->first = NULL;
+	/*! 20140607 lock-less list 를 초기화한다. */
 }
 
 /**

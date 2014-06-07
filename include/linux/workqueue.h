@@ -67,9 +67,11 @@ enum {
 	 */
 	WORK_STRUCT_FLAG_BITS	= WORK_STRUCT_COLOR_SHIFT +
 				  WORK_STRUCT_COLOR_BITS,
+	/*! 20140607 WORK_STRUCT_FLAG_BITS: 8, WORK_STRUCT_COLOR_SHIFT: 4, WORK_STRUCT_COLOR_BITS: 4 */
 
 	/* data contains off-queue information when !WORK_STRUCT_PWQ */
 	WORK_OFFQ_FLAG_BASE	= WORK_STRUCT_COLOR_SHIFT,
+	/*! 20140607 WORK_OFFQ_FLAG_BASE: 4 */
 
 	WORK_OFFQ_CANCELING	= (1 << WORK_OFFQ_FLAG_BASE),
 
@@ -80,14 +82,19 @@ enum {
 	 */
 	WORK_OFFQ_FLAG_BITS	= 1,
 	WORK_OFFQ_POOL_SHIFT	= WORK_OFFQ_FLAG_BASE + WORK_OFFQ_FLAG_BITS,
+	/*! 20140607 WORK_OFFQ_POOL_SHIFT: 4 + 1 = 5 */
 	WORK_OFFQ_LEFT		= BITS_PER_LONG - WORK_OFFQ_POOL_SHIFT,
+	/*! 20140607 WORK_OFFQ_LEFT: 32 - 5 = 27 */
 	WORK_OFFQ_POOL_BITS	= WORK_OFFQ_LEFT <= 31 ? WORK_OFFQ_LEFT : 31,
+	/*! 20140607 WORK_OFFQ_POOL_BITS: 27 */
 	WORK_OFFQ_POOL_NONE	= (1LU << WORK_OFFQ_POOL_BITS) - 1,
+	/*! 20140607 WORK_OFFQ_POOL_NONE: 1 << 27 - 1 = 0x7FFFFFF */
 
 	/* convenience constants */
 	WORK_STRUCT_FLAG_MASK	= (1UL << WORK_STRUCT_FLAG_BITS) - 1,
 	WORK_STRUCT_WQ_DATA_MASK = ~WORK_STRUCT_FLAG_MASK,
 	WORK_STRUCT_NO_POOL	= (unsigned long)WORK_OFFQ_POOL_NONE << WORK_OFFQ_POOL_SHIFT,
+	/*! 20140607 WORK_STRUCT_NO_POOL: 0x7FFFFFF << 5 = 0xFFFFFFE0 */
 
 	/* bit mask for work_busy() return values */
 	WORK_BUSY_PENDING	= 1 << 0,
@@ -107,6 +114,7 @@ struct work_struct {
 };
 
 #define WORK_DATA_INIT()	ATOMIC_LONG_INIT(WORK_STRUCT_NO_POOL)
+/*! 20140607 WORK_DATA_INIT: 0xFFFFFFE0 */
 #define WORK_DATA_STATIC_INIT()	\
 	ATOMIC_LONG_INIT(WORK_STRUCT_NO_POOL | WORK_STRUCT_STATIC)
 
@@ -196,6 +204,7 @@ static inline unsigned int work_static(struct work_struct *work)
 	return *work_data_bits(work) & WORK_STRUCT_STATIC;
 }
 #else
+/*! 20140607 여기 실행됨 */
 static inline void __init_work(struct work_struct *work, int onstack) { }
 static inline void destroy_work_on_stack(struct work_struct *work) { }
 static inline unsigned int work_static(struct work_struct *work) { return 0; }
@@ -227,12 +236,14 @@ static inline unsigned int work_static(struct work_struct *work) { return 0; }
 		INIT_LIST_HEAD(&(_work)->entry);			\
 		PREPARE_WORK((_work), (_func));				\
 	} while (0)
+	/*! 20140607 (_work)->data: 0xFFFFFFE0 */
 #endif
 
 #define INIT_WORK(_work, _func)						\
 	do {								\
 		__INIT_WORK((_work), (_func), 0);			\
 	} while (0)
+	/*! 20140607 여기 실행됨 */
 
 #define INIT_WORK_ONSTACK(_work, _func)					\
 	do {								\

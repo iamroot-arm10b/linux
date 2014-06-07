@@ -135,12 +135,12 @@ enum mem_add_context { BOOT, HOTPLUG };
 	register_memory_notifier(&fn##_mem_nb);			\
 })
 #define register_hotmemory_notifier(nb)		register_memory_notifier(nb)
-/*! 20140517 hotplug 미지원이므로 패스 */
 #define unregister_hotmemory_notifier(nb) 	unregister_memory_notifier(nb)
 #else
 #define hotplug_memory_notifier(fn, pri)	({ 0; })
 /* These aren't inline functions due to a GCC bug. */
 #define register_hotmemory_notifier(nb)    ({ (void)(nb); 0; })
+/*! 20140517 hotplug 미지원이므로 패스 */
 #define unregister_hotmemory_notifier(nb)  ({ (void)(nb); })
 #endif
 

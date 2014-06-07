@@ -1643,7 +1643,7 @@ static inline void *acquire_slab(struct kmem_cache *s,
 	 * new.counts = 0,
 	 * new.inuse = page->objects * new.freelist = NULL
 	 * new.frozen = 1
-	  */
+	 */
 
 	if (!__cmpxchg_double_slab(s, page,
 			freelist, counters,
@@ -2478,7 +2478,6 @@ load_freelist:
 
 new_slab:
 	/*! 20140517 여기 실행 */
-
 	if (c->partial) {
 		page = c->page = c->partial;
 		c->partial = page->next;
@@ -2486,8 +2485,7 @@ new_slab:
 		c->freelist = NULL;
 		goto redo;
 	}
-
-	/*! 20140517 최초 실행으로 partial이 없을 경우 아래쪽 실행 */
+	/*! 20140517 최초 실행으로 partial이 NULL이기 때문에 if문 실행없이 여기가 실행됨 */
 
 	freelist = new_slab_objects(s, gfpflags, node, &c);
 	/*! 20140524 node의 partial list에서 cpu slab할당 받는다
@@ -2665,6 +2663,7 @@ EXPORT_SYMBOL(kmem_cache_alloc_trace);
 void *kmalloc_order_trace(size_t size, gfp_t flags, unsigned int order)
 {
 	void *ret = kmalloc_order(size, flags, order);
+	/*! 20140607 order 크기로 할당받은 page의 va를 리턴 받음 */
 	trace_kmalloc(_RET_IP_, ret, size, PAGE_SIZE << order, flags);
 	return ret;
 }
@@ -3150,7 +3149,8 @@ static int init_kmem_cache_nodes(struct kmem_cache *s)
 		}
 
 		/*! 20140517 slab_state가 DOWN이 아니면 아래가 실행된다
-		 *  현재 kmem_cache_node slab이 생성되어 slab_state=PARTIAL이다. */
+		 *  현재 kmem_cache_node slab이 생성되어 slab_state=PARTIAL이다.
+		 */
 		n = kmem_cache_alloc_node(kmem_cache_node,
 						GFP_KERNEL, node);
 		/*! 20140517 include/linux/slab.h - kmem_cache_alloc_node() 실행됨 */
@@ -3541,13 +3541,16 @@ void *__kmalloc(size_t size, gfp_t flags)
 
 	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
 		return kmalloc_large(size, flags);
+		/*! 20140607 size가 8192보다 크면 size에 맞는 order 크기로 할당받은 page의 va를 리턴 */
 
 	s = kmalloc_slab(size, flags);
+	/*! 20140607 size에 맞는 kmem_cache 구조체 반환 */
 
 	if (unlikely(ZERO_OR_NULL_PTR(s)))
 		return s;
 
 	ret = slab_alloc(s, flags, _RET_IP_);
+	/*! 20140524 slab에서 object 할당 */
 
 	trace_kmalloc(_RET_IP_, ret, size, s->size, flags);
 
@@ -3927,6 +3930,7 @@ void __init kmem_cache_init(void)
 	/*! 20140517 kmem_cache_node를 위한 자료구조 초기화 */
 
 	register_hotmemory_notifier(&slab_memory_callback_nb);
+	/*! 20140517 아무일도 안함 */
 
 	/* Able to allocate the per node structures */
 	slab_state = PARTIAL;
@@ -3954,9 +3958,15 @@ void __init kmem_cache_init(void)
 
 	/* Now we can use the kmem_cache to allocate kmalloc slabs */
 	create_kmalloc_caches(0);
+	/*! 20140607 slab_state: UP으로 바뀜 
+	 * kmalloc_caches 배열을 초기화하고 각 배열인자인 kmem_cache->name에 값 할당
+	 */
 
 #ifdef CONFIG_SMP
 	register_cpu_notifier(&slab_notifier);
+	/*! 20140607 cpu_notifier에 slab_notifier를 추가등록한다.
+	 * slab_cpuup_callback 함수를 등록해 둔다.
+	 */
 #endif
 
 	printk(KERN_INFO
@@ -4061,8 +4071,8 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 }
 
 int __kmem_cache_create(struct kmem_cache *s, unsigned long flags)
-/*! 20140517 kmem_cache 관련 자료구조 초기화 */
 {
+	/*! 20140517 kmem_cache 관련 자료구조 초기화 */
 	int err;
 
 	err = kmem_cache_open(s, flags);
@@ -4119,6 +4129,7 @@ static int slab_cpuup_callback(struct notifier_block *nfb,
 
 static struct notifier_block slab_notifier = {
 	.notifier_call = slab_cpuup_callback
+	/*! 20140607 여기 참조 */
 };
 
 #endif
@@ -4129,14 +4140,18 @@ void *__kmalloc_track_caller(size_t size, gfp_t gfpflags, unsigned long caller)
 	void *ret;
 
 	if (unlikely(size > KMALLOC_MAX_CACHE_SIZE))
+		/*! 20140607 KMALLOC_MAX_CACHE_SIZE: 8192 */
 		return kmalloc_large(size, gfpflags);
+	/*! 20140607 KMALLOC_MAX_CACHE_SIZE보다 큰 경우 buddy에서 크기에 맞는 page를 할당받음 */
 
 	s = kmalloc_slab(size, gfpflags);
+	/*! 20140607 size에 맞는 kmem_cache 구조체를 가져옴 */
 
 	if (unlikely(ZERO_OR_NULL_PTR(s)))
 		return s;
 
 	ret = slab_alloc(s, gfpflags, caller);
+	/*! 20140607 s에서 object를 하나 할당 받아옴 */
 
 	/* Honor the call site pointer we received. */
 	trace_kmalloc(caller, ret, size, s->size, gfpflags);

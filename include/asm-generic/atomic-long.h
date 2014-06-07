@@ -143,6 +143,7 @@ static inline long atomic_long_add_unless(atomic_long_t *l, long a, long u)
 typedef atomic_t atomic_long_t;
 
 #define ATOMIC_LONG_INIT(i)	ATOMIC_INIT(i)
+/*! 20140607 여기 실행됨 */
 static inline long atomic_long_read(atomic_long_t *l)
 {
 	atomic_t *v = (atomic_t *)l;

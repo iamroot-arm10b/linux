@@ -115,7 +115,9 @@ kmalloc_order(size_t size, gfp_t flags, unsigned int order)
 
 	flags |= (__GFP_COMP | __GFP_KMEMCG);
 	ret = (void *) __get_free_pages(flags, order);
+	/*! 20140607 order 크기로 할당받은 page의 va를 리턴 받음 */
 	kmemleak_alloc(ret, size, 1, flags);
+	/*! 20140607 CONFIG_DEBUG_KMEMLEAK가 꺼져있으므로 아무일도 안함 */
 	return ret;
 }
 
@@ -141,6 +143,7 @@ static __always_inline void *
 kmem_cache_alloc_trace(struct kmem_cache *s, gfp_t gfpflags, size_t size)
 {
 	return kmem_cache_alloc(s, gfpflags);
+	/*! 20140524 slab에서 object 할당 */
 }
 
 static __always_inline void *
@@ -154,25 +157,31 @@ static __always_inline void *kmalloc_large(size_t size, gfp_t flags)
 {
 	unsigned int order = get_order(size);
 	return kmalloc_order_trace(size, flags, order);
+	/*! 20140607 order 크기로 할당받은 page의 va를 리턴 */
 }
 
 static __always_inline void *kmalloc(size_t size, gfp_t flags)
 {
 	if (__builtin_constant_p(size)) {
 		if (size > KMALLOC_MAX_CACHE_SIZE)
+			/*! 20140607 size가 8192보다 크면 buddy에서 메모리 할당받음 */
 			return kmalloc_large(size, flags);
 
 		if (!(flags & GFP_DMA)) {
 			int index = kmalloc_index(size);
+			/*! 20140607 size에 맞는 kmalloc_caches의 index를 얻어옴 */
 
 			if (!index)
+				/*! 20140607 index를 못받아오면 ZERO_SIZE_PTR 반환 */
 				return ZERO_SIZE_PTR;
 
 			return kmem_cache_alloc_trace(kmalloc_caches[index],
 					flags, size);
+			/*! 20140607 slab에서 할당받은 object 주소를 넘겨준다. */
 		}
 	}
 	return __kmalloc(size, flags);
+	/*! 20140607 slab에서 할당받은 object 주소를 넘겨준다. */
 }
 
 #ifdef CONFIG_NUMA

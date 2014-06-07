@@ -307,7 +307,9 @@ static void *pcpu_mem_zalloc(size_t size)
 		return NULL;
 
 	if (size <= PAGE_SIZE)
+	/*! 20140607 size가 4096보다 작으면 여기 실행 */
 		return kzalloc(size, GFP_KERNEL);
+		/*! 20140607 slab에서 할당받은 object 주소를 넘겨준다. */
 	else
 		return vzalloc(size);
 }
@@ -2090,15 +2092,18 @@ void __init percpu_init_late(void)
 	for (i = 0; (chunk = target_chunks[i]); i++) {
 		int *map;
 		const size_t size = PERCPU_DYNAMIC_EARLY_SLOTS * sizeof(map[0]);
+		/*! 20140607 size: 512 */
 
 		BUILD_BUG_ON(size > PAGE_SIZE);
 
 		map = pcpu_mem_zalloc(size);
+		/*! 20140607 slab에서 할당받은 object 주소를 받아온다. */
 		BUG_ON(!map);
 
 		spin_lock_irqsave(&pcpu_lock, flags);
 		memcpy(map, chunk->map, size);
 		chunk->map = map;
+		/*! 20140607 chunk->map 공간을 slab의 공간으로 이전한다. */
 		spin_unlock_irqrestore(&pcpu_lock, flags);
 	}
 }

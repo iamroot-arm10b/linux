@@ -2925,9 +2925,11 @@ unsigned long __get_free_pages(gfp_t gfp_mask, unsigned int order)
 	VM_BUG_ON((gfp_mask & __GFP_HIGHMEM) != 0);
 
 	page = alloc_pages(gfp_mask, order);
+	/*! 20140607 order 크기의 페이지를 buddy로부터 할당받음 */
 	if (!page)
 		return 0;
 	return (unsigned long) page_address(page);
+	/*! 20140607 page의 va 반환 */
 }
 EXPORT_SYMBOL(__get_free_pages);
 

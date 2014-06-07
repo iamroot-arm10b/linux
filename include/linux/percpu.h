@@ -59,6 +59,7 @@
  * larger than PERCPU_DYNAMIC_EARLY_SIZE.
  */
 #define PERCPU_DYNAMIC_EARLY_SLOTS	128
+/*! 20140607 여기 참조 */
 #define PERCPU_DYNAMIC_EARLY_SIZE	(12 << 10)
 
 /*

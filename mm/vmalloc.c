@@ -308,6 +308,7 @@ static void __insert_vmap_area(struct vmap_area *va)
 	struct rb_node *tmp;
 
 	while (*p) {
+		/*! 20140607 p에 새로 추가될 node의 위치를 할당한다. */
 		struct vmap_area *tmp_va;
 
 		parent = *p;
@@ -318,10 +319,13 @@ static void __insert_vmap_area(struct vmap_area *va)
 			p = &(*p)->rb_right;
 		else
 			BUG();
+		/*! 20140607 start와 end가 역순으로 되거나 overflow되는 경우에 bug */
 	}
 
 	rb_link_node(&va->rb_node, parent, p);
+	/*! 20140607 rb_node 초기화 */
 	rb_insert_color(&va->rb_node, &vmap_area_root);
+	/*! 20140607 TODO: rbtree 분석해야 함. 어려워서 나중에 보기로 함 */
 
 	/* address-sort this list */
 	tmp = rb_prev(&va->rb_node);
@@ -331,6 +335,7 @@ static void __insert_vmap_area(struct vmap_area *va)
 		list_add_rcu(&va->list, &prev->list);
 	} else
 		list_add_rcu(&va->list, &vmap_area_list);
+	/*! 20140607 삽입할 노드의 바로 이전 값에 list를 추가한다. */
 }
 
 static void purge_vmap_area_lazy(void);
@@ -344,6 +349,7 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
 				unsigned long vstart, unsigned long vend,
 				int node, gfp_t gfp_mask)
 {
+	/*! 20140607 TODO: 나중에 다시 분석하기로 함. */
 	struct vmap_area *va;
 	struct rb_node *n;
 	unsigned long addr;
@@ -356,6 +362,7 @@ static struct vmap_area *alloc_vmap_area(unsigned long size,
 
 	va = kmalloc_node(sizeof(struct vmap_area),
 			gfp_mask & GFP_RECLAIM_MASK, node);
+	/*! 20140607 vmap_area 크기에 맞는 slab에서 할당받아온 object의 주소를 받아온다. */
 	if (unlikely(!va))
 		return ERR_PTR(-ENOMEM);
 
@@ -402,17 +409,21 @@ nocache:
 		while (n) {
 			struct vmap_area *tmp;
 			tmp = rb_entry(n, struct vmap_area, rb_node);
+			/*! 20140607 rb_node 주소를 가리키는 n이 속해있는 vmap_area 구조체의 시작주소를 가져온다. */
 			if (tmp->va_end >= addr) {
 				first = tmp;
 				if (tmp->va_start <= addr)
 					break;
+				/*! 20140607 addr가 기존주소에 포함되어 있으면 정지한다. */
 				n = n->rb_left;
 			} else
 				n = n->rb_right;
 		}
+		/*! 20140607 rb_tree 탐색하여 addr를 넣을 위치를 찾는다. */
 
 		if (!first)
 			goto found;
+		/*! 20140607 처음에는 first 가 NULL 이므로 goto found */
 	}
 
 	/* from the starting point, walk areas until a suitable hole is found */
@@ -1184,15 +1195,22 @@ void __init vmalloc_init(void)
 	int i;
 
 	for_each_possible_cpu(i) {
+	/*! 20140517 possible한 cpu들을 하나씩 돌면서 실행 */
 		struct vmap_block_queue *vbq;
 		struct vfree_deferred *p;
 
 		vbq = &per_cpu(vmap_block_queue, i);
+		/*! 20140607 현재 CPU의 vmap_block_queue 변수를 가져옴 */
 		spin_lock_init(&vbq->lock);
 		INIT_LIST_HEAD(&vbq->free);
 		p = &per_cpu(vfree_deferred, i);
+		/*! 20140607 현재 CPU의 vfree_deferred 변수를 가져옴 */
 		init_llist_head(&p->list);
 		INIT_WORK(&p->wq, free_work);
+		/*! 20140607 p->wq(work struct) 초기화
+		 * p->wq->data: 0xFFFFFFE0
+		 * p->wq->func: free_work
+		 */
 	}
 
 	/* Import existing vmlist entries. */
@@ -1203,6 +1221,7 @@ void __init vmalloc_init(void)
 		va->va_end = va->va_start + tmp->size;
 		va->vm = tmp;
 		__insert_vmap_area(va);
+		/*! 20140607 vmlist의 각 요소를 vmap_area_root.rb_node에 추가하여 rbtree 로 관리한다. */
 	}
 
 	vmap_area_pcpu_hole = VMALLOC_END;
@@ -1322,12 +1341,15 @@ static struct vm_struct *__get_vm_area_node(unsigned long size,
 	BUG_ON(in_interrupt());
 	if (flags & VM_IOREMAP)
 		align = 1ul << clamp(fls(size), PAGE_SHIFT, IOREMAP_MAX_ORDER);
+	/*! 20140607 fls(size)의 상한값, 하한값을 결정한다. */
 
 	size = PAGE_ALIGN(size);
+	/*! 20140607 page align한 size를 가져온다. */
 	if (unlikely(!size))
 		return NULL;
 
 	area = kzalloc_node(sizeof(*area), gfp_mask & GFP_RECLAIM_MASK, node);
+	/*! 20140607 vm_struct 크기의 slab에서 할당받아온 object의 주소를 받아온다. */
 	if (unlikely(!area))
 		return NULL;
 
@@ -1646,6 +1668,7 @@ void *__vmalloc_node_range(unsigned long size, unsigned long align,
 	if (!size || (size >> PAGE_SHIFT) > totalram_pages)
 		goto fail;
 
+	/*! 20140607 여기 진입함 */
 	area = __get_vm_area_node(size, align, VM_ALLOC | VM_UNINITIALIZED,
 				  start, end, node, gfp_mask, caller);
 	if (!area)
@@ -1695,6 +1718,7 @@ static void *__vmalloc_node(unsigned long size, unsigned long align,
 			    gfp_t gfp_mask, pgprot_t prot,
 			    int node, const void *caller)
 {
+	/*! 20140607 여기 진입함 */
 	return __vmalloc_node_range(size, align, VMALLOC_START, VMALLOC_END,
 				gfp_mask, prot, node, caller);
 }
@@ -1709,6 +1733,7 @@ EXPORT_SYMBOL(__vmalloc);
 static inline void *__vmalloc_node_flags(unsigned long size,
 					int node, gfp_t flags)
 {
+	/*! 20140607 여기 진입함 */
 	return __vmalloc_node(size, 1, flags, PAGE_KERNEL,
 					node, __builtin_return_address(0));
 }
@@ -1741,6 +1766,7 @@ EXPORT_SYMBOL(vmalloc);
  */
 void *vzalloc(unsigned long size)
 {
+	/*! 20140607 여기진입함 */
 	return __vmalloc_node_flags(size, NUMA_NO_NODE,
 				GFP_KERNEL | __GFP_HIGHMEM | __GFP_ZERO);
 }

@@ -372,6 +372,7 @@ static s8 size_index[24] = {
 static inline int size_index_elem(size_t bytes)
 {
 	return (bytes - 1) / 8;
+	/*! 20140607 bytes의 index에 맞는 값 리턴 */
 }
 
 /*
@@ -383,6 +384,7 @@ struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags)
 	int index;
 
 	if (size > KMALLOC_MAX_SIZE) {
+		/*! 20140607 KMALLOC_MAX_SIZE:13 => 이보다 size가 크면 null 리턴 */
 		WARN_ON_ONCE(!(flags & __GFP_NOWARN));
 		return NULL;
 	}
@@ -390,10 +392,13 @@ struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags)
 	if (size <= 192) {
 		if (!size)
 			return ZERO_SIZE_PTR;
+			/*! 20140607 size가 0일때 오류값(ZERO_SIZE_PTR) 리턴 */
 
 		index = size_index[size_index_elem(size)];
+		/*! 20140607 size가 192이하인 경우 size_index배열에서 kmalloc_caches의 index를 구함 */
 	} else
 		index = fls(size - 1);
+	/*! 20140607 size에 맞는 kmalloc_caches의 index를 구함 */
 
 #ifdef CONFIG_ZONE_DMA
 	if (unlikely((flags & GFP_DMA)))
@@ -401,6 +406,7 @@ struct kmem_cache *kmalloc_slab(size_t size, gfp_t flags)
 
 #endif
 	return kmalloc_caches[index];
+	/*! 20140607 size에 맞는 kmem_cache 구조체 반환 */
 }
 
 /*
@@ -482,14 +488,18 @@ void __init create_kmalloc_caches(unsigned long flags)
 	slab_state = UP;
 
 	for (i = 0; i <= KMALLOC_SHIFT_HIGH; i++) {
+		/*! 20140607 KMALLOC_SHIFT_HIGH: 13 */
 		struct kmem_cache *s = kmalloc_caches[i];
+		/*! 20140607 아직 kmalloc_caches[0]은 어디에서 설정되는지 모름 */
 		char *n;
 
 		if (s) {
 			n = kasprintf(GFP_NOWAIT, "kmalloc-%d", kmalloc_size(i));
+			/*! 20140607 slab 또는 buddy에서 공간을 할당받아 string를 복사한 주소를 받아온다. */
 
 			BUG_ON(!n);
 			s->name = n;
+			/*! 20140607 kmalloc-%d 문자열을 가리키는 포인터 할당 */
 		}
 	}
 

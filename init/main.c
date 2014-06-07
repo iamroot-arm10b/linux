@@ -491,9 +491,13 @@ static void __init mm_init(void)
 	mem_init();
 	/*! 20140405 bootmem(lowmem), highmem 의 가용메모리를 buddy 시스템으로 변환한다. */
 	kmem_cache_init();
+	/*! 20140607 slab을 위한 kmem_cache 구조체들을 초기화한다. */
 	percpu_init_late();
+	/*! 20140607 기존의 pcpu_first_chunk, pcpu_reservered_chunk 의 allocation map을 slab 공간으로 이전한다. */
 	pgtable_cache_init();
+	/*! 20140607 아무일도 안함 */
 	vmalloc_init();
+	/*! 20140607 vmalloc 관련 구조체 초기화하고 기존에 작성한 vmlist를 slab 기반의 list와 rbtree로 이전한다. */
 }
 
 asmlinkage void __init start_kernel(void)
@@ -592,6 +596,12 @@ asmlinkage void __init start_kernel(void)
 	trap_init();
 	/*! 20140309 아무일안함 */
 	mm_init();
+	/*! 20140607 vmalloc과 rbtree는 다시 확인하기로 하고 여기까지 함.
+	 * 1. bootmem(lowmem), highmem 의 가용메모리를 buddy 시스템으로 변환
+	 * 2. slab을 위한 kmem_cache 구조체 초기화
+	 * 3. 기존의 pcpu_first_chunk, pcpu_reservered_chunk 의 allocation map을 slab 공간으로 이전
+	 * 4. vmalloc 관련 구조체 초기화하고 기존에 작성한 vmlist를 slab 기반의 list와 rbtree로 이전
+	 */
 
 	/*
 	 * Set up the scheduler prior starting any interrupts (such as the

@@ -90,6 +90,7 @@
  * Both make kfree a no-op.
  */
 #define ZERO_SIZE_PTR ((void *)16)
+/*! 20140607 여기 실행 */
 
 #define ZERO_OR_NULL_PTR(x) ((unsigned long)(x) <= \
 				(unsigned long)ZERO_SIZE_PTR)
@@ -224,6 +225,7 @@ struct kmem_cache {
 #define KMALLOC_MAX_SIZE	(1UL << KMALLOC_SHIFT_MAX)
 /* Maximum size for which we actually use a slab cache */
 #define KMALLOC_MAX_CACHE_SIZE	(1UL << KMALLOC_SHIFT_HIGH)
+/*! 20140607 KMALLOC_MAX_CACHE_SIZE: 1 << 13 = 8192 */
 /* Maximum order allocatable via the slab allocagtor */
 #define KMALLOC_MAX_ORDER	(KMALLOC_SHIFT_MAX - PAGE_SHIFT)
 
@@ -251,6 +253,7 @@ extern struct kmem_cache *kmalloc_dma_caches[KMALLOC_SHIFT_HIGH + 1];
  */
 static __always_inline int kmalloc_index(size_t size)
 {
+	/*! 20140607 size에 맞는 kmalloc_caches배열의 index를 반환 */
 	if (!size)
 		return 0;
 
@@ -322,6 +325,7 @@ static __always_inline int kmalloc_size(int n)
 	if (n == 2 && KMALLOC_MIN_SIZE <= 64)
 		return 192;
 #endif
+	/*! 20140607 n에 맞는 slab object 크기를 반환 */
 	return 0;
 }
 
@@ -469,6 +473,7 @@ static inline void *kcalloc(size_t n, size_t size, gfp_t flags)
 static inline void *kmalloc_node(size_t size, gfp_t flags, int node)
 {
 	return kmalloc(size, flags);
+	/*! 20140607 size에 맞는 slab에서 할당받아온 object의 주소를 넘겨준다. */
 }
 
 static inline void *__kmalloc_node(size_t size, gfp_t flags, int node)
@@ -498,6 +503,7 @@ static inline void *kmem_cache_alloc_node(struct kmem_cache *cachep,
 #if defined(CONFIG_DEBUG_SLAB) || defined(CONFIG_SLUB) || \
 	(defined(CONFIG_SLAB) && defined(CONFIG_TRACING)) || \
 	(defined(CONFIG_SLOB) && defined(CONFIG_TRACING))
+/*! 20140607 여기 진입함 */
 extern void *__kmalloc_track_caller(size_t, gfp_t, unsigned long);
 #define kmalloc_track_caller(size, flags) \
 	__kmalloc_track_caller(size, flags, _RET_IP_)
@@ -553,6 +559,7 @@ static inline void *kmem_cache_zalloc(struct kmem_cache *k, gfp_t flags)
 static inline void *kzalloc(size_t size, gfp_t flags)
 {
 	return kmalloc(size, flags | __GFP_ZERO);
+	/*! 20140607 slab에서 할당받은 object 주소를 넘겨준다. */
 }
 
 /**
@@ -564,6 +571,7 @@ static inline void *kzalloc(size_t size, gfp_t flags)
 static inline void *kzalloc_node(size_t size, gfp_t flags, int node)
 {
 	return kmalloc_node(size, flags | __GFP_ZERO, node);
+	/*! 20140607 size에 맞는 slab에서 할당받아온 object의 주소를 넘겨준다. */
 }
 
 /*

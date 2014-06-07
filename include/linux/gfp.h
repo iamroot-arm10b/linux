@@ -378,6 +378,7 @@ extern struct page *alloc_pages_vma(gfp_t gfp_mask, int order,
 #else
 #define alloc_pages(gfp_mask, order) \
 		alloc_pages_node(numa_node_id(), gfp_mask, order)
+/*! 20140607 여기 수행됨. numa_node_id(): 0, order 크기의 page를 buddy로부터 할당받음 */
 #define alloc_pages_vma(gfp_mask, order, vma, addr, node)	\
 	alloc_pages(gfp_mask, order)
 #endif

@@ -71,6 +71,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 #define this_cpu_ptr(ptr) SHIFT_PERCPU_PTR(ptr, my_cpu_offset)
 #else
 #define this_cpu_ptr(ptr) __this_cpu_ptr(ptr)
+/*! 20140517 여기 실행됨 */
 #endif
 
 #define __get_cpu_var(var) (*this_cpu_ptr(&(var)))

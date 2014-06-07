@@ -336,6 +336,7 @@ static inline pte_t pte_modify(pte_t pte, pgprot_t newprot)
 #define HAVE_ARCH_UNMAPPED_AREA_TOPDOWN
 
 #define pgtable_cache_init() do { } while (0)
+/*! 20140607 여기 실행됨 */
 
 #endif /* !__ASSEMBLY__ */
 

@@ -385,6 +385,7 @@ static const struct rb_augment_callbacks dummy_callbacks = {
 
 void rb_insert_color(struct rb_node *node, struct rb_root *root)
 {
+	/*! 20140607 TODO: rbtree 분석해야 함. 어려워서 나중에 보기로 함 */
 	__rb_insert(node, root, dummy_rotate);
 }
 EXPORT_SYMBOL(rb_insert_color);
@@ -490,6 +491,7 @@ struct rb_node *rb_prev(const struct rb_node *node)
 			node=node->rb_right;
 		return (struct rb_node *)node;
 	}
+	/*! 20140607 왼쪽 자식노드에서 오른쪽 자식의 마지막 노드가 prev 값이다. */
 
 	/*
 	 * No left-hand children. Go up till we find an ancestor which
@@ -497,6 +499,7 @@ struct rb_node *rb_prev(const struct rb_node *node)
 	 */
 	while ((parent = rb_parent(node)) && node == parent->rb_left)
 		node = parent;
+	/*! 20140607 부모 노드로 올라가면서 부모노드의 오른쪽 자식노드가 있는 부모노드의 값이 prev 값 */
 
 	return parent;
 }

@@ -64,6 +64,7 @@ static inline void kmemleak_init(void)
 static inline void kmemleak_alloc(const void *ptr, size_t size, int min_count,
 				  gfp_t gfp)
 {
+	/*! 20140607 아무것도 안함 */
 }
 static inline void kmemleak_alloc_recursive(const void *ptr, size_t size,
 					    int min_count, unsigned long flags,

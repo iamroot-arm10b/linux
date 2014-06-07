@@ -48,6 +48,7 @@ struct rb_root {
 
 #define RB_ROOT	(struct rb_root) { NULL, }
 #define	rb_entry(ptr, type, member) container_of(ptr, type, member)
+/*! 20140607 member가 속한 구조체의 시작주소를 가져온다. */
 
 #define RB_EMPTY_ROOT(root)  ((root)->rb_node == NULL)
 
@@ -76,9 +77,11 @@ static inline void rb_link_node(struct rb_node * node, struct rb_node * parent,
 				struct rb_node ** rb_link)
 {
 	node->__rb_parent_color = (unsigned long)parent;
+	/*! 20140607 __rb_parent_color는 주소정보와 하위1bit로 색깔을 나타낸다.  */
 	node->rb_left = node->rb_right = NULL;
 
 	*rb_link = node;
+	/*! 20140607 rb_node 초기화 */
 }
 
 #endif	/* _LINUX_RBTREE_H */
