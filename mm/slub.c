@@ -392,7 +392,7 @@ static inline bool __cmpxchg_double_slab(struct kmem_cache *s, struct page *page
 #endif
 	{
 		slab_lock(page);
-		/*! 20140517 page에 대해 PG_locked bit락을 획득 */
+		/*! 20140517 여기까지 함. page에 대해 PG_locked bit락을 획득 */
 		if (page->freelist == freelist_old && page->counters == counters_old) {
 		/*! 20140524 현재 여기가 실행됨, 부팅초반이기 때문에
 		 * if가 true이면, acquire_slab(), __cpxchg_double_slab() 사이에 slab 변화 없었음
@@ -1661,7 +1661,7 @@ static inline void *acquire_slab(struct kmem_cache *s,
 	/*! 20140524 page을 kmem_cache_node->partial list에서 제거 */
 	WARN_ON(!freelist);
 	return freelist;
-	/*! 20140524 page에서 freelist 가져오서 리터한다 */
+	/*! 20140524 page에서 freelist 가져와서 리턴한다 */
 }
 
 static void put_cpu_partial(struct kmem_cache *s, struct page *page, int drain);
@@ -1690,11 +1690,10 @@ static void *get_partial_node(struct kmem_cache *s, struct kmem_cache_node *n,
 	spin_lock(&n->list_lock);
 	list_for_each_entry_safe(page, page2, &n->partial, lru) {
 	/*! 20140517 
-	for (page = list_entry((&n->partial)->next, typeof(*page), lru),	\
-		page2 = list_entry(page->lru.next, typeof(*page), lru);		\
-		&page->lru != (&n->partial); 					\
-		page = page2, page2 = list_entry(page2->lru.next, typeof(*page2), lru))
-	*/
+	 * for (page = list_entry((&n->partial)->next, typeof(*page), lru),
+	 *	page2 = list_entry(page->lru.next, typeof(*page), lru);	&page->lru != (&n->partial);
+	 *	page = page2, page2 = list_entry(page2->lru.next, typeof(*page2), lru))
+	 */
 		void *t;
 
 		if (!pfmemalloc_match(page, flags))
@@ -2600,17 +2599,18 @@ redo:
 				s->cpu_slab->freelist, s->cpu_slab->tid,
 				object, tid,
 				next_object, next_tid(tid)))) {
-			/*! 20140524 s->cpu_slab->freelist크기가 4이므로, __this_cpu_cmpxchg_double_4(...) 
-			 *  => __this_cpu_generic_cmpxchg_double(...) {
-				int __ret = 0;							
-				if (__this_cpu_read(s->cpu_slab->freelist) == (object) &&
-						 __this_cpu_read(s->cpu_slab->tid)  == (tid)) {	
-					__this_cpu_write(s->cpu_slab->freelist, next_object);
-					__this_cpu_write(s->cpu_slab->tid, next_tid(tid));
-					__ret = 1;					
-				}						
-					(__ret);			
-				})
+			/*! 20140524 s->cpu_slab->freelist 크기가 4이므로, __this_cpu_cmpxchg_double_4(...) 
+			 * =>	__this_cpu_generic_cmpxchg_double(...)
+			 *	({
+			 *		int __ret = 0;
+			 *		if (__this_cpu_read(s->cpu_slab->freelist) == (object) &&
+			 *				 __this_cpu_read(s->cpu_slab->tid)  == (tid)) {
+			 *			__this_cpu_write(s->cpu_slab->freelist, next_object);
+			 *			__this_cpu_write(s->cpu_slab->tid, next_tid(tid));
+			 *			__ret = 1;
+			 *		}
+			 *		(__ret);
+			 *	})
 			 */
 
 			note_cmpxchg_failure("slab_alloc", s, tid);

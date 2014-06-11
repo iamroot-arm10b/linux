@@ -229,6 +229,7 @@ extern void __bad_size_call_parameter(void);
 	}								\
 	pdcrb_ret__;							\
 })
+/*! 20140524 pcp1 값에 따라 함수명이 정해짐 */
 
 #define __pcpu_size_call(stem, variable, ...)				\
 do {									\
@@ -520,6 +521,7 @@ do {									\
 # endif
 # define this_cpu_cmpxchg_double(pcp1, pcp2, oval1, oval2, nval1, nval2)	\
 	__pcpu_double_call_return_bool(this_cpu_cmpxchg_double_, (pcp1), (pcp2), (oval1), (oval2), (nval1), (nval2))
+/*! 20140524 여기 실행 */
 #endif
 
 /*
@@ -742,6 +744,7 @@ do {									\
 	}								\
 	(__ret);							\
 })
+/*! 20140524 여기가 실행됨 */
 
 #ifndef __this_cpu_cmpxchg_double
 # ifndef __this_cpu_cmpxchg_double_1
@@ -755,6 +758,7 @@ do {									\
 # ifndef __this_cpu_cmpxchg_double_4
 #  define __this_cpu_cmpxchg_double_4(pcp1, pcp2, oval1, oval2, nval1, nval2)	\
 	__this_cpu_generic_cmpxchg_double(pcp1, pcp2, oval1, oval2, nval1, nval2)
+	/*! 20140524 여기 실행됨 */
 # endif
 # ifndef __this_cpu_cmpxchg_double_8
 #  define __this_cpu_cmpxchg_double_8(pcp1, pcp2, oval1, oval2, nval1, nval2)	\
