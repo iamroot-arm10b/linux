@@ -64,9 +64,13 @@ __rb_rotate_set_parents(struct rb_node *old, struct rb_node *new,
 			struct rb_root *root, int color)
 {
 	struct rb_node *parent = rb_parent(old);
+	/*! 20140614 old의 부모를 얻는다.  */
 	new->__rb_parent_color = old->__rb_parent_color;
+	/*! 20140614 old의 부모와 색깔을 new로 승계한다.  */
 	rb_set_parent_color(old, new, color);
+	/*! 20140614 old에 새로운 색상을 입한다.  */
 	__rb_change_child(old, new, parent, root);
+	/*! 20140614 부모의 left 또는 right 알맞은 위치에 new를 연결한다.  */
 }
 
 static __always_inline void
@@ -75,6 +79,7 @@ __rb_insert(struct rb_node *node, struct rb_root *root,
 {
 	struct rb_node *parent = rb_red_parent(node), *gparent, *tmp;
 
+	/*! 20140614 rbtree: http://ezbeat.tistory.com/417 참조 */
 	while (true) {
 		/*
 		 * Loop invariant: node is red
@@ -85,15 +90,19 @@ __rb_insert(struct rb_node *node, struct rb_root *root,
 		 */
 		if (!parent) {
 			rb_set_parent_color(node, NULL, RB_BLACK);
+			/*! 20140614 root 인 경우에 BLACK */
 			break;
 		} else if (rb_is_black(parent))
 			break;
+			/*! 20140614 parent가 black이면 더이상 변경 없이 종료 */
 
 		gparent = rb_red_parent(parent);
 
 		tmp = gparent->rb_right;
+		/*! 20140614 tmp는 uncle */
 		if (parent != tmp) {	/* parent == gparent->rb_left */
 			if (tmp && rb_is_red(tmp)) {
+			/*! 20140614 uncle과 parant가 red일때 */
 				/*
 				 * Case 1 - color flips
 				 *
@@ -109,14 +118,19 @@ __rb_insert(struct rb_node *node, struct rb_root *root,
 				 */
 				rb_set_parent_color(tmp, gparent, RB_BLACK);
 				rb_set_parent_color(parent, gparent, RB_BLACK);
+				/*! 20140614 parent와 uncle을 black으로 바꾸어준다. */
 				node = gparent;
 				parent = rb_parent(node);
 				rb_set_parent_color(node, parent, RB_RED);
+				/*! 20140614 gparent는 red로 바꾸어주고, 현재node를 parent로 설정하여 계속. */
 				continue;
 			}
 
+			/*! 20140614 여기까지 오면 uncle은 black */
+
 			tmp = parent->rb_right;
 			if (node == tmp) {
+			/*! 20140614 node(red)가 parent의 right 인 경우 */
 				/*
 				 * Case 2 - left rotate at parent
 				 *
@@ -136,8 +150,11 @@ __rb_insert(struct rb_node *node, struct rb_root *root,
 							    RB_BLACK);
 				rb_set_parent_color(parent, node, RB_RED);
 				augment_rotate(parent, node);
+				/*! 20140614 augment_rotate: 현재 dummy_rotate 로 설정되어 아무일도 안함 */
 				parent = node;
 				tmp = node->rb_right;
+				/*! 20140614 right node와 parent를 left rotate 시킨다. */
+				/*! 20140614 case 2의 경우는 case 3로 가서 회전을 1번 더 한다. */
 			}
 
 			/*
@@ -150,16 +167,29 @@ __rb_insert(struct rb_node *node, struct rb_root *root,
 			 *    n                   U
 			 */
 			gparent->rb_left = tmp;  /* == parent->rb_right */
+			/*! 20140614 p의 오른쪽 자식을 g의 왼쪽에 연결 */
 			parent->rb_right = gparent;
+			/*! 20140614 gparent 기준으로 right rotate */
 			if (tmp)
 				rb_set_parent_color(tmp, gparent, RB_BLACK);
+			/*! 20140614 p의 자식이 있을 경우 검은색으로 변환*/
 			__rb_rotate_set_parents(gparent, parent, root, RB_RED);
+			/*! 20140614 회전한 g의 색깔을 붉은색으로 설정 */
 			augment_rotate(gparent, parent);
+			/*! 20140614 augment_rotate: 현재 dummy_rotate 로 설정되어 아무일도 안함 */
 			break;
 		} else {
+			/*! 20140614 node가 gparent의 right인 경우 위의 동작과 대칭 */
 			tmp = gparent->rb_left;
 			if (tmp && rb_is_red(tmp)) {
 				/* Case 1 - color flips */
+				/*
+				 *       G            g
+				 *      / \          / \
+				 *     p   u  -->   P   U
+				 *                       \
+				 *                        n
+				 */
 				rb_set_parent_color(tmp, gparent, RB_BLACK);
 				rb_set_parent_color(parent, gparent, RB_BLACK);
 				node = gparent;
@@ -385,8 +415,8 @@ static const struct rb_augment_callbacks dummy_callbacks = {
 
 void rb_insert_color(struct rb_node *node, struct rb_root *root)
 {
-	/*! 20140607 TODO: rbtree 분석해야 함. 어려워서 나중에 보기로 함 */
 	__rb_insert(node, root, dummy_rotate);
+	/*! 20140614 rbtree 이용하여 node insert 함 */
 }
 EXPORT_SYMBOL(rb_insert_color);
 

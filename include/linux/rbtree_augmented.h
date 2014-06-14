@@ -105,6 +105,7 @@ static inline void rb_set_parent_color(struct rb_node *rb,
 				       struct rb_node *p, int color)
 {
 	rb->__rb_parent_color = (unsigned long)p | color;
+	/*! 20140614 rb의 p(parent)와 color를 설정한다. */
 }
 
 static inline void
@@ -114,10 +115,13 @@ __rb_change_child(struct rb_node *old, struct rb_node *new,
 	if (parent) {
 		if (parent->rb_left == old)
 			parent->rb_left = new;
+		/*! 20140614 부모의 왼쪽이면 왼쪽에 연결 */
 		else
 			parent->rb_right = new;
+		/*! 20140614 부모의 오른쪽이면 오른쪽에 연결 */
 	} else
 		root->rb_node = new;
+		/*! 20140614 parent에 없으면 root node에 연결 */
 }
 
 extern void __rb_erase_color(struct rb_node *parent, struct rb_root *root,

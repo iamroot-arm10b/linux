@@ -34,6 +34,7 @@
 
 struct rb_node {
 	unsigned long  __rb_parent_color;
+	/*! 20140614 부모의 주소와 자기의 색을 한 변수로 사용하는 것 */
 	struct rb_node *rb_right;
 	struct rb_node *rb_left;
 } __attribute__((aligned(sizeof(long))));

@@ -313,6 +313,7 @@ static void __insert_vmap_area(struct vmap_area *va)
 
 		parent = *p;
 		tmp_va = rb_entry(parent, struct vmap_area, rb_node);
+		/*! 20140614 rb_node가 속한 구조체의 시작주소를 가져온다. */
 		if (va->va_start < tmp_va->va_end)
 			p = &(*p)->rb_left;
 		else if (va->va_end > tmp_va->va_start)
@@ -323,9 +324,9 @@ static void __insert_vmap_area(struct vmap_area *va)
 	}
 
 	rb_link_node(&va->rb_node, parent, p);
-	/*! 20140607 rb_node 초기화 */
+	/*! 20140607 rb_node 초기화하여 연결시킴 */
 	rb_insert_color(&va->rb_node, &vmap_area_root);
-	/*! 20140607 TODO: rbtree 분석해야 함. 어려워서 나중에 보기로 함 */
+	/*! 20140614 rbtree 이용하여 node insert 함 */
 
 	/* address-sort this list */
 	tmp = rb_prev(&va->rb_node);
