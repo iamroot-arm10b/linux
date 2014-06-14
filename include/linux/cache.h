@@ -29,6 +29,7 @@
 #endif /* CONFIG_SMP */
 #endif
 
+/*! 20140614 여기 참조함 */
 #ifndef __cacheline_aligned
 #define __cacheline_aligned					\
   __attribute__((__aligned__(SMP_CACHE_BYTES),			\

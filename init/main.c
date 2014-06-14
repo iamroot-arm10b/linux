@@ -608,6 +608,7 @@ asmlinkage void __init start_kernel(void)
 	 * timer interrupt). Full topology setup happens at smp_init()
 	 * time - but meanwhile we still have a functioning scheduler.
 	 */
+	/*! 20140614 스케줄링 시작 */
 	sched_init();
 	/*
 	 * Disable preemption - early bootup scheduling is extremely

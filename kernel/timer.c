@@ -52,6 +52,7 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/timer.h>
 
+/*! 20140614 여기에 jiffies_64 로 선언되어 있다. */
 u64 jiffies_64 __cacheline_aligned_in_smp = INITIAL_JIFFIES;
 
 EXPORT_SYMBOL(jiffies_64);

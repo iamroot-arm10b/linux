@@ -153,6 +153,7 @@ struct hrtimer_clock_base {
 	ktime_t			offset;
 };
 
+/*! 20140614 이 enum을 사용한다. */
 enum  hrtimer_base_type {
 	HRTIMER_BASE_MONOTONIC,
 	HRTIMER_BASE_REALTIME,

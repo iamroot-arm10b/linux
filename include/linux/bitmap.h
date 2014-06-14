@@ -155,6 +155,7 @@ extern int bitmap_ord_to_pos(const unsigned long *bitmap, int n, int bits);
 
 #define small_const_nbits(nbits) \
 	(__builtin_constant_p(nbits) && (nbits) <= BITS_PER_LONG)
+/*! 20140614 __builtin_constant_p(nbits): nbits가 상수면 true */
 
 static inline void bitmap_zero(unsigned long *dst, int nbits)
 {
@@ -164,6 +165,7 @@ static inline void bitmap_zero(unsigned long *dst, int nbits)
 		int len = BITS_TO_LONGS(nbits) * sizeof(unsigned long);
 		memset(dst, 0, len);
 	}
+	/*! 20140614 4byte면 0, 그보다 크면 0으로 memset */
 }
 
 static inline void bitmap_fill(unsigned long *dst, int nbits)

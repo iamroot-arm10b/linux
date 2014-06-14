@@ -45,6 +45,7 @@
  */
 union ktime {
 	s64	tv64;
+	/*! 20140614 tv64만 선언된다. */
 #if BITS_PER_LONG != 64 && !defined(CONFIG_KTIME_SCALAR)
 	struct {
 # ifdef __BIG_ENDIAN
@@ -94,6 +95,7 @@ static inline ktime_t ktime_set(const long secs, const unsigned long nsecs)
  */
 #define ktime_add_ns(kt, nsval) \
 		({ (ktime_t){ .tv64 = (kt).tv64 + (nsval) }; })
+/*! 20140614 여기가 실행됨 */
 
 /*
  * Subtract a scalar nanosecod from a ktime_t variable
@@ -375,6 +377,7 @@ static inline ktime_t ns_to_ktime(u64 ns)
 	static const ktime_t ktime_zero = { .tv64 = 0 };
 
 	return ktime_add_ns(ktime_zero, ns);
+	/*! 20140614 ktime_zero.tv64 + ns */
 }
 
 static inline ktime_t ms_to_ktime(u64 ms)

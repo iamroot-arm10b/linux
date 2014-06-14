@@ -5033,6 +5033,7 @@ static int init_rootdomain(struct root_domain *rd)
 {
 	memset(rd, 0, sizeof(*rd));
 
+	/*! 20140614 alloc_cpumask_var: true 가 리턴됨 */
 	if (!alloc_cpumask_var(&rd->span, GFP_KERNEL))
 		goto out;
 	if (!alloc_cpumask_var(&rd->online, GFP_KERNEL))
@@ -5042,6 +5043,7 @@ static int init_rootdomain(struct root_domain *rd)
 
 	if (cpupri_init(&rd->cpupri) != 0)
 		goto free_rto_mask;
+	/*! 20140614 rd->cpupri 구조체 초기화 */
 	return 0;
 
 free_rto_mask:
@@ -5063,8 +5065,10 @@ struct root_domain def_root_domain;
 static void init_defrootdomain(void)
 {
 	init_rootdomain(&def_root_domain);
+	/*! 20140614 def_root_domain 구조체 초기화 */
 
 	atomic_set(&def_root_domain.refcount, 1);
+	/*! 20140614 def_root_domain.refcount = 1 로 설정 */
 }
 
 static struct root_domain *alloc_rootdomain(void)
@@ -6438,10 +6442,14 @@ void __init sched_init(void)
 
 #ifdef CONFIG_SMP
 	init_defrootdomain();
+	/*! 20140614 def_root_domain  초기화 */
 #endif
 
 	init_rt_bandwidth(&def_rt_bandwidth,
 			global_rt_period(), global_rt_runtime());
+	/*! 20140614 global_rt_period: 1000000 * 1000L (1초) , global_rt_runtime: 950000000 (0.95초)
+	 * def_rt_bandwidth->rt_period_timer 초기화
+	 */
 
 #ifdef CONFIG_RT_GROUP_SCHED
 	init_rt_bandwidth(&root_task_group.rt_bandwidth,
@@ -6460,6 +6468,7 @@ void __init sched_init(void)
 		struct rq *rq;
 
 		rq = cpu_rq(i);
+		/*! 20140614 i번호의 cpu run_queue 를 가져온다. */
 		raw_spin_lock_init(&rq->lock);
 		rq->nr_running = 0;
 		rq->calc_load_active = 0;

@@ -38,12 +38,20 @@ void init_rt_bandwidth(struct rt_bandwidth *rt_b, u64 period, u64 runtime)
 {
 	rt_b->rt_period = ns_to_ktime(period);
 	rt_b->rt_runtime = runtime;
+	/*! 20140614 nano sec 단위값으로 넣어줌
+	 * rt_b->rt_period = 1초
+	 * rt_b->rt_runtime = 0.95초
+	 */
 
 	raw_spin_lock_init(&rt_b->rt_runtime_lock);
+	/*! 20140614 spin_lock 초기화 */
 
+	/*! 20140614 rt_b->rt_period_timer 초기화 */
 	hrtimer_init(&rt_b->rt_period_timer,
 			CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	/*! 20140614 CLOCK_MONOTONIC: 1, HRTIMER_MODE_REL: 0x1 */
 	rt_b->rt_period_timer.function = sched_rt_period_timer;
+	/*! 20140614 rt_b->rt_period_timer.function 초기화 */
 }
 
 static void start_rt_bandwidth(struct rt_bandwidth *rt_b)

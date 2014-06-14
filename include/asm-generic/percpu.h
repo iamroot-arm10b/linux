@@ -76,6 +76,7 @@ extern unsigned long __per_cpu_offset[NR_CPUS];
 
 #define __get_cpu_var(var) (*this_cpu_ptr(&(var)))
 #define __raw_get_cpu_var(var) (*__this_cpu_ptr(&(var)))
+/*! 20140614 여기 실행됨 */
 
 #ifdef CONFIG_HAVE_SETUP_PER_CPU_AREA
 extern void setup_per_cpu_areas(void);

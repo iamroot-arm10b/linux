@@ -536,8 +536,10 @@ static inline int cpu_of(struct rq *rq)
 }
 
 DECLARE_PER_CPU(struct rq, runqueues);
+/*! 20140614 struct rq type의 runqueues를 cpu 갯수만큼 선언하는 것 */
 
 #define cpu_rq(cpu)		(&per_cpu(runqueues, (cpu)))
+/*! 20140614 cpu의 runqueues를 가져온다. */
 #define this_rq()		(&__get_cpu_var(runqueues))
 #define task_rq(p)		cpu_rq(task_cpu(p))
 #define cpu_curr(cpu)		(cpu_rq(cpu)->curr)
@@ -786,6 +788,9 @@ extern bool numabalancing_enabled;
 static inline u64 global_rt_period(void)
 {
 	return (u64)sysctl_sched_rt_period * NSEC_PER_USEC;
+	/*! 20140614 sysctl_sched_rt_period: 1000000, NSEC_PER_USEC: 1000L 
+	 * micro sec 단위의 설정값을 nano sec 단위값으로 변환
+	 */
 }
 
 static inline u64 global_rt_runtime(void)
@@ -794,6 +799,7 @@ static inline u64 global_rt_runtime(void)
 		return RUNTIME_INF;
 
 	return (u64)sysctl_sched_rt_runtime * NSEC_PER_USEC;
+	/*! 20140614 950000 * 1000L */
 }
 
 

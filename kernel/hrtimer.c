@@ -61,6 +61,7 @@
  * to reach a base using a clockid, hrtimer_clockid_to_base()
  * is used to convert from clockid to the proper hrtimer_base_type.
  */
+/*! 20140614 여기 참조됨 */
 DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
 {
 
@@ -94,6 +95,7 @@ DEFINE_PER_CPU(struct hrtimer_cpu_base, hrtimer_bases) =
 	}
 };
 
+/*! 20140614 이 구조체 사용 */
 static const int hrtimer_clock_to_base_table[MAX_CLOCKS] = {
 	[CLOCK_REALTIME]	= HRTIMER_BASE_REALTIME,
 	[CLOCK_MONOTONIC]	= HRTIMER_BASE_MONOTONIC,
@@ -104,6 +106,7 @@ static const int hrtimer_clock_to_base_table[MAX_CLOCKS] = {
 static inline int hrtimer_clockid_to_base(clockid_t clock_id)
 {
 	return hrtimer_clock_to_base_table[clock_id];
+	/*! 20140614 해당 clock_id 의 HRTIMER_BASE 값을 받아온다.(enum hrtimer_base_type) */
 }
 
 
@@ -1184,13 +1187,24 @@ static void __hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 	memset(timer, 0, sizeof(struct hrtimer));
 
 	cpu_base = &__raw_get_cpu_var(hrtimer_bases);
+	/*! 20140614 현재 cpu의 hrtimer_bases 변수의 주소값을 가져온다. */
 
 	if (clock_id == CLOCK_REALTIME && mode != HRTIMER_MODE_ABS)
 		clock_id = CLOCK_MONOTONIC;
 
 	base = hrtimer_clockid_to_base(clock_id);
+	/*! 20140614 해당 clock_id 의 HRTIMER_BASE 값을 받아온다.(enum hrtimer_base_type) */
 	timer->base = &cpu_base->clock_base[base];
+	/*! 20140614 base가 HRTIMER_BASE_MONOTONIC 일 경우,
+	 * {
+	 * 	.index = HRTIMER_BASE_MONOTONIC,
+	 * 	.clockid = CLOCK_MONOTONIC,
+	 * 	.get_time = &ktime_get,
+	 * 	.resolution = KTIME_LOW_RES,
+	 * },
+	 */
 	timerqueue_init(&timer->node);
+	/*! 20140614 timer->node 를 초기화 */
 
 #ifdef CONFIG_TIMER_STATS
 	timer->start_site = NULL;
@@ -1209,7 +1223,11 @@ void hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 		  enum hrtimer_mode mode)
 {
 	debug_init(timer, clock_id, mode);
+	/*! 20140614 debug는 pass */
 	__hrtimer_init(timer, clock_id, mode);
+	/*! 20140614 timer 구조체 초기화. 
+	 * timer->node, timer->base, 나머지는 0 으로 초기화
+	 */
 }
 EXPORT_SYMBOL_GPL(hrtimer_init);
 

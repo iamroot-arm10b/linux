@@ -212,15 +212,18 @@ int cpupri_init(struct cpupri *cp)
 	memset(cp, 0, sizeof(*cp));
 
 	for (i = 0; i < CPUPRI_NR_PRIORITIES; i++) {
+		/*! 20140614 CPUPRI_NR_PRIORITIES: 102 */
 		struct cpupri_vec *vec = &cp->pri_to_cpu[i];
 
 		atomic_set(&vec->count, 0);
 		if (!zalloc_cpumask_var(&vec->mask, GFP_KERNEL))
+			/*! 20140614 vec->mask를 0으로 초기화 */
 			goto cleanup;
 	}
 
 	for_each_possible_cpu(i)
 		cp->cpu_to_pri[i] = CPUPRI_INVALID;
+	/*! 20140614 cpu bitmap에서 possible한 cpu들을 CPUPRI_INVALID로 초기화한다. */
 	return 0;
 
 cleanup:

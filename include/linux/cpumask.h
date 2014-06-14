@@ -334,6 +334,7 @@ static inline void cpumask_setall(struct cpumask *dstp)
 static inline void cpumask_clear(struct cpumask *dstp)
 {
 	bitmap_zero(cpumask_bits(dstp), nr_cpumask_bits);
+	/*! 20140614 dstp->bits = 0 으로 초기화함 */
 }
 
 /**
@@ -688,6 +689,7 @@ typedef struct cpumask cpumask_var_t[1];
 
 static inline bool alloc_cpumask_var(cpumask_var_t *mask, gfp_t flags)
 {
+	/*! 20140614 여기 실행됨 */
 	return true;
 }
 
@@ -699,7 +701,9 @@ static inline bool alloc_cpumask_var_node(cpumask_var_t *mask, gfp_t flags,
 
 static inline bool zalloc_cpumask_var(cpumask_var_t *mask, gfp_t flags)
 {
+	/*! 20140614 cpumask_var_t *mask: struct cpumask *mask[1] */
 	cpumask_clear(*mask);
+	/*! 20140614 mask->bits를 0으로 clear함 */
 	return true;
 }
 

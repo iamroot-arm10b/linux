@@ -58,6 +58,7 @@ struct rb_root {
 	((node)->__rb_parent_color == (unsigned long)(node))
 #define RB_CLEAR_NODE(node)  \
 	((node)->__rb_parent_color = (unsigned long)(node))
+/*! 20140614 rbnode의 parent를 자기자신으로 초기화 */
 
 
 extern void rb_insert_color(struct rb_node *, struct rb_root *);

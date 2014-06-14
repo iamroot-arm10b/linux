@@ -67,6 +67,9 @@ extern int register_refined_jiffies(long clock_tick_rate);
  * an 8-byte variable may not be correctly accessed unless we force the issue
  */
 #define __jiffy_data  __attribute__((section(".data")))
+/*! 20140614 arch/arm/kernel/vmlinux.lds.S 에 정의되어 있다.
+ * http://hooneyo.tistory.com/entry/지피-jiffy 참고
+ */
 
 /*
  * The 64-bit value is not atomic - you MUST NOT read it
@@ -75,6 +78,7 @@ extern int register_refined_jiffies(long clock_tick_rate);
  */
 extern u64 __jiffy_data jiffies_64;
 extern unsigned long volatile __jiffy_data jiffies;
+/*! 20140614 os time tick 단위로 1씩 증가하는 변수. kernel log에서 uptime 찍히는 값 */
 
 #if (BITS_PER_LONG < 64)
 u64 get_jiffies_64(void);

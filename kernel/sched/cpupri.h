@@ -4,6 +4,7 @@
 #include <linux/sched.h>
 
 #define CPUPRI_NR_PRIORITIES	(MAX_RT_PRIO + 2)
+/*! 20140614 CPUPRI_NR_PRIORITIES: 100 + 2 */
 
 #define CPUPRI_INVALID -1
 #define CPUPRI_IDLE     0
@@ -25,6 +26,7 @@ int  cpupri_find(struct cpupri *cp,
 		 struct task_struct *p, struct cpumask *lowest_mask);
 void cpupri_set(struct cpupri *cp, int cpu, int pri);
 int cpupri_init(struct cpupri *cp);
+/*! 20140614 여기가 실행됨 */
 void cpupri_cleanup(struct cpupri *cp);
 #else
 #define cpupri_set(cp, cpu, pri) do { } while (0)
