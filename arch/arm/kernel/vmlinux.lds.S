@@ -50,7 +50,7 @@ jiffies = jiffies_64;
 #else
 jiffies = jiffies_64 + 4;
 #endif
-/*! 20140614 kerner/timer.c 에서 jiffies_64 선언됨 */
+/*! 20140614 kernel/timer.c 에서 jiffies_64 선언됨 */
 /*! 20140614 http://hooneyo.tistory.com/entry/지피-jiffy 참고 */
 
 SECTIONS

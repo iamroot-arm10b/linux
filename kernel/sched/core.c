@@ -6473,6 +6473,10 @@ void __init sched_init(void)
 		rq->nr_running = 0;
 		rq->calc_load_active = 0;
 		rq->calc_load_update = jiffies + LOAD_FREQ;
+		/*! 20140614 여기까지 스터디함. jiffies 선언 부분까지 찾음.
+		 * include/linux/jiffies.h, arch/arm/kernel/vmlinux.lds.S,
+		 * kernel/timer.c, include/linux/cache.h 참고
+		 */
 		init_cfs_rq(&rq->cfs);
 		init_rt_rq(&rq->rt, rq);
 #ifdef CONFIG_FAIR_GROUP_SCHED
