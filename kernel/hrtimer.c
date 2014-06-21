@@ -1226,7 +1226,14 @@ void hrtimer_init(struct hrtimer *timer, clockid_t clock_id,
 	/*! 20140614 debug는 pass */
 	__hrtimer_init(timer, clock_id, mode);
 	/*! 20140614 timer 구조체 초기화. 
-	 * timer->node, timer->base, 나머지는 0 으로 초기화
+	 * clock_id == CLOCK_MONOTONIC일 경우,
+	 * timer->base = {
+	 * 	.index = HRTIMER_BASE_MONOTONIC,
+	 * 	.clockid = CLOCK_MONOTONIC,
+	 * 	.get_time = &ktime_get,
+	 * 	.resolution = KTIME_LOW_RES,
+	 * }
+	 * timer->node 초기화, 나머지값은 0 으로 초기화
 	 */
 }
 EXPORT_SYMBOL_GPL(hrtimer_init);

@@ -76,6 +76,8 @@ unsigned long long __attribute__((weak)) sched_clock(void)
 {
 	return (unsigned long long)(jiffies - INITIAL_JIFFIES)
 					* (NSEC_PER_SEC / HZ);
+	/*! 20140621 (jiffies + 60000) * 5000000 = (jiffies - (-60000)) * (1000000000L / 200) */
+	/*! 20140621 jiffies 를 초단위 시간으로 변환하여 리턴 */
 }
 EXPORT_SYMBOL_GPL(sched_clock);
 

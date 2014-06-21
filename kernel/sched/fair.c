@@ -5945,12 +5945,15 @@ void init_cfs_rq(struct cfs_rq *cfs_rq)
 {
 	cfs_rq->tasks_timeline = RB_ROOT;
 	cfs_rq->min_vruntime = (u64)(-(1LL << 20));
+	/*! 20140621 cfs_rq->tasks_timeline, min_vruntime 초기화 */
 #ifndef CONFIG_64BIT
 	cfs_rq->min_vruntime_copy = cfs_rq->min_vruntime;
 #endif
 #ifdef CONFIG_SMP
 	atomic64_set(&cfs_rq->decay_counter, 1);
+	/*! 20140621 cfs_rq->decay_counter = 1 */
 	atomic_long_set(&cfs_rq->removed_load, 0);
+	/*! 20140621 cfs_rq->removed_load = 0 */
 #endif
 }
 

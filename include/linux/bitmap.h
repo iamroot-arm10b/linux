@@ -182,6 +182,7 @@ static inline void bitmap_copy(unsigned long *dst, const unsigned long *src,
 			int nbits)
 {
 	if (small_const_nbits(nbits))
+		/*! 20140621 nbits가 상수일때 여기 실행 */
 		*dst = *src;
 	else {
 		int len = BITS_TO_LONGS(nbits) * sizeof(unsigned long);

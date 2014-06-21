@@ -479,6 +479,7 @@ static inline void init_hrtick(void)
 }
 #endif /* CONFIG_SMP */
 
+/*! 20140621 여기 실행됨 */
 static void init_rq_hrtick(struct rq *rq)
 {
 #ifdef CONFIG_SMP
@@ -486,11 +487,14 @@ static void init_rq_hrtick(struct rq *rq)
 
 	rq->hrtick_csd.flags = 0;
 	rq->hrtick_csd.func = __hrtick_start;
+	/*! 20140621 rq->hrtick_csd.func 함수포인터를 __hrtick_start 으로 설정 */
 	rq->hrtick_csd.info = rq;
 #endif
 
 	hrtimer_init(&rq->hrtick_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	/*! 20140621 rq->hrtick_timer 초기화 */
 	rq->hrtick_timer.function = hrtick;
+	/*! 20140621 함수포인터를 hrtick 으로 설정 */
 }
 #else	/* CONFIG_SCHED_HRTICK */
 static inline void hrtick_clear(struct rq *rq)
@@ -749,19 +753,26 @@ int tg_nop(struct task_group *tg, void *data)
 static void set_load_weight(struct task_struct *p)
 {
 	int prio = p->static_prio - MAX_RT_PRIO;
+	/*! 20140621 init_task->static_prio:120, MAX_RT_PRIO: 100 */
 	struct load_weight *load = &p->se.load;
 
 	/*
 	 * SCHED_IDLE tasks get minimal weight:
 	 */
+	/*! 20140621 현재 init_task->policy: SCHED_NORMAL 이므로 if문 pass */
 	if (p->policy == SCHED_IDLE) {
+		/*! 20140621 SCHED_IDLE: 5 */
 		load->weight = scale_load(WEIGHT_IDLEPRIO);
+		/*! 20140621 load->weight = WEIGHT_IDLEPRIO: 3 */
 		load->inv_weight = WMULT_IDLEPRIO;
+		/*! 20140621 WMULT_IDLEPRIO: 1431655765 */
 		return;
 	}
 
 	load->weight = scale_load(prio_to_weight[prio]);
+	/*! 20140621 load->weight = prio_to_weight[20]: 1024 */
 	load->inv_weight = prio_to_wmult[prio];
+	/*! 20140621 load->inv_weight = prio_to_wmult[20]: 4194304 */
 }
 
 static void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
@@ -1624,12 +1635,14 @@ static void __sched_fork(struct task_struct *p)
 	p->se.nr_migrations		= 0;
 	p->se.vruntime			= 0;
 	INIT_LIST_HEAD(&p->se.group_node);
+	/*! 20140621 p->se.group_node list 초기화 */
 
 #ifdef CONFIG_SCHEDSTATS
 	memset(&p->se.statistics, 0, sizeof(p->se.statistics));
 #endif
 
 	INIT_LIST_HEAD(&p->rt.run_list);
+	/*! 20140621 p->rt.runlist list 초기화 */
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	INIT_HLIST_HEAD(&p->preempt_notifiers);
@@ -4206,14 +4219,20 @@ void init_idle_bootup_task(struct task_struct *idle)
 void init_idle(struct task_struct *idle, int cpu)
 {
 	struct rq *rq = cpu_rq(cpu);
+	/*! 20140621 cpu의 runqueue pointer를 가져온다. */
 	unsigned long flags;
 
 	raw_spin_lock_irqsave(&rq->lock, flags);
+	/*! 20140621 runqueue의 spin lock 획득 */
 
 	__sched_fork(idle);
+	/*! 20140621 idle의 schedule 관련된 값(sched_entity) 초기화 */
 	idle->state = TASK_RUNNING;
+	/*! 20140621 TASK_RUNNING: 0 */
 	idle->se.exec_start = sched_clock();
+	/*! 20140621 scheduler 시작시간 설정 (jiffies의 초단위 시간) */
 
+	/*! 20140621 cpumask_of(cpu): cpu의 cpu_mask 포인터 */
 	do_set_cpus_allowed(idle, cpumask_of(cpu));
 	/*
 	 * We're having a chicken and egg problem, even though we are
@@ -4252,10 +4271,13 @@ void init_idle(struct task_struct *idle, int cpu)
 #ifdef CONFIG_SMP
 void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
 {
+	/*! 20140621 TODO: 현재 p->sched_class 설정안되어 있으므로 나중에 확인 */
 	if (p->sched_class && p->sched_class->set_cpus_allowed)
 		p->sched_class->set_cpus_allowed(p, new_mask);
 
 	cpumask_copy(&p->cpus_allowed, new_mask);
+	/*! 20140621 p->cpus_allowed->bits = new_mask->bits */
+	/*! 20140621 여기까지 스터디 */
 	p->nr_cpus_allowed = cpumask_weight(new_mask);
 }
 
@@ -4653,6 +4675,7 @@ static void unregister_sched_domain_sysctl(void)
 }
 #endif
 
+/*! 20140621 TODO: 나중에 다시봐야 함 */
 static void set_rq_online(struct rq *rq)
 {
 	if (!rq->online) {
@@ -4660,8 +4683,10 @@ static void set_rq_online(struct rq *rq)
 
 		cpumask_set_cpu(rq->cpu, rq->rd->online);
 		rq->online = 1;
+		/*! 20140621 rq->online이 아니면 rq->rd->online의 rq->cpu번째 bit를 set하고 online을 1로 set */
 
 		for_each_class(class) {
+		/*! 20140621 for (class = sched_class_highest; class; class = class->next) */
 			if (class->rq_online)
 				class->rq_online(rq);
 		}
@@ -4998,8 +5023,10 @@ static void rq_attach_root(struct rq *rq, struct root_domain *rd)
 	unsigned long flags;
 
 	raw_spin_lock_irqsave(&rq->lock, flags);
+	/*! 20140621 rq의 spin_lock & flag 저장 & interrupt disable */
 
 	if (rq->rd) {
+		/*! 20140621 TODO: 현재는 rq->rd가 NULL 이므로 나중에 보자 */
 		old_rd = rq->rd;
 
 		if (cpumask_test_cpu(rq->cpu, old_rd->online))
@@ -5018,14 +5045,19 @@ static void rq_attach_root(struct rq *rq, struct root_domain *rd)
 
 	atomic_inc(&rd->refcount);
 	rq->rd = rd;
+	/*! 20140621 인자로 넘어온 rd를 rq->rd로 설정 */
 
 	cpumask_set_cpu(rq->cpu, rd->span);
+	/*! 20140621 rd->span의 rq->cpu번째 bit를 set */
 	if (cpumask_test_cpu(rq->cpu, cpu_active_mask))
+		/*! 20140621 TODO: cpu_active_mask의 rq->cpu가 1이면 if문 실행 */
 		set_rq_online(rq);
 
 	raw_spin_unlock_irqrestore(&rq->lock, flags);
+	/*! 20140621 rq의 spin_unlock & flag 원복 & interrupt enable */
 
 	if (old_rd)
+		/*! 20140621 TODO: 현재 old_rd가 NULL 이므로 나중에 보자 */
 		call_rcu_sched(&old_rd->rcu, free_rootdomain);
 }
 
@@ -5040,6 +5072,7 @@ static int init_rootdomain(struct root_domain *rd)
 		goto free_span;
 	if (!alloc_cpumask_var(&rd->rto_mask, GFP_KERNEL))
 		goto free_online;
+	/*! 20140621 rd->span = rd->online = rd->rto_mask = 0 */
 
 	if (cpupri_init(&rd->cpupri) != 0)
 		goto free_rto_mask;
@@ -6478,7 +6511,9 @@ void __init sched_init(void)
 		 * kernel/timer.c, include/linux/cache.h 참고
 		 */
 		init_cfs_rq(&rq->cfs);
+		/*! 20140621 rq->cfs 값 set */
 		init_rt_rq(&rq->rt, rq);
+		/*! 20140621 rq->rt 값 초기화 */
 #ifdef CONFIG_FAIR_GROUP_SCHED
 		root_task_group.shares = ROOT_TASK_GROUP_LOAD;
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);
@@ -6506,12 +6541,14 @@ void __init sched_init(void)
 #endif /* CONFIG_FAIR_GROUP_SCHED */
 
 		rq->rt.rt_runtime = def_rt_bandwidth.rt_runtime;
+		/*! 20140621 rq->rt.rt_runtime = 0.95s */
 #ifdef CONFIG_RT_GROUP_SCHED
 		INIT_LIST_HEAD(&rq->leaf_rt_rq_list);
 		init_tg_rt_entry(&root_task_group, &rq->rt, NULL, i, NULL);
 #endif
 
 		for (j = 0; j < CPU_LOAD_IDX_MAX; j++)
+			/*! 20140621 CPU_LOAD_IDX_MAX: 5 */
 			rq->cpu_load[j] = 0;
 
 		rq->last_load_update_tick = jiffies;
@@ -6520,6 +6557,7 @@ void __init sched_init(void)
 		rq->sd = NULL;
 		rq->rd = NULL;
 		rq->cpu_power = SCHED_POWER_SCALE;
+		/*! 20140621 SCHED_POWER_SCALE: 1024 */
 		rq->post_schedule = 0;
 		rq->active_balance = 0;
 		rq->next_balance = jiffies;
@@ -6528,10 +6566,13 @@ void __init sched_init(void)
 		rq->online = 0;
 		rq->idle_stamp = 0;
 		rq->avg_idle = 2*sysctl_sched_migration_cost;
+		/*! 20140621 sysctl_sched_migration_cost = 500000UL */
 
 		INIT_LIST_HEAD(&rq->cfs_tasks);
+		/*! 20140621 rq->cfs_tasks list 초기화 */
 
 		rq_attach_root(rq, &def_root_domain);
+		/*! 20140621 rq->rd = &def_root_domain */
 #ifdef CONFIG_NO_HZ_COMMON
 		rq->nohz_flags = 0;
 #endif
@@ -6540,10 +6581,13 @@ void __init sched_init(void)
 #endif
 #endif
 		init_rq_hrtick(rq);
+		/*! 20140621 rq->hrtick_timer 초기화 */
 		atomic_set(&rq->nr_iowait, 0);
 	}
+	/*! 20140621 possible cpu별 rq초기화 */
 
 	set_load_weight(&init_task);
+	/*! 20140621 init_task의 weight 값을 초기화 */
 
 #ifdef CONFIG_PREEMPT_NOTIFIERS
 	INIT_HLIST_HEAD(&init_task.preempt_notifiers);
@@ -6551,19 +6595,26 @@ void __init sched_init(void)
 
 #ifdef CONFIG_RT_MUTEXES
 	plist_head_init(&init_task.pi_waiters);
+	/*! 20140621 init_task.pi_waiters list 초기화 */
 #endif
 
 	/*
 	 * The boot idle thread does lazy MMU switching as well:
 	 */
 	atomic_inc(&init_mm.mm_count);
+	/*! 20140621 init_mm.mm_count 를 1 증가 */
 	enter_lazy_tlb(&init_mm, current);
+	/*! 20140621 아무일도 안함 */
 
 	/*
 	 * Make us the idle thread. Technically, schedule() should not be
 	 * called from this thread, however somewhere below it might be,
 	 * but because we are the idle thread, we just pick up running again
 	 * when this runqueue becomes "idle".
+	 */
+	/*! 20140621 current : 현재 thread의 thread_info의 task 주소
+	 * smp_processor_id(): thread_info에서 CPU의 ID를 가져온다.
+	 * init_idle 시작
 	 */
 	init_idle(current, smp_processor_id());
 

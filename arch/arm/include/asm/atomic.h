@@ -302,6 +302,13 @@ static inline void atomic64_set(atomic64_t *v, u64 i)
 	: "=&r" (tmp), "=Qo" (v->counter)
 	: "r" (&v->counter), "r" (i)
 	: "cc");
+	/*! 20140621 %H0: high
+	 * ldrexd tmp[31:0], tmp[63:32], [&v->counter]
+	 * : v->counter 값 64bit값을 읽어서 tmp변수에 저장
+	 * strexd tmp, i[31:0], i[63:32], [&v->counter]
+	 * : v->counter에 i값을 atomic하게 저장 (tmp==0일 경우)
+	 * 값이 0이면 정상, 0이 아니면 atomic하지않은 것이므로 다시 시도
+	 */
 }
 #endif
 

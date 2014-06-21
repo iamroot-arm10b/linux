@@ -61,6 +61,7 @@ extern void update_cpu_load_active(struct rq *this_rq);
 # define scale_load_down(w)	((w) >> SCHED_LOAD_RESOLUTION)
 #else
 # define SCHED_LOAD_RESOLUTION	0
+/*! 20140621 여기 참조함 */
 # define scale_load(w)		(w)
 # define scale_load_down(w)	(w)
 #endif
@@ -914,6 +915,7 @@ static inline void finish_lock_switch(struct rq *rq, struct task_struct *prev)
 
 #define WEIGHT_IDLEPRIO                3
 #define WMULT_IDLEPRIO         1431655765
+/*! 20140621 여기 참조함 */
 
 /*
  * Nice levels are multiplicative, with a gentle 10% change for every
@@ -1015,6 +1017,7 @@ struct sched_class {
 #define sched_class_highest (&stop_sched_class)
 #define for_each_class(class) \
    for (class = sched_class_highest; class; class = class->next)
+/*! 20140621 여기 실행 */
 
 extern const struct sched_class stop_sched_class;
 extern const struct sched_class rt_sched_class;

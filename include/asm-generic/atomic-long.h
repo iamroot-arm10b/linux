@@ -151,11 +151,13 @@ static inline long atomic_long_read(atomic_long_t *l)
 	return (long)atomic_read(v);
 }
 
+/*! 20140621 여기 실행됨 */
 static inline void atomic_long_set(atomic_long_t *l, long i)
 {
 	atomic_t *v = (atomic_t *)l;
 
 	atomic_set(v, i);
+	/*! 20140621 atomic하게 i를 v에 set */
 }
 
 static inline void atomic_long_inc(atomic_long_t *l)

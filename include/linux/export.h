@@ -21,6 +21,7 @@
 /* Indirect, so macros are expanded before pasting. */
 #define VMLINUX_SYMBOL(x) __VMLINUX_SYMBOL(x)
 #define VMLINUX_SYMBOL_STR(x) __VMLINUX_SYMBOL_STR(x)
+/*! 20140621 VMLINUX_SYMBOL_STR(x) = #x */
 
 #ifndef __ASSEMBLY__
 struct kernel_symbol

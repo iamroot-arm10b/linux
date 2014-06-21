@@ -104,6 +104,7 @@ static inline void finish_arch_post_lock_switch(void)
 static inline void
 enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
 {
+	/*! 20140621 여기 실행함 */
 }
 
 /*

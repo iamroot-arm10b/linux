@@ -658,9 +658,25 @@ void notify_cpu_starting(unsigned int cpu)
 #define MASK_DECLARE_2(x)	MASK_DECLARE_1(x), MASK_DECLARE_1(x+1)
 #define MASK_DECLARE_4(x)	MASK_DECLARE_2(x), MASK_DECLARE_2(x+2)
 #define MASK_DECLARE_8(x)	MASK_DECLARE_4(x), MASK_DECLARE_4(x+4)
+/*! 20140621 MASK_DECLARE_8
+ *  => MASK_DECLARE_4(x), MASK_DECLARE_4(x+4)
+ *  => MASK_DECLARE_2(x), MASK_DECLARE_2(x+2), MASK_DECLARE_2(x+4), MASK_DECLARE_2(x+6), 
+ *  => MASK_DECLARE_1(x), MASK_DECLARE_1(x+1), MASK_DECLARE_1(x+2), MASK_DECLARE_1(x+3),
+ *     MASK_DECLARE_1(x+4), MASK_DECLARE_1(x+5), MASK_DECLARE_1(x+6), MASK_DECLARE_1(x+7)
+ *  => [x+1][0] = 1 << x,
+ *     [x+2][0] = 1 << x+1,
+ *     [x+3][0] = 1 << x+2,
+ *     [x+4][0] = 1 << x+3,
+ *     [x+5][0] = 1 << x+4,
+ *     [x+6][0] = 1 << x+5,
+ *     [x+7][0] = 1 << x+6,
+ *     [x+8][0] = 1 << x+7
+ */
 
 const unsigned long cpu_bit_bitmap[BITS_PER_LONG+1][BITS_TO_LONGS(NR_CPUS)] = {
-
+	/*! 20140621 BITS_PER_LONG 크기에 해당하는, 각각의 bit별 MASK 생성
+	 * [1][0] = 1 << 0, [2][0] = 1 << 1, ....., [32][0] = 1 << 31
+	 */
 	MASK_DECLARE_8(0),	MASK_DECLARE_8(8),
 	MASK_DECLARE_8(16),	MASK_DECLARE_8(24),
 #if BITS_PER_LONG > 32

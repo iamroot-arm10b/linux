@@ -117,6 +117,7 @@ static inline void
 plist_head_init(struct plist_head *head)
 {
 	INIT_LIST_HEAD(&head->node_list);
+	/*! 20140621 head->node_list 초기화 */
 }
 
 /**

@@ -760,6 +760,7 @@ enum cpu_idle_type {
  */
 #define SCHED_POWER_SHIFT	10
 #define SCHED_POWER_SCALE	(1L << SCHED_POWER_SHIFT)
+/*! 20140621 SCHED_POWER_SCALE: 1024 */
 
 /*
  * sched-domains (multiprocessor balancing) declarations:

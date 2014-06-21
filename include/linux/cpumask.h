@@ -12,6 +12,7 @@
 #include <linux/bug.h>
 
 typedef struct cpumask { DECLARE_BITMAP(bits, NR_CPUS); } cpumask_t;
+/*! 20140621 NR_CPUS 갯수만큼의 bitmap(bits) 선언. NR_CPUS < 32 이면 32bit 사용 */
 
 /**
  * cpumask_bits - get the bits in a cpumask
@@ -263,9 +264,8 @@ int cpumask_any_but(const struct cpumask *mask, unsigned int cpu);
 static inline void cpumask_set_cpu(unsigned int cpu, struct cpumask *dstp)
 {
 	set_bit(cpumask_check(cpu), cpumask_bits(dstp));
-	/*!
-	 * cpumask_bits: dstp의 bits 접근 
-	 */
+	/*! cpumask_check(cpu): cpu번호, cpumask_bits: dstp의 bits 의 주소값 */
+	/*! 20140621 dstp->bits |= 1 << cpu (dstp 의 cpu번째 bit를 set한다.) */
 }
 
 /**
@@ -289,6 +289,7 @@ static inline void cpumask_clear_cpu(int cpu, struct cpumask *dstp)
  */
 #define cpumask_test_cpu(cpu, cpumask) \
 	test_bit(cpumask_check(cpu), cpumask_bits((cpumask)))
+/*! 20140621 cpumask->bits의 cpu번째 bit 값이 0 or 1인지 test (0 or 1 리턴) */
 
 /**
  * cpumask_test_and_set_cpu - atomically test and set a cpu in a cpumask
@@ -509,6 +510,8 @@ static inline void cpumask_copy(struct cpumask *dstp,
 				const struct cpumask *srcp)
 {
 	bitmap_copy(cpumask_bits(dstp), cpumask_bits(srcp), nr_cpumask_bits);
+	/*! 20140621 bitmap_copy(dstp->bits, scrp->bits, NR_CPUS: 4) */
+	/*! 20140621 dstp->bits = scrp->bits */
 }
 
 /**
@@ -542,6 +545,7 @@ static inline void cpumask_copy(struct cpumask *dstp,
  * @cpu: the cpu (<= nr_cpu_ids)
  */
 #define cpumask_of(cpu) (get_cpu_mask(cpu))
+/*! 20140621 cpu의 cpu_mask 포인터 */
 
 /**
  * cpumask_scnprintf - print a cpumask into a string as comma-separated hex
@@ -779,12 +783,16 @@ static inline int __check_is_bitmap(const unsigned long *bitmap)
  */
 extern const unsigned long
 	cpu_bit_bitmap[BITS_PER_LONG+1][BITS_TO_LONGS(NR_CPUS)];
+/*! 20140621 cpu_bit_bitmap[33][1] */
 
 static inline const struct cpumask *get_cpu_mask(unsigned int cpu)
 {
 	const unsigned long *p = cpu_bit_bitmap[1 + cpu % BITS_PER_LONG];
+	/*! 20140621 현재 cpu의 번호에 해당하는 cpu_bit_bitmap의 위치값(mask 주소)을 가져온다. */
 	p -= cpu / BITS_PER_LONG;
+	/*! 20140621 p = p - 0 */
 	return to_cpumask(p);
+	/*! 20140621 bitmap p의 포인터 리턴 */
 }
 
 #define cpu_is_offline(cpu)	unlikely(!cpu_online(cpu))

@@ -74,24 +74,32 @@ void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
 
 	array = &rt_rq->active;
 	for (i = 0; i < MAX_RT_PRIO; i++) {
+	/*! 20140621 MAX_RT_PRIO: 100 */
 		INIT_LIST_HEAD(array->queue + i);
+		/*! 20140621 rt_rq->active->queue 를 초기화한다. */
 		__clear_bit(i, array->bitmap);
+		/*! 20140621 array->bitmap 의 i번째 bit를 clear */
 	}
 	/* delimiter for bitsearch: */
 	__set_bit(MAX_RT_PRIO, array->bitmap);
+	/*! 20140621 array->bitmap 의 MAX_RT_PRIO번째 bit를 set */
 
 #if defined CONFIG_SMP
 	rt_rq->highest_prio.curr = MAX_RT_PRIO;
 	rt_rq->highest_prio.next = MAX_RT_PRIO;
+	/*! 20140621 우선순위를 MAX_RT_PRIO로 설정(가장 낮은 우선순위) */
 	rt_rq->rt_nr_migratory = 0;
 	rt_rq->overloaded = 0;
 	plist_head_init(&rt_rq->pushable_tasks);
+	/*! 20140621 CONFIG_SMP 가 있을때의 rt_rq 구조체 값 초기화 */
 #endif
 
 	rt_rq->rt_time = 0;
 	rt_rq->rt_throttled = 0;
 	rt_rq->rt_runtime = 0;
+	/*! 20140621 구조체 값 초기화 */
 	raw_spin_lock_init(&rt_rq->rt_runtime_lock);
+	/*! 20140621 spin_lock 초기화 */
 }
 
 #ifdef CONFIG_RT_GROUP_SCHED

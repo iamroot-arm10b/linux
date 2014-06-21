@@ -7,6 +7,7 @@
 #include <linux/time.h>
 #include <linux/timex.h>
 #include <asm/param.h>			/* for HZ */
+/*! 20140621 HZ = CONFIG_HZ = 200  */
 
 /*
  * The following defines establish the engineering parameters of the PLL
@@ -168,6 +169,7 @@ static inline u64 get_jiffies_64(void)
  * so jiffies wrap bugs show up earlier.
  */
 #define INITIAL_JIFFIES ((unsigned long)(unsigned int) (-300*HZ))
+/*! 20140621 INITIAL_JIFFIES: -300*200 = -60000 */
 
 /*
  * Change timeval to jiffies, trying to avoid the

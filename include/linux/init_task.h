@@ -223,6 +223,10 @@ extern struct task_group root_task_group;
 	INIT_CPUSET_SEQ							\
 	INIT_VTIME(tsk)							\
 }
+/*! 20140621 
+ * .static_prio	= 120
+ * .policy	= SCHED_NORMAL,					\
+ */
 
 
 #define INIT_CPU_TIMERS(cpu_timers)					\
