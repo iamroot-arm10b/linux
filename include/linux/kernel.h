@@ -19,7 +19,9 @@
 #define SHRT_MAX	((s16)(USHRT_MAX>>1))
 #define SHRT_MIN	((s16)(-SHRT_MAX - 1))
 #define INT_MAX		((int)(~0U>>1))
+/*! 20140628 ~0 = 0xFFFFFFFF, ~0>>1 = 0xFFFFFFFF >> 1 = 0x7FFFFFFF */
 #define INT_MIN		(-INT_MAX - 1)
+/*! 20140628 0x7FFFFFFF보수 + 1 - 1 = 0x80000000 : int의 최소값: -2,147,483,648 */
 #define UINT_MAX	(~0U)
 #define LONG_MAX	((long)(~0UL>>1))
 #define LONG_MIN	(-LONG_MAX - 1)

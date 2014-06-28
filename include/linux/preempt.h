@@ -14,10 +14,11 @@
   extern void add_preempt_count(int val);
   extern void sub_preempt_count(int val);
 #else
+  /*! 20140628 CONFIG_DEBUG_PREEMPT를 not set으로 가정하므로 여기가 실행됨 */
 # define add_preempt_count(val)	do { preempt_count() += (val); } while (0)
 # define sub_preempt_count(val)	do { preempt_count() -= (val); } while (0)
 #endif
-/* preempt count를 1 증가 */
+/*! preempt count를 1 증가 */
 #define inc_preempt_count() add_preempt_count(1)
 #define dec_preempt_count() sub_preempt_count(1)
 
@@ -59,14 +60,13 @@ do { \
 
 
 #ifdef CONFIG_PREEMPT_COUNT
-/*! 20131221 preempt count를 증가시켜 disable 시킨다. */
 /*! 20140104
  * http://nimhaplz.egloos.com/5683475 참고
  * 다른 thread가 동작하는 것을 막는다. 계속 현재 thread만 수행되도록 한다.
  * 인터럽트를 막지는 않는다.
  * preempt_count = 0 인 경우 preemption enable / 1 이상인 경우 preemption disable
- * TODO: 다음에, 나중에 스케쥴링 나오면 자세히 봅시다.
  */
+/*! 20140628 현재 task의 thread_info->preempt_count를 1 증가 */
 #define preempt_disable() \
 do { \
 	inc_preempt_count(); \

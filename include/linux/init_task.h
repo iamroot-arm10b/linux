@@ -153,6 +153,7 @@ extern struct task_group root_task_group;
 #endif
 
 #define INIT_TASK_COMM "swapper"
+/*! 20140628 이것 사용함 */
 
 /*
  *  INIT_TASK is used to set up the first task table, touch at

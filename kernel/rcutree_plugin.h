@@ -334,6 +334,7 @@ static struct list_head *rcu_next_node_entry(struct task_struct *t,
  */
 void rcu_read_unlock_special(struct task_struct *t)
 {
+	/*! 20140628 TODO: 나중에 분석하기로 함 */
 	int empty;
 	int empty_exp;
 	int empty_exp_now;

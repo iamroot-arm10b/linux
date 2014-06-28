@@ -69,6 +69,7 @@ static inline unsigned long hweight_long(unsigned long w)
 {
 	return sizeof(w) == 4 ? hweight32(w) : hweight64(w);
 	/*! 20140111 32bit 인지 64bit 인지 파악하여 hamming weight 알고리즘으로 bit의 갯수를 구한다. */
+	/*! 20140628 linux/lib/hweight.c 의 __sw_hweight32 참조 */
 }
 
 /**

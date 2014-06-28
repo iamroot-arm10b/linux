@@ -66,6 +66,7 @@ void __rcu_read_lock(void)
 {
 	current->rcu_read_lock_nesting++;
 	barrier();  /* critical section after entry code. */
+	/*! 20140628 rcu_read_lock_nesting 값 증가, barrier로 실행 보장 */
 }
 EXPORT_SYMBOL_GPL(__rcu_read_lock);
 
@@ -81,6 +82,7 @@ void __rcu_read_unlock(void)
 	struct task_struct *t = current;
 
 	if (t->rcu_read_lock_nesting != 1) {
+		/*! 20140628 rcu_read_lock_nesting이 1이 아니면 1 감소 */
 		--t->rcu_read_lock_nesting;
 	} else {
 		barrier();  /* critical section before exit code. */
@@ -91,6 +93,7 @@ void __rcu_read_unlock(void)
 		barrier();  /* assign before ->rcu_read_unlock_special load */
 		if (unlikely(ACCESS_ONCE(t->rcu_read_unlock_special)))
 			rcu_read_unlock_special(t);
+		/*! 20140628 현재 t->rcu_read_unlock_special가 초기값(0)이므로 pass */
 		barrier();  /* ->rcu_read_unlock_special load before assign */
 		t->rcu_read_lock_nesting = 0;
 	}

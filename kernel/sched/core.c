@@ -4232,8 +4232,12 @@ void init_idle(struct task_struct *idle, int cpu)
 	idle->se.exec_start = sched_clock();
 	/*! 20140621 scheduler 시작시간 설정 (jiffies의 초단위 시간) */
 
-	/*! 20140621 cpumask_of(cpu): cpu의 cpu_mask 포인터 */
+	/*! 20140621 cpumask_of(cpu): cpu의 cpu_mask 포인터, cpu bitmap 테이블 */
 	do_set_cpus_allowed(idle, cpumask_of(cpu));
+	/*! 20140628
+	 * idle->nr_cpus_allowed에 사용가능한 cpu 갯수 setting(설정에 따라 4개)
+	 * idle->cpus_allowed = cpumask_of(cpu)
+	 */
 	/*
 	 * We're having a chicken and egg problem, even though we are
 	 * holding rq->lock, the cpu isn't yet set to this cpu so the
@@ -4245,26 +4249,34 @@ void init_idle(struct task_struct *idle, int cpu)
 	 * Silence PROVE_RCU
 	 */
 	rcu_read_lock();
+	/*! 20140628 rcu의 read lock 획득 */
 	__set_task_cpu(idle, cpu);
+	/*! 20140628 thread_info->cpu에 현재 cpu번호를 set */
 	rcu_read_unlock();
+	/*! 20140628 rcu의 read lock 을 해제 */
 
 	rq->curr = rq->idle = idle;
 #if defined(CONFIG_SMP)
 	idle->on_cpu = 1;
 #endif
 	raw_spin_unlock_irqrestore(&rq->lock, flags);
+	/*! 20140628 runqueue의 spinlock 릴리즈, cpsr의 irq info flag 원복, irq enable */
 
 	/* Set the preempt count _outside_ the spinlocks! */
 	task_thread_info(idle)->preempt_count = 0;
+	/*! 20140628 idle->thread->preempt_count = 0 */
 
 	/*
 	 * The idle tasks have their own, simple scheduling class:
 	 */
 	idle->sched_class = &idle_sched_class;
 	ftrace_graph_init_idle_task(idle, cpu);
+	/*! 20140628 CONFIG_FUNCTION_GRAPH_TRACER가 not set 이므로 아무일도 안함 */
 	vtime_init_idle(idle, cpu);
+	/*! 20140628 CONFIG_VIRT_CPU_ACCOUNTING_GEN가 not set 이므로 아무일도 안함 */
 #if defined(CONFIG_SMP)
 	sprintf(idle->comm, "%s/%d", INIT_TASK_COMM, cpu);
+	/*! 20140628 idle->comm: "swapper/0" */
 #endif
 }
 
@@ -4279,6 +4291,7 @@ void do_set_cpus_allowed(struct task_struct *p, const struct cpumask *new_mask)
 	/*! 20140621 p->cpus_allowed->bits = new_mask->bits */
 	/*! 20140621 여기까지 스터디 */
 	p->nr_cpus_allowed = cpumask_weight(new_mask);
+	/*! 20140628 사용가능한 cpu 갯수 */
 }
 
 /*
@@ -6617,22 +6630,29 @@ void __init sched_init(void)
 	 * init_idle 시작
 	 */
 	init_idle(current, smp_processor_id());
+	/*! 20140628 current task(swapper)를 idle로 설정한다. */
 
 	calc_load_update = jiffies + LOAD_FREQ;
+	/*! 20140628 LOAD_FREQ = 5*HZ+1 = 1000+1 */
 
 	/*
 	 * During early bootup we pretend to be a normal task:
 	 */
 	current->sched_class = &fair_sched_class;
+	/*! 20140628 현재 task의 sched_class를 fair_sched_class 로 설정 */
 
 #ifdef CONFIG_SMP
 	zalloc_cpumask_var(&sched_domains_tmpmask, GFP_NOWAIT);
+	/*! 20140628 sched_domains_tmpmask->bits를 0으로 clear */
 	/* May be allocated at isolcpus cmdline parse time */
 	if (cpu_isolated_map == NULL)
 		zalloc_cpumask_var(&cpu_isolated_map, GFP_NOWAIT);
+		/*! 20140614 cpu_isolated_map->bits를 0으로 clear함 */
 	idle_thread_set_boot_cpu();
+	/*! 20140628 현재 cpu의 idle_threads에 current를 대입한다. */
 #endif
 	init_sched_fair_class();
+	/*! 20140628 fair_sched class 초기화 */
 
 	scheduler_running = 1;
 }

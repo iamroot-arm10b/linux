@@ -423,6 +423,7 @@ static inline int rcu_read_lock_sched_held(void)
 
 #else /* #ifdef CONFIG_DEBUG_LOCK_ALLOC */
 
+/*! 20140628 여기 실행 */
 # define rcu_lock_acquire(a)		do { } while (0)
 # define rcu_lock_release(a)		do { } while (0)
 
@@ -493,6 +494,7 @@ static inline void rcu_preempt_sleep_check(void)
 
 #else /* #ifdef CONFIG_PROVE_RCU */
 
+/*! 20140628 여기 실행됨 */
 #define rcu_lockdep_assert(c, s) do { } while (0)
 #define rcu_sleep_check() do { } while (0)
 
@@ -774,10 +776,14 @@ static inline void rcu_preempt_sleep_check(void)
 static inline void rcu_read_lock(void)
 {
 	__rcu_read_lock();
+	/*! 20140628 rcu(read copy update)의 read lock */
 	__acquire(RCU);
+	/*! 20140628 Sparse 가 enale 안되어 있으므로 아무것도 안함 */
 	rcu_lock_acquire(&rcu_lock_map);
+	/*! 20140628 DEBUG 이므로 아무것도 안함 */
 	rcu_lockdep_assert(!rcu_is_cpu_idle(),
 			   "rcu_read_lock() used illegally while idle");
+	/*! 20140628 CONFIG_PROVE_RCU가 not set이므로 아무것도 안함 */
 }
 
 /*
@@ -801,7 +807,9 @@ static inline void rcu_read_unlock(void)
 			   "rcu_read_unlock() used illegally while idle");
 	rcu_lock_release(&rcu_lock_map);
 	__release(RCU);
+	/*! 20140628 DEBUG feature가 꺼져 있어서 위 세 함수는 아무것도 안함 */
 	__rcu_read_unlock();
+	/*! 20140628 current->rcu_read_lock_nesting 을 0으로 설정함 */
 }
 
 /**

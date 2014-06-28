@@ -703,6 +703,7 @@ static inline void set_task_rq(struct task_struct *p, unsigned int cpu)
 
 #else /* CONFIG_CGROUP_SCHED */
 
+/*! 20140628 여기 실행됨 */
 static inline void set_task_rq(struct task_struct *p, unsigned int cpu) { }
 static inline struct task_group *task_group(struct task_struct *p)
 {
@@ -714,6 +715,7 @@ static inline struct task_group *task_group(struct task_struct *p)
 static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
 {
 	set_task_rq(p, cpu);
+	/*! 20140628 CONFIG_CGROUP_SCHED = not set 이므로 아무것도 안함 */
 #ifdef CONFIG_SMP
 	/*
 	 * After ->cpu is set up to a new value, task_rq_lock(p, ...) can be
@@ -721,7 +723,9 @@ static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
 	 * per-task data have been completed by this moment.
 	 */
 	smp_wmb();
+	/*! 20140628 쓰기순서를 보장(dmb명령어 수행) */
 	task_thread_info(p)->cpu = cpu;
+	/*! 20140628 thread_info->cpu(=p->stack->cpu)에 현재 cpu를 set */
 #endif
 }
 

@@ -6232,11 +6232,18 @@ __init void init_sched_fair_class(void)
 {
 #ifdef CONFIG_SMP
 	open_softirq(SCHED_SOFTIRQ, run_rebalance_domains);
+	/*! 20140628 softirq_vec[SCHED_SOFTIRQ].action = run_rebalance_domains */
 
 #ifdef CONFIG_NO_HZ_COMMON
 	nohz.next_balance = jiffies;
 	zalloc_cpumask_var(&nohz.idle_cpus_mask, GFP_NOWAIT);
 	cpu_notifier(sched_ilb_notifier, 0);
+	/*! 20140628 아래와 같이 변환되어 cpu_notifier_chain에 등록 
+	 * static struct notifier_block sched_ilb_notifier_nb =			\
+	 * 	{ .notifier_call = sched_ilb_notifier, .priority = pri };	\
+	 * register_cpu_notifier(&sched_ilb_notifier_nb);			\
+	 * }
+	 */
 #endif
 #endif /* SMP */
 

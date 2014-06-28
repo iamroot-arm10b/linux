@@ -406,6 +406,7 @@ void __raise_softirq_irqoff(unsigned int nr)
 void open_softirq(int nr, void (*action)(struct softirq_action *))
 {
 	softirq_vec[nr].action = action;
+	/*! 20140628 nr번호의 softirq_vec에 action함수 등록 */
 }
 
 /*

@@ -2296,6 +2296,7 @@ static inline void threadgroup_unlock(struct task_struct *tsk) {}
 #ifndef __HAVE_THREAD_FUNCTIONS
 
 #define task_thread_info(task)	((struct thread_info *)(task)->stack)
+/*! 20140628 task의 thread 주소를 리턴 */
 #define task_stack_page(task)	((task)->stack)
 
 static inline void setup_thread_stack(struct task_struct *p, struct task_struct *org)

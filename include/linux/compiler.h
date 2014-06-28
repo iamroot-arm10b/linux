@@ -38,6 +38,7 @@ extern void __chk_io_ptr(const volatile void __iomem *);
 # define __acquires(x)
 # define __releases(x)
 # define __acquire(x) (void)0
+/*! 20140628 여기 실행 */
 # define __release(x) (void)0
 # define __cond_lock(x,c) (c)
 # define __percpu

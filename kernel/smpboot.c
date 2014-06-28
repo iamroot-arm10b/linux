@@ -37,6 +37,7 @@ struct task_struct *idle_thread_get(unsigned int cpu)
 void __init idle_thread_set_boot_cpu(void)
 {
 	per_cpu(idle_threads, smp_processor_id()) = current;
+	/*! 20140628 현재 cpu의 idle_threads에 current를 대입한다. */
 }
 
 /**
