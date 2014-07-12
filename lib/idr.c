@@ -853,6 +853,7 @@ void __init idr_init_cache(void)
 {
 	idr_layer_cache = kmem_cache_create("idr_layer_cache",
 				sizeof(struct idr_layer), 0, SLAB_PANIC, NULL);
+	/*! 20140712 idr_layer_cache를 위한 slab 생성, SLAB_PANIC: 0x00040000 */
 }
 
 /**

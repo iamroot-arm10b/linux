@@ -92,8 +92,10 @@ void put_online_cpus(void)
 
 	if (WARN_ON(!cpu_hotplug.refcount))
 		cpu_hotplug.refcount++; /* try to fix things up */
+	/*! 20140712 cpu_hotplug.refcount가 0이면 1 증가시킨다. */
 
 	if (!--cpu_hotplug.refcount && unlikely(cpu_hotplug.active_writer))
+		/*! 20140712 cpu_hotplug.refcount 값을 감소시킨 값이 0이고 active_writer 값이 있으면 실행 */
 		wake_up_process(cpu_hotplug.active_writer);
 	mutex_unlock(&cpu_hotplug.lock);
 

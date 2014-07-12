@@ -66,8 +66,15 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 
 
 /* Legal flag mask for kmem_cache_create(), for various configurations */
-#define SLAB_CORE_FLAGS (SLAB_HWCACHE_ALIGN | SLAB_CACHE_DMA | SLAB_PANIC | \
+#define SLAB_CORE_FLAGS (SLAB_WCACHE_ALIGN | SLAB_CACHE_DMA | SLAB_PANIC | \
 			 SLAB_DESTROY_BY_RCU | SLAB_DEBUG_OBJECTS )
+/*! 20140712 SLAB_CORE_FLAGS: 0x000C6000
+ * SLAB_WCACHE_ALIGN  : 0x00002000
+ * SLAB_CACHE_DMA     :	0x00004000
+ * SLAB_PANIC         : 0x00040000
+ * SLAB_DESTROY_BY_RCU: 0x00080000
+ * SLAB_DEBUG_OBJECTS : 0x0
+ */
 
 #if defined(CONFIG_DEBUG_SLAB)
 #define SLAB_DEBUG_FLAGS (SLAB_RED_ZONE | SLAB_POISON | SLAB_STORE_USER)
@@ -84,11 +91,22 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 #elif defined(CONFIG_SLUB)
 #define SLAB_CACHE_FLAGS (SLAB_NOLEAKTRACE | SLAB_RECLAIM_ACCOUNT | \
 			  SLAB_TEMPORARY | SLAB_NOTRACK)
+/*! 20140712 SLAB_CACHE_FLAGS: 0x00820000
+ * SLAB_NOLEAKTRACE    : 0x00800000 
+ * SLAB_RECLAIM_ACCOUNT: 0x00020000
+ * SLAB_TEMPORARY      : SLAB_RECLAIM_ACCOUNT = 0x00020000
+ * SLAB_NOTRACK        : 0x0
+ */
 #else
 #define SLAB_CACHE_FLAGS (0)
 #endif
 
 #define CACHE_CREATE_MASK (SLAB_CORE_FLAGS | SLAB_DEBUG_FLAGS | SLAB_CACHE_FLAGS)
+/*! 20140712 CACHE_CREATE_MASK: 0x008E6000
+ * SLAB_CORE_FLAGS : 0x000C6000
+ * SLAB_DEBUG_FLAGS: 0x0
+ * SLAB_CACHE_FLAGS: 0x00820000
+ */
 
 int __kmem_cache_shutdown(struct kmem_cache *);
 
@@ -182,6 +200,7 @@ static inline bool is_root_cache(struct kmem_cache *s)
 static inline bool cache_match_memcg(struct kmem_cache *cachep,
 				     struct mem_cgroup *memcg)
 {
+	/*! 20140712 여기 실행됨 */
 	return true;
 }
 

@@ -205,7 +205,12 @@ PAGEFLAG(Active, active) __CLEARPAGEFLAG(Active, active)
 /*! 20140531 static inline void __ClearPageActive(struct page *page) { __clear_bit(PG_active, &page->flags); } */
 	TESTCLEARFLAG(Active, active)
 __PAGEFLAG(Slab, slab)
-/*! 20140426 static inline void SetPageSlab(struct page *page)  { set_bit(PG_slab, &page->flags); } */
+/*! 20140712 => TESTPAGEFLAG(Slab, slab) __SETPAGEFLAG(Slab, slab) __CLEARPAGEFLAG(Slab, slab) 
+ * TESTPAGEFLAG: int PageSlab(const struct page *page) { return test_bit(PG_slab, &page->flags); }
+ *               page->flags에서 PG_slab번째(7번째)의 bit값 리턴
+ * __SETPAGEFLAG: void SetPageSlab(struct page *page)  { set_bit(PG_slab, &page->flags); } 
+ * __CLEARPAGEFLAG: void __ClearPageSlab(struct page *page) { __clear_bit(PG_slab, &page->flags); }
+ */
 PAGEFLAG(Checked, checked)		/* Used by some filesystems */
 PAGEFLAG(Pinned, pinned) TESTSCFLAG(Pinned, pinned)	/* Xen */
 PAGEFLAG(SavePinned, savepinned);			/* Xen */
@@ -383,16 +388,18 @@ __SETPAGEFLAG(Head, compound)  __CLEARPAGEFLAG(Head, compound)
  */
 #define PG_head_mask ((1L << PG_compound))
 #define PG_head_tail_mask ((1L << PG_compound) | (1L << PG_reclaim))
+/*! 20140712 여기 참조 */
 
 static inline int PageHead(struct page *page)
 {
-	/*! 20140322 page->flags의 PG_compound, PG_reclaim 이 setting되어 있는지 체크 */
 	return ((page->flags & PG_head_tail_mask) == PG_head_mask);
+	/*! 20140322 page->flags의 PG_compound 가 set되어있으면 true 리턴 */
 }
 
 static inline int PageTail(struct page *page)
 {
 	return ((page->flags & PG_head_tail_mask) == PG_head_tail_mask);
+	/*! 20140322 page->flags의 PG_compound, PG_reclaim 이 둘다 set되어 있으면 true 리턴 */
 }
 
 static inline void __SetPageTail(struct page *page)

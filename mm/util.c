@@ -29,8 +29,10 @@ char *kstrdup(const char *s, gfp_t gfp)
 
 	len = strlen(s) + 1;
 	buf = kmalloc_track_caller(len, gfp);
+	/*! 20140712 gfp lenth 만틈의 메모리를 할당받음 */
 	if (buf)
 		memcpy(buf, s, len);
+	/*! 20140712 buf에 string 복사 */
 	return buf;
 }
 EXPORT_SYMBOL(kstrdup);

@@ -94,6 +94,7 @@
 
 #define ZERO_OR_NULL_PTR(x) ((unsigned long)(x) <= \
 				(unsigned long)ZERO_SIZE_PTR)
+/*! 20140712 여기 실행. x가 NULL로 셋팅된 범위(ZERO_SIZE_PTR)에 있으면 true */
 
 
 struct mem_cgroup;

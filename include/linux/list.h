@@ -433,7 +433,7 @@ static inline void list_splice_tail_init(struct list_head *list,
 	for (pos = list_entry((head)->next, typeof(*pos), member);	\
 	     &pos->member != (head); 	\
 	     pos = list_entry(pos->member.next, typeof(*pos), member))
-/*! 20140419 pos의 member를 끝까지 탐색 */
+/*! 20140712 head list의 member를 처음부터 끝까지 탐색 */
 
 /**
  * list_for_each_entry_reverse - iterate backwards over list of given type.

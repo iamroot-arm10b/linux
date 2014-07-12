@@ -1609,7 +1609,7 @@ int wake_up_process(struct task_struct *p)
 	WARN_ON(task_is_stopped_or_traced(p));
 	/*! 20140222 현재 task의 상태가 stopped 이거나 traced 이면 warning 발생 */
 	return try_to_wake_up(p, TASK_NORMAL, 0);
-	/*! 20140222 나중에 scheduler 가 초기화 된 후에 보기로 함 */
+	/*! 20140222 TODO:나중에 scheduler 가 초기화 된 후에 보기로 함 */
 }
 EXPORT_SYMBOL(wake_up_process);
 
@@ -6627,7 +6627,6 @@ void __init sched_init(void)
 	 */
 	/*! 20140621 current : 현재 thread의 thread_info의 task 주소
 	 * smp_processor_id(): thread_info에서 CPU의 ID를 가져온다.
-	 * init_idle 시작
 	 */
 	init_idle(current, smp_processor_id());
 	/*! 20140628 current task(swapper)를 idle로 설정한다. */

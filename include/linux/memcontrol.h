@@ -599,6 +599,7 @@ static inline int
 memcg_register_cache(struct mem_cgroup *memcg, struct kmem_cache *s,
 		     struct kmem_cache *root_cache)
 {
+	/*! 20140712 여기 실행됨 */
 	return 0;
 }
 

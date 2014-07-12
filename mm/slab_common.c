@@ -77,6 +77,7 @@ static int kmem_cache_sanity_check(struct mem_cgroup *memcg, const char *name,
 static inline int kmem_cache_sanity_check(struct mem_cgroup *memcg,
 					  const char *name, size_t size)
 {
+	/*! 20140712 여기 실행됨 */
 	return 0;
 }
 #endif
@@ -132,6 +133,7 @@ unsigned long calculate_alignment(unsigned long flags,
 		/*! 20140405 size가 40인 경우, align: 64 */
 	}
 
+	/*! 20140712 ARCH_SLAB_MINALIGN: 8 */
 	if (align < ARCH_SLAB_MINALIGN)
 		align = ARCH_SLAB_MINALIGN;
 
@@ -173,9 +175,12 @@ kmem_cache_create_memcg(struct mem_cgroup *memcg, const char *name, size_t size,
 	int err = 0;
 
 	get_online_cpus();
+	/*! 20140712 cpu_hotplug.refcount 값 증가 */
 	mutex_lock(&slab_mutex);
+	/*! 20140712 slab_mutex lock 획득 */
 
 	if (!kmem_cache_sanity_check(memcg, name, size) == 0)
+		/*! 20140712 항상 0이 리턴되므로 여기 실행안됨 */
 		goto out_locked;
 
 	/*
@@ -185,24 +190,30 @@ kmem_cache_create_memcg(struct mem_cgroup *memcg, const char *name, size_t size,
 	 * passed flags.
 	 */
 	flags &= CACHE_CREATE_MASK;
+	/*! 20140712 CACHE_CREATE_MASK: 0x008E6000, CACHE_CREATE_MASK 이외의 flag clear */
 
 	s = __kmem_cache_alias(memcg, name, size, align, flags, ctor);
+	/*! 20140712 merge할 수 있는 kmem_cache가 있으면 s에 값 설정되고 아니면 NULL */
 	if (s)
 		goto out_locked;
 
 	s = kmem_cache_zalloc(kmem_cache, GFP_KERNEL);
+	/*! 20140712 kmem_cache 크기의 memory 공간 할당받음 */
 	if (s) {
 		s->object_size = s->size = size;
 		s->align = calculate_alignment(flags, align, size);
 		s->ctor = ctor;
+		/*! 20140712 새롭게 생성할 kmem_cache 변수 초기화 */
 
 		if (memcg_register_cache(memcg, s, parent_cache)) {
+		/*! 20140712 아무것도 안함 */
 			kmem_cache_free(kmem_cache, s);
 			err = -ENOMEM;
 			goto out_locked;
 		}
 
 		s->name = kstrdup(name, GFP_KERNEL);
+		/*! 20140712 s->name 크기의 memory 공간을 할당해서 name 설정 */
 		if (!s->name) {
 			kmem_cache_free(kmem_cache, s);
 			err = -ENOMEM;
@@ -210,11 +221,16 @@ kmem_cache_create_memcg(struct mem_cgroup *memcg, const char *name, size_t size,
 		}
 
 		err = __kmem_cache_create(s, flags);
+		/*! 20140712 새로운 kmem_cache 를 생성한다. */
 		if (!err) {
 			s->refcount = 1;
+			/*! 20140712 merge 할 수 있도록 설정 */
 			list_add(&s->list, &slab_caches);
+			/*! 20140712 slab_caches list에 추가 */
 			memcg_cache_list_add(memcg, s);
+			/*! 20140712 아무것도 안함 */
 		} else {
+			/*! 20140712 kem_cache 생성 실패시 실행 */
 			kfree(s->name);
 			kmem_cache_free(kmem_cache, s);
 		}
@@ -224,8 +240,10 @@ kmem_cache_create_memcg(struct mem_cgroup *memcg, const char *name, size_t size,
 out_locked:
 	mutex_unlock(&slab_mutex);
 	put_online_cpus();
+	/*! 20140712 cpu_hotplug.refcount 값을 1 감소 */
 
 	if (err) {
+		/*! 20140712 err값이 있는 경우 실행 */
 
 		if (flags & SLAB_PANIC)
 			panic("kmem_cache_create: Failed to create slab '%s'. Error %d\n",
@@ -240,6 +258,7 @@ out_locked:
 	}
 
 	return s;
+	/*! 20140712 새로 생성한 kmem_cache 구조체 포인터 리턴 */
 }
 
 struct kmem_cache *
@@ -247,6 +266,7 @@ kmem_cache_create(const char *name, size_t size, size_t align,
 		  unsigned long flags, void (*ctor)(void *))
 {
 	return kmem_cache_create_memcg(NULL, name, size, align, flags, ctor, NULL);
+	/*! 20140712 새로 생성한 kmem_cache 구조체 포인터 리턴 */
 }
 EXPORT_SYMBOL(kmem_cache_create);
 
@@ -309,6 +329,7 @@ void __init create_boot_cache(struct kmem_cache *s, const char *name, size_t siz
 					name, size, err);
 
 	s->refcount = -1;	/* Exempt from merging for now */
+	/*! 20140712 s->refcount값이 음수이면, 새로운 slab 생성시 merge 대상에서 제외한다. */
 }
 
 struct kmem_cache *__init create_kmalloc_cache(const char *name, size_t size,

@@ -738,6 +738,7 @@ static inline void ftrace_dump(enum ftrace_dump_mode oops_dump_mode) { }
 	type __max1 = (x);			\
 	type __max2 = (y);			\
 	__max1 > __max2 ? __max1: __max2; })
+/*! 20140712 x, y 중 큰 값 리턴 */
 
 /**
  * clamp_t - return a value clamped to a given range using a given type

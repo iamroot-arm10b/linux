@@ -375,6 +375,7 @@ static inline struct page *compound_head(struct page *page)
 {
 	if (unlikely(PageTail(page)))
 		return page->first_page;
+		/*! 20140712 tail page인 경우 page->first_page 리턴 */
 	return page;
 }
 
@@ -429,7 +430,9 @@ static inline void get_page(struct page *page)
 static inline struct page *virt_to_head_page(const void *x)
 {
 	struct page *page = virt_to_page(x);
+	/*! 20140712 virture address를 해당 주소가 속한 page 구조체 주소로 변환 */
 	return compound_head(page);
+	/*! 20140712 page 구조체 주소 리턴 */
 }
 
 /*

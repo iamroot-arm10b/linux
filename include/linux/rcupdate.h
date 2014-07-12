@@ -778,7 +778,7 @@ static inline void rcu_read_lock(void)
 	__rcu_read_lock();
 	/*! 20140628 rcu(read copy update)의 read lock */
 	__acquire(RCU);
-	/*! 20140628 Sparse 가 enale 안되어 있으므로 아무것도 안함 */
+	/*! 20140628 Sparse 가 enable 안되어 있으므로 아무것도 안함 */
 	rcu_lock_acquire(&rcu_lock_map);
 	/*! 20140628 DEBUG 이므로 아무것도 안함 */
 	rcu_lockdep_assert(!rcu_is_cpu_idle(),

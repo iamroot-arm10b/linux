@@ -131,6 +131,7 @@ static inline bool kmem_cache_has_cpu_partial(struct kmem_cache *s)
 	 * 다만 특정 DEBUG flags가 있으면 false를 리턴
 	 */
 	return !kmem_cache_debug(s);
+	/*! 20140712 1 리턴 */
 #else
 	return false;
 #endif
@@ -180,6 +181,7 @@ static inline bool kmem_cache_has_cpu_partial(struct kmem_cache *s)
 		SLAB_TRACE | SLAB_DESTROY_BY_RCU | SLAB_NOLEAKTRACE | \
 		SLAB_FAILSLAB)
 
+/*! 20140712 여기 참조 */
 #define SLUB_MERGE_SAME (SLAB_DEBUG_FREE | SLAB_RECLAIM_ACCOUNT | \
 		SLAB_CACHE_DMA | SLAB_NOTRACK)
 
@@ -288,7 +290,7 @@ static inline void *get_freepointer_safe(struct kmem_cache *s, void *object)
 static inline void set_freepointer(struct kmem_cache *s, void *object, void *fp)
 {
 	*(void **)(object + s->offset) = fp;
-	/*! 20140426 objects + s->offset 한 주소에 fp 대입 */
+	/*! 20140426 object + s->offset 한 주소에 fp 대입 */
 }
 
 /* Loop over all objects in a slab */
@@ -467,6 +469,9 @@ static inline bool cmpxchg_double_slab(struct kmem_cache *s, struct page *page,
 #endif
 
 	return 0;
+	/*! 20140712 page->freelist == freelist_old && page->counters == counters_old 이면
+	 * page->freelist = freelist_new; page->counters = counters_new;
+	 */
 }
 
 #ifdef CONFIG_SLUB_DEBUG
@@ -1279,6 +1284,7 @@ static inline unsigned long kmem_cache_flags(unsigned long object_size,
 	unsigned long flags, const char *name,
 	void (*ctor)(void *))
 {
+	/*! 20140712 CONFIG_SLUB_DEBUG가 꺼져있다고 가정하므로 여기 실행 */
 	return flags;
 }
 #define slub_debug 0
@@ -1304,6 +1310,7 @@ static inline void slab_post_alloc_hook(struct kmem_cache *s, gfp_t flags,
 /*! 20140524 debug feature가 꺼져있으면 이쪽 실행 */
 
 static inline void slab_free_hook(struct kmem_cache *s, void *x) {}
+/*! 20140712 debug feature가 꺼져있으면 이쪽 실행 */
 
 #endif /* CONFIG_SLUB_DEBUG */
 
@@ -2717,10 +2724,12 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 	unsigned long uninitialized_var(flags);
 
 	stat(s, FREE_SLOWPATH);
+	/*! 20140712 아무일 안함 */
 
 	if (kmem_cache_debug(s) &&
 		!(n = free_debug_processing(s, page, x, addr, &flags)))
 		return;
+	/*! 20140712 DEBUG 옵션이 꺼져 있다고 가정하므로 아무일도 안함 */
 
 	do {
 		if (unlikely(n)) {
@@ -2730,12 +2739,16 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 		prior = page->freelist;
 		counters = page->counters;
 		set_freepointer(s, object, prior);
+		/*! 20140712 object + s->offset 한 주소에 prior 대입 */
 		new.counters = counters;
+		/*! 20140712 free 시킬 page의 counters 값 가져온다. */
 		was_frozen = new.frozen;
 		new.inuse--;
 		if ((!new.inuse || !prior) && !was_frozen) {
+			/*! 20140712 사용하는 프로세스 없거나 free list가 없고 page가 frozen이 아닌 경우 */
 
 			if (kmem_cache_has_cpu_partial(s) && !prior)
+				/*! 20140712 !prior: free list가 없는 경우 */
 
 				/*
 				 * Slab was on no list before and will be partially empty
@@ -2746,6 +2759,7 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 			else { /* Needs to be taken off a list */
 
 	                        n = get_node(s, page_to_nid(page));
+				/*! 20140712 kmem_cache->node[node] 값을 리턴 */
 				/*
 				 * Speculatively acquire the list_lock.
 				 * If the cmpxchg does not succeed then we may
@@ -2763,6 +2777,14 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 		prior, counters,
 		object, new.counters,
 		"__slab_free"));
+	/*! 20140712 거의 한번만 실행된다.
+	 * if (page->freelist == prior && page->counters == counters) {
+	 *	page->freelist = object;
+	 *	page->counters = new.counters;
+	 *	return 1;
+	 * }
+	 * 2014/07/12 여기까지 스터디
+	 */
 
 	if (likely(!n)) {
 
@@ -2834,6 +2856,7 @@ static __always_inline void slab_free(struct kmem_cache *s,
 	unsigned long tid;
 
 	slab_free_hook(s, x);
+	/*! 20140712 아무일도 안함 */
 
 redo:
 	/*
@@ -2844,22 +2867,31 @@ redo:
 	 */
 	preempt_disable();
 	c = __this_cpu_ptr(s->cpu_slab);
+	/*! 20140712 현재 cpu의 percpu공간에서 ptr 주소를 얻는다. */
 
 	tid = c->tid;
+	/*! 20140712 tid: transaction ID, 현재cpu의 tid를 가져오기 위해 선점금지한 것 */
 	preempt_enable();
 
 	if (likely(page == c->page)) {
+		/*! 20140712 page가 cpu slab에서 할당받은 page면 if문 실행 */
 		set_freepointer(s, object, c->freelist);
+		/*! 20140712 object + s->offset 을 c->freelist 로 설정 */
 
 		if (unlikely(!this_cpu_cmpxchg_double(
 				s->cpu_slab->freelist, s->cpu_slab->tid,
 				c->freelist, tid,
 				object, next_tid(tid)))) {
+			/*! 20140712 s->cpu_slab->freelist == c->freelist 이고 s->cpu_slab->tid == tid 이면, 
+			 * s->cpu_slab->freelist = object, s->cpu_slab->tid = next_tid(tid)
+			 */
 
 			note_cmpxchg_failure("slab_free", s, tid);
+			/*! 20140712 오류일때 printk 함수 실행 */
 			goto redo;
 		}
 		stat(s, FREE_FASTPATH);
+		/*! 20140712 아무것도 안함 */
 	} else
 		__slab_free(s, page, x, addr);
 
@@ -3664,15 +3696,19 @@ void kfree(const void *x)
 	trace_kfree(_RET_IP_, x);
 
 	if (unlikely(ZERO_OR_NULL_PTR(x)))
+		/*! 20140712 x가 NULL 인 경우 리턴 */
 		return;
 
 	page = virt_to_head_page(x);
+	/*! 20140712 x의 page구조체 주소로 변환 */
 	if (unlikely(!PageSlab(page))) {
+	/*! 20140712 page->flags에서 PG_slab번째(7번째)의 bit값 리턴. slab이므로 if문 실행안함 */
 		BUG_ON(!PageCompound(page));
 		kmemleak_free(x);
 		__free_memcg_kmem_pages(page, compound_order(page));
 		return;
 	}
+	/*! 20140712 _RET_IP_: __builtin_return_address(0) : 현재 함수를 호출한 함수의 반환 위치 주소 */
 	slab_free(page->slab_cache, page, object, _RET_IP_);
 }
 EXPORT_SYMBOL(kfree);
@@ -3987,16 +4023,21 @@ void __init kmem_cache_init_late(void)
 static int slab_unmergeable(struct kmem_cache *s)
 {
 	if (slub_nomerge || (s->flags & SLUB_NEVER_MERGE))
+		/*! 20140712 기존 kmem_cache의 merge가 금지된 경우 1 리턴 */
 		return 1;
 
 	if (s->ctor)
+		/*! 20140712 기존 kmem_cache에 ctor이 등록되어 있는 경우 1 리턴 */
 		return 1;
 
 	/*
 	 * We may have set a slab to be unmergeable during bootstrap.
 	 */
 	if (s->refcount < 0)
+		/*! 20140712 기존 kmem_cache의 refcount가 0 미만인 경우 1 리턴 */
 		return 1;
+	/*! 20140712 s->refcount가 -1인것(merge 금지), 1인것(merge 가능) 둘다 있다. */
+	/*! 20140712 mm/slab_common.c 의 create_boot_cache, create_kmalloc_cache 함수에서 set 했음 */
 
 	return 0;
 }
@@ -4008,39 +4049,54 @@ static struct kmem_cache *find_mergeable(struct mem_cgroup *memcg, size_t size,
 	struct kmem_cache *s;
 
 	if (slub_nomerge || (flags & SLUB_NEVER_MERGE))
+		/*! 20140712 slub merge가 안되도록 설정이 되어 있으면 NULL 리턴 */
 		return NULL;
 
 	if (ctor)
 		return NULL;
 
 	size = ALIGN(size, sizeof(void *));
+	/*! 20140712 size를 4byte 단위로 정렬 */
 	align = calculate_alignment(flags, align, size);
+	/*! 20140712 SLAB_HWCACHE_ALIGN이 설정된 경우 size를 cache line 크기를, 
+	 * 그렇지 않은 경우 ARCH_SLAB_MINALIGN 크기를 받아온다.
+	 */
 	size = ALIGN(size, align);
+	/*! 20140712 size를 align 값으로 재정렬 */
 	flags = kmem_cache_flags(size, flags, name, NULL);
+	/*! 20140712 아무일도 안함 */
 
 	list_for_each_entry(s, &slab_caches, list) {
+	/*! 20140712 slab_caches list를 순차적으로 처리 */
 		if (slab_unmergeable(s))
 			continue;
+		/*! 20140712 merge 할수 없는 경우(s->refcount < 0) continue */
 
 		if (size > s->size)
 			continue;
+		/*! 20140712 새롭게 만들 size가 기존 size보다 크면 continue */
 
 		if ((flags & SLUB_MERGE_SAME) != (s->flags & SLUB_MERGE_SAME))
-				continue;
+			continue;
+		/*! 20140712 양쪽의 flag가 SLUB_MERGE_SAME 이면 continue */
 		/*
 		 * Check if alignment is compatible.
 		 * Courtesy of Adrian Drzewiecki
 		 */
 		if ((s->size & ~(align - 1)) != s->size)
 			continue;
+		/*! 20140712 s->size가 align의 배수가 아니면 continue */
 
 		if (s->size - size >= sizeof(void *))
 			continue;
+		/*! 20140712 새롭게 만들 size보다 기존 size 차이가 4 이상인 경우 continue */
 
 		if (!cache_match_memcg(s, memcg))
 			continue;
+		/*! 20140712 항상 1이 리턴되므로 아래 수행됨 */
 
 		return s;
+		/*! 20140712 merge할 수 있는 후보 s 리턴 */
 	}
 	return NULL;
 }
@@ -4052,6 +4108,7 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 	struct kmem_cache *s;
 
 	s = find_mergeable(memcg, size, align, flags, name, ctor);
+	/*! 20140712 merge 할 수 있는 kmem_cache 찾는다. */
 	if (s) {
 		s->refcount++;
 		/*
@@ -4059,15 +4116,21 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 		 * the complete object on kzalloc.
 		 */
 		s->object_size = max(s->object_size, (int)size);
+		/*! 20140712 size: meta data 포함한 size, object_size: meta data 제외한 size 
+		 * 기존 크기(s->object_size)와 새로만들 크기(size) 중 큰 것으로 object_size 재설정 
+		 */
 		s->inuse = max_t(int, s->inuse, ALIGN(size, sizeof(void *)));
+		/*! 20140712 int type으로 둘 중에서 큰 값을 s->inuse 에 설정 */
 
 		if (sysfs_slab_alias(s, name)) {
 			s->refcount--;
 			s = NULL;
 		}
+		/*! 20140712 kmem_cache s 에 name의 alias를 생성한다. */
 	}
 
 	return s;
+	/*! 20140712 merge할 수 있는 kmem_cache가 있으면 alias 생성후 리턴 */
 }
 
 int __kmem_cache_create(struct kmem_cache *s, unsigned long flags)
@@ -5562,6 +5625,7 @@ static int sysfs_slab_alias(struct kmem_cache *s, const char *name)
 	}
 
 	al = kmalloc(sizeof(struct saved_alias), GFP_KERNEL);
+	/*! 20140607 saved_alias크기만큼의 memory를 할당받음 */
 	if (!al)
 		return -ENOMEM;
 
@@ -5569,6 +5633,7 @@ static int sysfs_slab_alias(struct kmem_cache *s, const char *name)
 	al->name = name;
 	al->next = alias_list;
 	alias_list = al;
+	/*! 20140712 새로운 alias를 생성하여 alias_list 에 추가함 */
 	return 0;
 }
 
