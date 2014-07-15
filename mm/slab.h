@@ -66,10 +66,10 @@ __kmem_cache_alias(struct mem_cgroup *memcg, const char *name, size_t size,
 
 
 /* Legal flag mask for kmem_cache_create(), for various configurations */
-#define SLAB_CORE_FLAGS (SLAB_WCACHE_ALIGN | SLAB_CACHE_DMA | SLAB_PANIC | \
+#define SLAB_CORE_FLAGS (SLAB_HWCACHE_ALIGN | SLAB_CACHE_DMA | SLAB_PANIC | \
 			 SLAB_DESTROY_BY_RCU | SLAB_DEBUG_OBJECTS )
 /*! 20140712 SLAB_CORE_FLAGS: 0x000C6000
- * SLAB_WCACHE_ALIGN  : 0x00002000
+ * SLAB_HWCACHE_ALIGN  : 0x00002000
  * SLAB_CACHE_DMA     :	0x00004000
  * SLAB_PANIC         : 0x00040000
  * SLAB_DESTROY_BY_RCU: 0x00080000
