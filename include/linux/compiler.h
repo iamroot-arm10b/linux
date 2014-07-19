@@ -42,6 +42,7 @@ extern void __chk_io_ptr(const volatile void __iomem *);
 # define __release(x) (void)0
 # define __cond_lock(x,c) (c)
 # define __percpu
+/*! 20140719 단순히 percpu 변수로 쓴다는 것을 알려주는 용도 */
 # define __rcu
 #endif
 

@@ -567,6 +567,7 @@ memcg_kmem_get_cache(struct kmem_cache *cachep, gfp_t gfp)
 #define for_each_memcg_cache_index(_idx)	\
 	for (; NULL; )
 
+/*! 20140719 여기 실행된다 */
 static inline bool memcg_kmem_enabled(void)
 {
 	return false;

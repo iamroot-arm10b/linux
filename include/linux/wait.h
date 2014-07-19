@@ -72,6 +72,7 @@ extern void __init_waitqueue_head(wait_queue_head_t *q, const char *name, struct
 							\
 		__init_waitqueue_head((q), #q, &__key);	\
 	} while (0)
+/*! 20140719 waitqueue_head 초기화 */
 
 #ifdef CONFIG_LOCKDEP
 # define __WAIT_QUEUE_HEAD_INIT_ONSTACK(name) \

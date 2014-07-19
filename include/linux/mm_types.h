@@ -77,6 +77,7 @@ struct page {
 			 * slab_lock but _count is not.
 			 */
 			unsigned counters;
+			/*! 20140719 여기 사용함 */
 #endif
 
 			struct {

@@ -26,6 +26,7 @@ struct irq_work {
 static inline
 void init_irq_work(struct irq_work *work, void (*func)(struct irq_work *))
 {
+	/*! 20140719 여기 실행됨 */
 	work->flags = 0;
 	work->func = func;
 }

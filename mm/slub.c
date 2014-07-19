@@ -2103,6 +2103,11 @@ static void unfreeze_partials(struct kmem_cache *s,
 		/*! 20140531 cpu slab의 freelist를 없애고 page slab partial의 freelist로 바꾸기 위한 것으로 추정 */
 
 		if (unlikely(!new.inuse && n->nr_partial > s->min_partial)) {
+			/*! 20140719
+			 * page에 사용중인 object가 없고
+			 * nr_partial의 갯수가 min_partial(node의 partial로 유지해야할 최소갯수)보다 큰 경우
+			 * 해당 page를 discard_page로 지정
+			 */
 			page->next = discard_page;
 			discard_page = page;
 		} else {
@@ -2148,11 +2153,22 @@ static void put_cpu_partial(struct kmem_cache *s, struct page *page, int drain)
 		pages = 0;
 		pobjects = 0;
 		oldpage = this_cpu_read(s->cpu_slab->partial);
+		/*! 20140719
+		 * this_cpu_read(s->cpu_slab->partial)
+		 * => __pcpu_size_call_return(this_cpu_read_, (s->cpu_slab->partial)) 
+		 * => this_cpu_read_4(s->cpu_slab->partial)
+		 * => _this_cpu_generic_read(s->cpu_slab->partial)
+		 * 현재 cpu의 cpu_slab->partial 값을 읽어온다.
+		 */
 
 		if (oldpage) {
+		/*! 20140719 가지고 온 oldpage가 있으면 수행됨 */
 			pobjects = oldpage->pobjects;
+			/*! 20140719 pobjects: partial slab의 전체 object 갯수 */
 			pages = oldpage->pages;
+			/*! 20140719 pages: partial slab에 남아 있는 page 갯수 */
 			if (drain && pobjects > s->cpu_partial) {
+				/*! 20140719 s->cpu_partial: 유지할 partial의 최대값 */
 				unsigned long flags;
 				/*
 				 * partial array is full. Move the existing
@@ -2160,6 +2176,9 @@ static void put_cpu_partial(struct kmem_cache *s, struct page *page, int drain)
 				 */
 				local_irq_save(flags);
 				unfreeze_partials(s, this_cpu_ptr(s->cpu_slab));
+				/*! 20140719 기존 cpu_slab을 node 의 partial로 보내거나 buddy로 반환한다.
+				 * inuse가 0인 것은 discard(buddy로 보냄), nr_patial이 있으면 slab 유지
+				 */
 				local_irq_restore(flags);
 				oldpage = NULL;
 				pobjects = 0;
@@ -2176,6 +2195,7 @@ static void put_cpu_partial(struct kmem_cache *s, struct page *page, int drain)
 		page->next = oldpage;
 
 	} while (this_cpu_cmpxchg(s->cpu_slab->partial, oldpage, page) != oldpage);
+	/*! 20140719 if (s->cpu_slab->partial == oldpage) { s->cpu_slab->partial = page; } */
 #endif
 }
 
@@ -2744,8 +2764,11 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 		/*! 20140712 free 시킬 page의 counters 값 가져온다. */
 		was_frozen = new.frozen;
 		new.inuse--;
+		/*! 20140719 new.inuse 값을 변경시키면 new.counters 값도 변경된다.
+		 * page구조체에서 counters가 union type이므로.
+		 */
 		if ((!new.inuse || !prior) && !was_frozen) {
-			/*! 20140712 사용하는 프로세스 없거나 free list가 없고 page가 frozen이 아닌 경우 */
+			/*! 20140712 slab object가 할당된 것이 없거나 free list가 없고 page가 frozen이 아닌 경우 */
 
 			if (kmem_cache_has_cpu_partial(s) && !prior)
 				/*! 20140712 !prior: free list가 없는 경우 */
@@ -2794,6 +2817,7 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 		 */
 		if (new.frozen && !was_frozen) {
 			put_cpu_partial(s, page, 1);
+			/*! 20140719 page를 cpu_slab 의 partial list로 추가한다. */
 			stat(s, CPU_PARTIAL_FREE);
 		}
 		/*
@@ -2806,6 +2830,7 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
         }
 
 	if (unlikely(!new.inuse && n->nr_partial > s->min_partial))
+		/*! 20140719 현재 slab page가 buddy로 반환하는 조건일 때 */
 		goto slab_empty;
 
 	/*
@@ -2813,6 +2838,7 @@ static void __slab_free(struct kmem_cache *s, struct page *page,
 	 * then add it.
 	 */
 	if (!kmem_cache_has_cpu_partial(s) && unlikely(!prior)) {
+		/*! 20140719 kmem_cache_has_cpu_partial은 한상 1을 리턴하므로 실행안됨 */
 		if (kmem_cache_debug(s))
 			remove_full(s, page);
 		add_partial(n, page, DEACTIVATE_TO_TAIL);
@@ -2826,15 +2852,19 @@ slab_empty:
 		/*
 		 * Slab on the partial list.
 		 */
+		/*! 20140719 page_freelist가 node partial에 있는 경우 */
 		remove_partial(n, page);
+		/*! 20140719 page를 list에서 제거하고 nr_partial값을 1 감소한다. */
 		stat(s, FREE_REMOVE_PARTIAL);
 	} else
 		/* Slab must be on the full list */
 		remove_full(s, page);
+		/*! 20140719 아무일도 안함 */
 
 	spin_unlock_irqrestore(&n->list_lock, flags);
 	stat(s, FREE_SLAB);
 	discard_slab(s, page);
+	/*! 20140719 slab page를 buddy 시스템에 반환한다. */
 }
 
 /*
@@ -2894,15 +2924,18 @@ redo:
 		/*! 20140712 아무것도 안함 */
 	} else
 		__slab_free(s, page, x, addr);
+		/*! 20140719 slab page를 cpu_slab의 partial list나 buddy로 반환한다. */
 
 }
 
 void kmem_cache_free(struct kmem_cache *s, void *x)
 {
 	s = cache_from_obj(s, x);
+	/*! 20140719 항상 s 리턴 */
 	if (!s)
 		return;
 	slab_free(s, virt_to_head_page(x), x, _RET_IP_);
+	/*! 20140719 s에 해당하는 page의 object를 free한다. */
 	trace_kmem_cache_free(_RET_IP_, x);
 }
 EXPORT_SYMBOL(kmem_cache_free);
@@ -3710,6 +3743,7 @@ void kfree(const void *x)
 	}
 	/*! 20140712 _RET_IP_: __builtin_return_address(0) : 현재 함수를 호출한 함수의 반환 위치 주소 */
 	slab_free(page->slab_cache, page, object, _RET_IP_);
+	/*! 20140719 slab page를 반환한다. */
 }
 EXPORT_SYMBOL(kfree);
 

@@ -621,6 +621,7 @@ asmlinkage void __init start_kernel(void)
 		/*! 20140628 cpsr의 irq 관련된 내용을 flags 변수에 저장 */
 	/*! 20140628 여기까지 스터디함 */
 	idr_init_cache();
+	/*! 20140719 idr_layer_cache로 사용할 slab 생성 */
 	rcu_init();
 	tick_nohz_init();
 	radix_tree_init();

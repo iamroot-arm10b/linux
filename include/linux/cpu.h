@@ -114,6 +114,7 @@ enum {
 /* Need to know about CPUs going up/down? */
 #if defined(CONFIG_HOTPLUG_CPU) || !defined(MODULE)
 /*! 20140628 여기 실행됨 */
+/*! 20140719 cpu hotplug가 일어날때마다 여기 실행되는 것 */
 #define cpu_notifier(fn, pri) {					\
 	static struct notifier_block fn##_nb =			\
 		{ .notifier_call = fn, .priority = pri };	\

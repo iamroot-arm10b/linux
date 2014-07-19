@@ -232,7 +232,9 @@ kmem_cache_create_memcg(struct mem_cgroup *memcg, const char *name, size_t size,
 		} else {
 			/*! 20140712 kem_cache 생성 실패시 실행 */
 			kfree(s->name);
+			/*! 20140719 kmalloc로 할당받은 slab 이름에 사용하는 메모리 반환 */
 			kmem_cache_free(kmem_cache, s);
+			/*! 20140719 kmem_cache page의 object를 free한다. */
 		}
 	} else
 		err = -ENOMEM;

@@ -174,6 +174,7 @@ extern phys_addr_t per_cpu_ptr_to_phys(void *addr);
 
 extern void __bad_size_call_parameter(void);
 
+/*! 20140719 여기 참조함 */
 #define __pcpu_size_call_return(stem, variable)				\
 ({	typeof(variable) pscr_ret__;					\
 	__verify_pcpu_ptr(&(variable));					\
@@ -272,6 +273,7 @@ do {									\
  *    used.
  */
 
+/*! 20140719 여기 실행됨 */
 #define _this_cpu_generic_read(pcp)					\
 ({	typeof(pcp) ret__;						\
 	preempt_disable();						\
@@ -289,11 +291,13 @@ do {									\
 # endif
 # ifndef this_cpu_read_4
 #  define this_cpu_read_4(pcp)	_this_cpu_generic_read(pcp)
+/*! 20140719 여기 실행됨 */
 # endif
 # ifndef this_cpu_read_8
 #  define this_cpu_read_8(pcp)	_this_cpu_generic_read(pcp)
 # endif
 # define this_cpu_read(pcp)	__pcpu_size_call_return(this_cpu_read_, (pcp))
+/*! 20140719 여기 실행됨 */
 #endif
 
 #define _this_cpu_generic_to_op(pcp, val, op)				\
@@ -454,6 +458,7 @@ do {									\
 	__pcpu_size_call_return2(this_cpu_xchg_, (pcp), nval)
 #endif
 
+/*! 20140719 여기 참조함 */
 #define _this_cpu_generic_cmpxchg(pcp, oval, nval)			\
 ({									\
 	typeof(pcp) ret__;						\
@@ -465,6 +470,9 @@ do {									\
 	raw_local_irq_restore(flags);					\
 	ret__;								\
 })
+/*! 20140719 현재 cpu의 pcp값이 oval와 같으면 pcp의 값을 nval로 설정
+ * 즉, if (pcp == oval) { pcp = nval; }
+ */
 
 #ifndef this_cpu_cmpxchg
 # ifndef this_cpu_cmpxchg_1

@@ -78,6 +78,7 @@ static void __init rcu_bootup_announce_oddness(void)
 	pr_info("\tAdditional per-CPU info printed with stalls.\n");
 #endif
 #if NUM_RCU_LVL_4 != 0
+	/*! 20140719 NUM_RCU_LVL_4: 0 이므로 실행안됨 */
 	pr_info("\tFour-level hierarchy is enabled.\n");
 #endif
 	if (rcu_fanout_leaf != CONFIG_RCU_FANOUT_LEAF)
@@ -106,6 +107,7 @@ static void __init rcu_bootup_announce_oddness(void)
 			pr_info("\tPoll for callbacks from no-CBs CPUs.\n");
 	}
 #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
+	/*! 20140719 조건에 맞는 것이 없으므로 아무것도 출력안함 */
 }
 
 #ifdef CONFIG_TREE_PREEMPT_RCU
@@ -124,6 +126,7 @@ static void __init rcu_bootup_announce(void)
 {
 	pr_info("Preemptible hierarchical RCU implementation.\n");
 	rcu_bootup_announce_oddness();
+	/*! 20140719 조건에 맞는 것이 없으므로 아무것도 출력안함 */
 }
 
 /*
@@ -931,6 +934,7 @@ EXPORT_SYMBOL_GPL(rcu_barrier);
 static void __init __rcu_init_preempt(void)
 {
 	rcu_init_one(&rcu_preempt_state, &rcu_preempt_data);
+	/*! 20140719 rcu_preempt state, data 관련 자료구조 초기화 */
 }
 
 /*
@@ -2331,6 +2335,7 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
 
 static void rcu_init_one_nocb(struct rcu_node *rnp)
 {
+	/*! 20140719 여기 실행 */
 }
 
 static bool __call_rcu_nocb(struct rcu_data *rdp, struct rcu_head *rhp,
@@ -2347,6 +2352,7 @@ static bool __maybe_unused rcu_nocb_adopt_orphan_cbs(struct rcu_state *rsp,
 
 static void __init rcu_boot_init_nocb_percpu_data(struct rcu_data *rdp)
 {
+	/*! 20140719 여기 실행 */
 }
 
 static void __init rcu_spawn_nocb_kthreads(struct rcu_state *rsp)
@@ -2355,6 +2361,7 @@ static void __init rcu_spawn_nocb_kthreads(struct rcu_state *rsp)
 
 static bool init_nocb_callback_list(struct rcu_data *rdp)
 {
+	/*! 20140719 여기 실행됨 */
 	return false;
 }
 

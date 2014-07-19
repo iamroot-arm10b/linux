@@ -79,9 +79,25 @@ static struct lock_class_key rcu_fqs_class[RCU_NUM_LVLS];
 	.abbr = sabbr, \
 }
 
+/*! 20140719 여기 실행됨 */
 struct rcu_state rcu_sched_state =
 	RCU_STATE_INITIALIZER(rcu_sched, 's', call_rcu_sched);
+	/*! 20140719
+	 * .level = { &rcu_sched_state.node[0] }, \
+	 * .call = call_rcu_sched, \
+	 * .fqs_state = RCU_GP_IDLE, \
+	 * .gpnum = 0UL - 300UL, \
+	 * .completed = 0UL - 300UL, \
+	 * .orphan_lock = __RAW_SPIN_LOCK_UNLOCKED(&rcu_sched_state.orphan_lock), \
+	 * .orphan_nxttail = &rcu_sched_state.orphan_nxtlist, \
+	 * .orphan_donetail = &rcu_sched_state.orphan_donelist, \
+	 * .barrier_mutex = __MUTEX_INITIALIZER(rcu_sched_state.barrier_mutex), \
+	 * .onoff_mutex = __MUTEX_INITIALIZER(rcu_sched_state.onoff_mutex), \
+	 * .name = "rcu_sched", \
+	 * .abbr = 's', \
+	 */
 DEFINE_PER_CPU(struct rcu_data, rcu_sched_data);
+/*! 20140719 struct rcu_data 에 대해서 PER CPU section에 선언하여 공간 확보 */
 
 struct rcu_state rcu_bh_state = RCU_STATE_INITIALIZER(rcu_bh, 'b', call_rcu_bh);
 DEFINE_PER_CPU(struct rcu_data, rcu_bh_data);
@@ -99,6 +115,13 @@ static int num_rcu_lvl[] = {  /* Number of rcu_nodes at specified level. */
 	NUM_RCU_LVL_2,
 	NUM_RCU_LVL_3,
 	NUM_RCU_LVL_4,
+	/*! 20140719
+	 * NUM_RCU_LVL_0: 1
+	 * NUM_RCU_LVL_1: 4
+	 * NUM_RCU_LVL_2: 0
+	 * NUM_RCU_LVL_3: 0
+	 * NUM_RCU_LVL_4: 0
+	 */
 };
 int rcu_num_nodes __read_mostly = NUM_RCU_NODES; /* Total # rcu_nodes in use. */
 
@@ -332,6 +355,7 @@ cpu_needs_another_gp(struct rcu_state *rsp, struct rcu_data *rdp)
  */
 static struct rcu_node *rcu_get_root(struct rcu_state *rsp)
 {
+	/*! 20140719 여기 실행 */
 	return &rsp->node[0];
 }
 
@@ -995,6 +1019,7 @@ static void init_callback_list(struct rcu_data *rdp)
 		return;
 	rdp->nxtlist = NULL;
 	for (i = 0; i < RCU_NEXT_SIZE; i++)
+		/*! 20140719 RCU_NEXT_SIZE: 4 */
 		rdp->nxttail[i] = &rdp->nxtlist;
 }
 
@@ -2887,20 +2912,26 @@ rcu_boot_init_percpu_data(int cpu, struct rcu_state *rsp)
 {
 	unsigned long flags;
 	struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
+	/*! 20140719 cpu별로 rdp = rsp->rda */
 	struct rcu_node *rnp = rcu_get_root(rsp);
+	/*! 20140719 rnp = &rsp->node[0]; */
 
 	/* Set up local state, ensuring consistent view of global state. */
 	raw_spin_lock_irqsave(&rnp->lock, flags);
 	rdp->grpmask = 1UL << (cpu - rdp->mynode->grplo);
+	/*! 20140719 cpu의 번호에 해당하는 bit를 1로 set */
 	init_callback_list(rdp);
+	/*! 20140719 cpu별로 nxttail 초기화 */
 	rdp->qlen_lazy = 0;
 	ACCESS_ONCE(rdp->qlen) = 0;
 	rdp->dynticks = &per_cpu(rcu_dynticks, cpu);
+	/*! 20140719 cpu번호의 percpu rcu_dynticks 포인터를 리턴 */
 	WARN_ON_ONCE(rdp->dynticks->dynticks_nesting != DYNTICK_TASK_EXIT_IDLE);
 	WARN_ON_ONCE(atomic_read(&rdp->dynticks->dynticks) != 1);
 	rdp->cpu = cpu;
 	rdp->rsp = rsp;
 	rcu_boot_init_nocb_percpu_data(rdp);
+	/*! 20140719 아무일도 안함 */
 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
 }
 
@@ -3067,6 +3098,7 @@ static void __init rcu_init_levelspread(struct rcu_state *rsp)
 	rsp->levelspread[0] = rcu_fanout_leaf;
 }
 #else /* #ifdef CONFIG_RCU_FANOUT_EXACT */
+/*! 20140719 여기 실행됨 */
 static void __init rcu_init_levelspread(struct rcu_state *rsp)
 {
 	int ccur;
@@ -3074,10 +3106,13 @@ static void __init rcu_init_levelspread(struct rcu_state *rsp)
 	int i;
 
 	cprv = nr_cpu_ids;
+	/*! 20140719 cprv: 4, rcu_num_lvls: 1 */
 	for (i = rcu_num_lvls - 1; i >= 0; i--) {
 		ccur = rsp->levelcnt[i];
 		rsp->levelspread[i] = (cprv + ccur - 1) / ccur;
+		/*! 20140719 rsp->levelspread[0] = (4 + 1 - 1) / 1 = 4 */
 		cprv = ccur;
+		/*! 20140719 cprv = 1 */
 	}
 }
 #endif /* #else #ifdef CONFIG_RCU_FANOUT_EXACT */
@@ -3102,37 +3137,48 @@ static void __init rcu_init_one(struct rcu_state *rsp,
 	struct rcu_node *rnp;
 
 	BUILD_BUG_ON(MAX_RCU_LVLS > ARRAY_SIZE(buf));  /* Fix buf[] init! */
+	/*! 20140719 컴파일 타임에 조건이 true이면 에러 발생 */
 
 	/* Silence gcc 4.8 warning about array index out of range. */
 	if (rcu_num_lvls > RCU_NUM_LVLS)
+	/*! 20140719 RCU_NUM_LVLS: 1 */
 		panic("rcu_init_one: rcu_num_lvls overflow");
 
 	/* Initialize the level-tracking arrays. */
 
+	/*! 20140719 rcu_num_lvls: 1 */
 	for (i = 0; i < rcu_num_lvls; i++)
 		rsp->levelcnt[i] = num_rcu_lvl[i];
+		/*! 20140719 rsp->levelcnt[0]: 1 */
 	for (i = 1; i < rcu_num_lvls; i++)
 		rsp->level[i] = rsp->level[i - 1] + rsp->levelcnt[i - 1];
 	rcu_init_levelspread(rsp);
+	/*! 20140719 cprv: 1, rcu_num_lvls: 1, rsp->levelspread[0]: 4 */
 
 	/* Initialize the elements themselves, starting from the leaves. */
 
 	for (i = rcu_num_lvls - 1; i >= 0; i--) {
 		cpustride *= rsp->levelspread[i];
 		rnp = rsp->level[i];
+		/*! 20140719 cpustride: 4, rnp = &rsp->node[0] */
 		for (j = 0; j < rsp->levelcnt[i]; j++, rnp++) {
 			raw_spin_lock_init(&rnp->lock);
 			lockdep_set_class_and_name(&rnp->lock,
 						   &rcu_node_class[i], buf[i]);
+			/*! 20140719 lockdep_~: DEBUG feature이므로 pass */
 			raw_spin_lock_init(&rnp->fqslock);
 			lockdep_set_class_and_name(&rnp->fqslock,
 						   &rcu_fqs_class[i], fqs[i]);
 			rnp->gpnum = rsp->gpnum;
+			/*! 20140719 rnp->gpnum: 0UL - 300UL = 0xFFFFFED4 */
 			rnp->completed = rsp->completed;
+			/*! 20140719 rnp->completed: 0UL - 300UL = 0xFFFFFED4  */
 			rnp->qsmask = 0;
 			rnp->qsmaskinit = 0;
 			rnp->grplo = j * cpustride;
+			/*! 20140719 rnp->grplo: 0 (cpu 번호나 group 중에 가장 낮은 번호) */
 			rnp->grphi = (j + 1) * cpustride - 1;
+			/*! 20140719 rnp->grphi = (0 + 1) * 4 - 1 = 3 */
 			if (rnp->grphi >= NR_CPUS)
 				rnp->grphi = NR_CPUS - 1;
 			if (i == 0) {
@@ -3146,22 +3192,30 @@ static void __init rcu_init_one(struct rcu_state *rsp,
 					      j / rsp->levelspread[i - 1];
 			}
 			rnp->level = i;
+			/*! 20140719 rnp->level: 0 */
 			INIT_LIST_HEAD(&rnp->blkd_tasks);
 			rcu_init_one_nocb(rnp);
+			/*! 20140719 아무일 안함 */
 		}
 	}
 
 	rsp->rda = rda;
 	init_waitqueue_head(&rsp->gp_wq);
+	/*! 20140719 waitqueue_head 초기화 */
 	init_irq_work(&rsp->wakeup_work, rsp_wakeup);
+	/*! 20140719 irq_work 초기화 */
 	rnp = rsp->level[rcu_num_lvls - 1];
+	/*! 20140719 rnp = &rsp->node[0] (level의 마지막 node의 포인터) */
 	for_each_possible_cpu(i) {
 		while (i > rnp->grphi)
 			rnp++;
 		per_cpu_ptr(rsp->rda, i)->mynode = rnp;
+		/*! 20140719 cpu별로 rsp->rda->mynode = &rsp->node[0] */
 		rcu_boot_init_percpu_data(i, rsp);
+		/*! 20140719 percpu rcu_data 관련 초기화 */
 	}
 	list_add(&rsp->flavors, &rcu_struct_flavors);
+	/*! 20140719 rsp->flavors를 rcu_struct_flavors(head)에 추가 */
 }
 
 /*
@@ -3176,6 +3230,7 @@ static void __init rcu_init_geometry(void)
 	int j;
 	int n = nr_cpu_ids;
 	int rcu_capacity[MAX_RCU_LVLS + 1];
+	/*! 20140719 MAX_RCU_LVLS: 4 */
 
 	/*
 	 * Initialize any unspecified boot parameters.
@@ -3185,15 +3240,19 @@ static void __init rcu_init_geometry(void)
 	 * RCU_JIFFIES_FQS_DIV CPUs that might be on the system.
 	 */
 	d = RCU_JIFFIES_TILL_FORCE_QS + nr_cpu_ids / RCU_JIFFIES_FQS_DIV;
+	/*! 20140719 d = 1 + 4 / 256 = 1*/
 	if (jiffies_till_first_fqs == ULONG_MAX)
 		jiffies_till_first_fqs = d;
 	if (jiffies_till_next_fqs == ULONG_MAX)
 		jiffies_till_next_fqs = d;
+	/*! 20140719 ULONG_MAX 면 초기화되지 않은 값이므로 d로 초기화함 */
 
 	/* If the compile-time values are accurate, just leave. */
 	if (rcu_fanout_leaf == CONFIG_RCU_FANOUT_LEAF &&
 	    nr_cpu_ids == NR_CPUS)
+		/*! 20140719 CONFIG_RCU_FANOUT_LEAF: 16, NR_CPUS: 4 이므로 여기서 리턴 */
 		return;
+	/*! 20140719 아래는, 컴파일 타임의 설정과 다른 경우 추가적인 초기화를 수행하는 것 */
 
 	/*
 	 * Compute number of nodes that can be handled an rcu_node tree
@@ -3244,11 +3303,17 @@ void __init rcu_init(void)
 	int cpu;
 
 	rcu_bootup_announce();
+	/*! 20140719 조건에 맞는 것이 없으므로 아무것도 출력안함 */
 	rcu_init_geometry();
+	/*! 20140719 jiffies_till_first_fqs = jiffies_till_next_fqs = 1 로 셋팅 */
 	rcu_init_one(&rcu_sched_state, &rcu_sched_data);
+	/*! 20140719 rcu_sched state, data 관련 자료구조 초기화 */
 	rcu_init_one(&rcu_bh_state, &rcu_bh_data);
+	/*! 20140719 rcu_bh state, data 관련 자료구조 초기화 */
 	__rcu_init_preempt();
+	/*! 20140719 rcu_preempt state, data 관련 자료구조 초기화 */
 	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
+	/*! 20140719 RCU_SOFTIRQ 핸들러 등록 */
 
 	/*
 	 * We don't need protection against CPU-hotplug here because
@@ -3256,6 +3321,8 @@ void __init rcu_init(void)
 	 * or the scheduler are operational.
 	 */
 	cpu_notifier(rcu_cpu_notify, 0);
+	/*! 20140719 rcu를 위한 cpu_notify 함수 등록 */
+	/*! 20140719 스터디 여기까지 */
 	for_each_online_cpu(cpu)
 		rcu_cpu_notify(NULL, CPU_UP_PREPARE, (void *)(long)cpu);
 }

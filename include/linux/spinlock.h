@@ -100,9 +100,9 @@ do {								\
 } while (0)
 
 #else
+/*! 20131130 DEBUG 안보기로 했으므로 여기 실행 */
 # define raw_spin_lock_init(lock)				\
 	do { *(lock) = __RAW_SPIN_LOCK_UNLOCKED(lock); } while (0)
-/*! 20131130 DEBUG 안보기로 했으므로 여기 실행 */
 #endif
 
 #define raw_spin_is_locked(lock)	arch_spin_is_locked(&(lock)->raw_lock)

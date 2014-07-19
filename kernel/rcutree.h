@@ -38,11 +38,13 @@
  */
 #define MAX_RCU_LVLS 4
 #define RCU_FANOUT_1	      (CONFIG_RCU_FANOUT_LEAF)
+/*! 20140719 여기 참조. RCU_FANOUT_1: 16 */
 #define RCU_FANOUT_2	      (RCU_FANOUT_1 * CONFIG_RCU_FANOUT)
 #define RCU_FANOUT_3	      (RCU_FANOUT_2 * CONFIG_RCU_FANOUT)
 #define RCU_FANOUT_4	      (RCU_FANOUT_3 * CONFIG_RCU_FANOUT)
 
 #if NR_CPUS <= RCU_FANOUT_1
+/*! 20140719 NR_CPUS: 8, RCU_FANOUT_1: 16 이므로 여기 참조함 */
 #  define RCU_NUM_LVLS	      1
 #  define NUM_RCU_LVL_0	      1
 #  define NUM_RCU_LVL_1	      (NR_CPUS)
@@ -75,7 +77,9 @@
 #endif /* #if (NR_CPUS) <= RCU_FANOUT_1 */
 
 #define RCU_SUM (NUM_RCU_LVL_0 + NUM_RCU_LVL_1 + NUM_RCU_LVL_2 + NUM_RCU_LVL_3 + NUM_RCU_LVL_4)
+/*! 20140719 RCU_SUM: 1 + 4 + 0 + 0 + 0 = 5 */
 #define NUM_RCU_NODES (RCU_SUM - NR_CPUS)
+/*! 20140719 NUM_RCU_NODES: 1 */
 
 extern int rcu_num_lvls;
 extern int rcu_num_nodes;
@@ -346,6 +350,7 @@ struct rcu_data {
 #define RCU_JIFFIES_TILL_FORCE_QS (1 + (HZ > 250) + (HZ > 500))
 					/* For jiffies_till_first_fqs and */
 					/*  and jiffies_till_next_fqs. */
+/*! 20140719 현재 HZ: 200 이므로 RCU_JIFFIES_TILL_FORCE_QS: 1 */
 
 #define RCU_JIFFIES_FQS_DIV	256	/* Very large systems need more */
 					/*  delay between bouts of */

@@ -248,6 +248,7 @@ static inline struct kmem_cache *cache_from_obj(struct kmem_cache *s, void *x)
 	 * will also be a constant.
 	 */
 	if (!memcg_kmem_enabled() && !unlikely(s->flags & SLAB_DEBUG_FREE))
+		/*! 20140719 memcg_kmem_enabled: 항상 false가 리턴됨 && DEBUG는 setting 안되어 있으므로 여기 실행 */
 		return s;
 
 	page = virt_to_head_page(x);
