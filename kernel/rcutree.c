@@ -355,7 +355,7 @@ cpu_needs_another_gp(struct rcu_state *rsp, struct rcu_data *rdp)
  */
 static struct rcu_node *rcu_get_root(struct rcu_state *rsp)
 {
-	/*! 20140719 여기 실행 */
+	/*! 20140719 여기 실행, 우리는 NUMA가 아니라 node가 하나뿐임 */
 	return &rsp->node[0];
 }
 
@@ -1016,6 +1016,7 @@ static void init_callback_list(struct rcu_data *rdp)
 	int i;
 
 	if (init_nocb_callback_list(rdp))
+		/*! 20140726 항상 false이므로 실행안됨 */
 		return;
 	rdp->nxtlist = NULL;
 	for (i = 0; i < RCU_NEXT_SIZE; i++)
@@ -2947,7 +2948,9 @@ rcu_init_percpu_data(int cpu, struct rcu_state *rsp, int preemptible)
 	unsigned long flags;
 	unsigned long mask;
 	struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
+	/*! 20140726 rdp = rsp->rda + cpu */
 	struct rcu_node *rnp = rcu_get_root(rsp);
+	/*! 20140726 rnp = rsp->node[0] */
 
 	/* Exclude new grace periods. */
 	mutex_lock(&rsp->onoff_mutex);
@@ -2956,24 +2959,30 @@ rcu_init_percpu_data(int cpu, struct rcu_state *rsp, int preemptible)
 	raw_spin_lock_irqsave(&rnp->lock, flags);
 	rdp->beenonline = 1;	 /* We have now been online. */
 	rdp->preemptible = preemptible;
+	/*! 20140726 rsp->name이 "rcu_preempt" 이면 1 */
 	rdp->qlen_last_fqs_check = 0;
 	rdp->n_force_qs_snap = rsp->n_force_qs;
 	rdp->blimit = blimit;
 	init_callback_list(rdp);  /* Re-enable callbacks on this CPU. */
+	/*! 20140726 rdp->nexttail 배열 초기화 */
 	rdp->dynticks->dynticks_nesting = DYNTICK_TASK_EXIT_IDLE;
+	/*! 20140726 DYNTICK_TASK_EXIT_IDLE: 0x0140 0000 0000 0000 */
 	atomic_set(&rdp->dynticks->dynticks,
 		   (atomic_read(&rdp->dynticks->dynticks) & ~0x1) + 1);
+	/*! 20140726 rdp->dynticks->dynticks->counter 의 0번 bit를 1로 set */
 	raw_spin_unlock(&rnp->lock);		/* irqs remain disabled. */
 
 	/* Add CPU to rcu_node bitmasks. */
 	rnp = rdp->mynode;
 	mask = rdp->grpmask;
+	/*! 20140726 mask: cpu의 번호에 해당하는 bit mask */
 	do {
 		/* Exclude any attempts to start a new GP on small systems. */
 		raw_spin_lock(&rnp->lock);	/* irqs already disabled. */
 		rnp->qsmaskinit |= mask;
 		mask = rnp->grpmask;
 		if (rnp == rdp->mynode) {
+			/*! 20140726 현재 node가 rcu_data가 가리키는 my_node인 경우(grace period) */
 			/*
 			 * If there is a grace period in progress, we will
 			 * set up to wait for it next time we run the
@@ -2989,6 +2998,9 @@ rcu_init_percpu_data(int cpu, struct rcu_state *rsp, int preemptible)
 		rnp = rnp->parent;
 	} while (rnp != NULL && !(rnp->qsmaskinit & mask));
 	local_irq_restore(flags);
+	/*! 20140726 rcu_data->my_node->qsmaskinit 에 rcu_data->grpmask 추가 이후
+	 * my_node->parent list에 연결된 개별 node의 qsmaskinit 에 child의 grpmask 추가
+	 */
 
 	mutex_unlock(&rsp->onoff_mutex);
 }
@@ -2998,8 +3010,10 @@ static void rcu_prepare_cpu(int cpu)
 	struct rcu_state *rsp;
 
 	for_each_rcu_flavor(rsp)
+		/*! 20140726 rsp의 rcu_struct_flavors list에서 flavors를 처음부터 끝까지 탐색 */
 		rcu_init_percpu_data(cpu, rsp,
 				     strcmp(rsp->name, "rcu_preempt") == 0);
+	/*! 20140726 기존에 생성한 rcu 자료구조에 대한 percpu data 초기화 */
 }
 
 /*
@@ -3010,6 +3024,7 @@ static int rcu_cpu_notify(struct notifier_block *self,
 {
 	long cpu = (long)hcpu;
 	struct rcu_data *rdp = per_cpu_ptr(rcu_state->rda, cpu);
+	/*! 20140726 rdp = rcu_state->rda + cpu */
 	struct rcu_node *rnp = rdp->mynode;
 	struct rcu_state *rsp;
 
@@ -3018,7 +3033,9 @@ static int rcu_cpu_notify(struct notifier_block *self,
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
 		rcu_prepare_cpu(cpu);
+		/*! 20140726 rcu 관련 percpu구조체 초기화 */
 		rcu_prepare_kthreads(cpu);
+		/*! 20140726 아무일도 안함 */
 		break;
 	case CPU_ONLINE:
 	case CPU_DOWN_FAILED:
@@ -3310,7 +3327,7 @@ void __init rcu_init(void)
 	/*! 20140719 rcu_sched state, data 관련 자료구조 초기화 */
 	rcu_init_one(&rcu_bh_state, &rcu_bh_data);
 	/*! 20140719 rcu_bh state, data 관련 자료구조 초기화 */
-	__rcu_init_preempt();
+	__rcu_init_reempt();
 	/*! 20140719 rcu_preempt state, data 관련 자료구조 초기화 */
 	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
 	/*! 20140719 RCU_SOFTIRQ 핸들러 등록 */
@@ -3325,6 +3342,7 @@ void __init rcu_init(void)
 	/*! 20140719 스터디 여기까지 */
 	for_each_online_cpu(cpu)
 		rcu_cpu_notify(NULL, CPU_UP_PREPARE, (void *)(long)cpu);
+		/*! 20140726 rcu 관련 percpu구조체 초기화 */
 }
 
 #include "rcutree_plugin.h"

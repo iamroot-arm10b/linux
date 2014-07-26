@@ -26,7 +26,9 @@ static struct lock_class_key irq_desc_lock_class;
 static void __init init_irq_default_affinity(void)
 {
 	alloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
+	/*! 20140726 아래 들어감 */
 	cpumask_setall(irq_default_affinity);
+	/*! 20140726 irq_default_affinity->bits 에서 nr_cpumask_bits만큼의 bit를 1로 set */
 }
 #else
 static void __init init_irq_default_affinity(void)
@@ -35,10 +37,12 @@ static void __init init_irq_default_affinity(void)
 #endif
 
 #ifdef CONFIG_SMP
+/*! 20140726 여기 실행됨 */
 static int alloc_masks(struct irq_desc *desc, gfp_t gfp, int node)
 {
 	if (!zalloc_cpumask_var_node(&desc->irq_data.affinity, gfp, node))
 		return -ENOMEM;
+	/*! 20140726 desc->irq_data.affinity->bits를 0 으로 clear함 */
 
 #ifdef CONFIG_GENERIC_PENDING_IRQ
 	if (!zalloc_cpumask_var_node(&desc->pending_mask, gfp, node)) {
@@ -53,6 +57,7 @@ static void desc_smp_init(struct irq_desc *desc, int node)
 {
 	desc->irq_data.node = node;
 	cpumask_copy(desc->irq_data.affinity, irq_default_affinity);
+	/*! 20140726 desc->irq_data.affinity->bits = irq_default_affinity->bits */
 #ifdef CONFIG_GENERIC_PENDING_IRQ
 	cpumask_clear(desc->pending_mask);
 #endif
@@ -80,8 +85,11 @@ static void desc_set_defaults(unsigned int irq, struct irq_desc *desc, int node,
 	desc->irq_data.chip_data = NULL;
 	desc->irq_data.handler_data = NULL;
 	desc->irq_data.msi_desc = NULL;
+	/*! 20140726 _IRQ_DEFAULT_INIT_FLAGS: 0 */
 	irq_settings_clr_and_set(desc, ~0, _IRQ_DEFAULT_INIT_FLAGS);
+	/*! 20140726 desc->status_use_accessors 의 bit를 clear & set */
 	irqd_set(&desc->irq_data, IRQD_IRQ_DISABLED);
+	/*! 20140726 desc->irq_data->state_use_accessors |= IRQD_IRQ_DISABLED */
 	desc->handle_irq = handle_bad_irq;
 	desc->depth = 1;
 	desc->irq_count = 0;
@@ -90,10 +98,14 @@ static void desc_set_defaults(unsigned int irq, struct irq_desc *desc, int node,
 	desc->owner = owner;
 	for_each_possible_cpu(cpu)
 		*per_cpu_ptr(desc->kstat_irqs, cpu) = 0;
+	/*! 20140726 cpu별 desc->kstat_irqs 초기화 */
+	/*! 20140726 여기까지 스터디함 */
 	desc_smp_init(desc, node);
+	/*! 20140726 desc->irq_data.node = node; desc->irq_data.affinity->bits = irq_default_affinity->bits */
 }
 
 int nr_irqs = NR_IRQS;
+/*! 20140726 여기 참조 */
 EXPORT_SYMBOL_GPL(nr_irqs);
 
 static DEFINE_MUTEX(sparse_irq_lock);
@@ -135,20 +147,27 @@ static struct irq_desc *alloc_desc(int irq, int node, struct module *owner)
 {
 	struct irq_desc *desc;
 	gfp_t gfp = GFP_KERNEL;
+	/*! 20140726 GFP_KERNEL: 0xD0 = (__GFP_WAIT | __GFP_IO | __GFP_FS) */
 
 	desc = kzalloc_node(sizeof(*desc), gfp, node);
+	/*! 20140726 struct irq_desc 크기의 memory를 할당받는다. */
 	if (!desc)
 		return NULL;
 	/* allocate based on nr_cpu_ids */
 	desc->kstat_irqs = alloc_percpu(unsigned int);
 	if (!desc->kstat_irqs)
 		goto err_desc;
+	/*! 20140726 kstat_irqs: percpu별로 존재해야 하는 변수
+	 * int 크기만큼의 memory를 cpu별 percpu에서 할당받는다.
+	 */
 
 	if (alloc_masks(desc, gfp, node))
 		goto err_kstat;
+	/*! 20140726 desc->irq_data.affinity->bits를 0 으로 clear함 */
 
 	raw_spin_lock_init(&desc->lock);
 	lockdep_set_class(&desc->lock, &irq_desc_lock_class);
+	/*! 20140726 아무일도 안함 */
 
 	desc_set_defaults(irq, desc, node, owner);
 
@@ -213,14 +232,19 @@ static int irq_expand_nr_irqs(unsigned int nr)
 int __init early_irq_init(void)
 {
 	int i, initcnt, node = first_online_node;
+	/*! 20140726 node = 0 */
 	struct irq_desc *desc;
 
+	/*! 20140726 여기 들어감 */
 	init_irq_default_affinity();
+	/*! 20140726 irq_default_affinity->bits 초기화 */
 
 	/* Let arch update nr_irqs and return the nr of preallocated irqs */
 	initcnt = arch_probe_nr_irqs();
+	/*! 20140726 initcnt = NR_IRQS = 16 */
 	printk(KERN_INFO "NR_IRQS:%d nr_irqs:%d %d\n", NR_IRQS, nr_irqs, initcnt);
 
+	/*! 20140726 IRQ_BITMAP_BITS: 16 + 8196 */
 	if (WARN_ON(nr_irqs > IRQ_BITMAP_BITS))
 		nr_irqs = IRQ_BITMAP_BITS;
 
@@ -229,8 +253,10 @@ int __init early_irq_init(void)
 
 	if (initcnt > nr_irqs)
 		nr_irqs = initcnt;
+	/*! 20140726 initcnt 와 전역변수 nr_irqs 값이 다르면 initcnt로 조정한다. */
 
 	for (i = 0; i < initcnt; i++) {
+		/*! 20140726 여기 진입 */
 		desc = alloc_desc(i, node, NULL);
 		set_bit(i, allocated_irqs);
 		irq_insert_desc(i, desc);

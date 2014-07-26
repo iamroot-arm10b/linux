@@ -148,6 +148,7 @@ extern int __init pcpu_page_first_chunk(size_t reserved_size,
 #ifdef CONFIG_SMP
 #define per_cpu_ptr(ptr, cpu)	SHIFT_PERCPU_PTR((ptr), per_cpu_offset((cpu)))
 /*! 20140517 cpu 번호를 통해 해당 cpu의 percpu 주소를 구한다.  */
+/*! 20140726 (typeof(ptr)) (ptr + (cpu)) */
 #else
 #define per_cpu_ptr(ptr, cpu)	({ (void)(cpu); VERIFY_PERCPU_PTR((ptr)); })
 #endif
@@ -166,6 +167,7 @@ extern phys_addr_t per_cpu_ptr_to_phys(void *addr);
 
 #define alloc_percpu(type)	\
 	(typeof(type) __percpu *)__alloc_percpu(sizeof(type), __alignof__(type))
+/*! 20140726 size만큼의 memory를 cpu별 percpu에서 할당받는다. */
 
 /*
  * Branching function to split up a function into a set of functions that

@@ -4,6 +4,7 @@
  */
 enum {
 	_IRQ_DEFAULT_INIT_FLAGS	= IRQ_DEFAULT_INIT_FLAGS,
+	/*! 20140726 _IRQ_DEFAULT_INIT_FLAGS: 0 */
 	_IRQ_PER_CPU		= IRQ_PER_CPU,
 	_IRQ_LEVEL		= IRQ_LEVEL,
 	_IRQ_NOPROBE		= IRQ_NOPROBE,
@@ -33,7 +34,9 @@ static inline void
 irq_settings_clr_and_set(struct irq_desc *desc, u32 clr, u32 set)
 {
 	desc->status_use_accessors &= ~(clr & _IRQF_MODIFY_MASK);
+	/*! 20140726 _IRQF_MODIFY_MASK에 해당하는 bit만 clear */
 	desc->status_use_accessors |= (set & _IRQF_MODIFY_MASK);
+	/*! 20140726 _IRQF_MODIFY_MASK에 해당하는 bit만 set */
 }
 
 static inline bool irq_settings_is_per_cpu(struct irq_desc *desc)

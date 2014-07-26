@@ -135,6 +135,7 @@ void __init set_handle_irq(void (*handle_irq)(struct pt_regs *))
 int __init arch_probe_nr_irqs(void)
 {
 	nr_irqs = machine_desc->nr_irqs ? machine_desc->nr_irqs : NR_IRQS;
+	/*! 20140726 nr_irqs = NR_IRQS = 16 */
 	return nr_irqs;
 }
 #endif

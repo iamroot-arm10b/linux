@@ -37,6 +37,7 @@
 #ifdef __KERNEL__
 #define RADIX_TREE_MAP_SHIFT	(CONFIG_BASE_SMALL ? 4 : 6)
 #else
+/*! 20140726 여기 실행 */
 #define RADIX_TREE_MAP_SHIFT	3	/* For more stressful testing */
 #endif
 
@@ -60,12 +61,14 @@ struct radix_tree_node {
 #define RADIX_TREE_INDEX_BITS  (8 /* CHAR_BIT */ * sizeof(unsigned long))
 #define RADIX_TREE_MAX_PATH (DIV_ROUND_UP(RADIX_TREE_INDEX_BITS, \
 					  RADIX_TREE_MAP_SHIFT))
+/*! 20140726 RADIX_TREE_MAX_PATH: (((8) + (3) - 1) / (3)) = 3 */
 
 /*
  * The height_to_maxindex array needs to be one deeper than the maximum
  * path as height 0 holds only 1 entry.
  */
 static unsigned long height_to_maxindex[RADIX_TREE_MAX_PATH + 1] __read_mostly;
+/*! 20140726 RADIX_TREE_MAX_PATH: 3 */
 
 /*
  * Radix tree node cache.
@@ -1407,11 +1410,14 @@ radix_tree_node_ctor(void *node)
 static __init unsigned long __maxindex(unsigned int height)
 {
 	unsigned int width = height * RADIX_TREE_MAP_SHIFT;
+	/*! 20140726 width = height * 3 */
 	int shift = RADIX_TREE_INDEX_BITS - width;
+	/*! 20140726 shift = 8 - (height * 3) */
 
 	if (shift < 0)
 		return ~0UL;
 	if (shift >= BITS_PER_LONG)
+		/*! 20140726 BITS_PER_LONG: 32 */
 		return 0UL;
 	return ~0UL >> shift;
 }
@@ -1422,6 +1428,12 @@ static __init void radix_tree_init_maxindex(void)
 
 	for (i = 0; i < ARRAY_SIZE(height_to_maxindex); i++)
 		height_to_maxindex[i] = __maxindex(i);
+	/*! 20140726 height_to_maxindex 배열값 초기화
+	 * height_to_maxindex[0] = 0x00FFFFFF;
+	 * height_to_maxindex[1] = 0x07FFFFFF;
+	 * height_to_maxindex[2] = 0x3FFFFFFF;
+	 * height_to_maxindex[3] = 0xFFFFFFFF;
+	 */
 }
 
 static int radix_tree_callback(struct notifier_block *nfb,
@@ -1450,6 +1462,9 @@ void __init radix_tree_init(void)
 			sizeof(struct radix_tree_node), 0,
 			SLAB_PANIC | SLAB_RECLAIM_ACCOUNT,
 			radix_tree_node_ctor);
+	/*! 20140726 struct radix_tree_node 크기의 kmem_cache slab 생성 */
 	radix_tree_init_maxindex();
+	/*! 20140726 height_to_maxindex 배열값 초기화 */
 	hotcpu_notifier(radix_tree_callback, 0);
+	/*! 20140726 radix_tree_callback함수를 hotcpu notifier로 등록함 */
 }

@@ -2177,7 +2177,7 @@ static void put_cpu_partial(struct kmem_cache *s, struct page *page, int drain)
 				local_irq_save(flags);
 				unfreeze_partials(s, this_cpu_ptr(s->cpu_slab));
 				/*! 20140719 기존 cpu_slab을 node 의 partial로 보내거나 buddy로 반환한다.
-				 * inuse가 0인 것은 discard(buddy로 보냄), nr_patial이 있으면 slab 유지
+				 * inuse가 0인 것은 discard(buddy로 보냄), nr_partial이 있으면 slab 유지
 				 */
 				local_irq_restore(flags);
 				oldpage = NULL;

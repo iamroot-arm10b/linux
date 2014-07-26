@@ -326,6 +326,9 @@ static inline int cpumask_test_and_clear_cpu(int cpu, struct cpumask *cpumask)
 static inline void cpumask_setall(struct cpumask *dstp)
 {
 	bitmap_fill(cpumask_bits(dstp), nr_cpumask_bits);
+	/*! 20140726 cpumask_bits(dstp): dstp->bits, nr_cpumask_bits: 4
+	 * dstp->bits 에서 nr_cpumask_bits만큼의 bit를 1로 set (0번 bit부터 set)
+	 */
 }
 
 /**
@@ -715,6 +718,7 @@ static inline bool zalloc_cpumask_var_node(cpumask_var_t *mask, gfp_t flags,
 					  int node)
 {
 	cpumask_clear(*mask);
+	/*! 20140726 mask->bits를 0 으로 clear함 */
 	return true;
 }
 
@@ -743,6 +747,7 @@ extern const DECLARE_BITMAP(cpu_all_bits, NR_CPUS);
 /*! 20140117 for ((cpu) = -1; (cpu) = cpumask_next((cpu), (mask)), (cpu) < nr_cpu_ids;) */
 /*! 20140517 cpu bitmap에서 possible한 cpu들을 하나씩 빼온다. */
 #define for_each_online_cpu(cpu)   for_each_cpu((cpu), cpu_online_mask)
+/*! 20140726 cpu bitmap에서 online 상태(사용하려는 cpu) cpu들을 하나씩 빼온다. */
 #define for_each_present_cpu(cpu)  for_each_cpu((cpu), cpu_present_mask)
 
 /* Wrappers for arch boot code to manipulate normally-constant masks */

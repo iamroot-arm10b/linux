@@ -100,6 +100,7 @@ enum {
 	(IRQ_TYPE_SENSE_MASK | IRQ_NOPROBE | IRQ_NOREQUEST | \
 	 IRQ_NOAUTOEN | IRQ_MOVE_PCNTXT | IRQ_LEVEL | IRQ_NO_BALANCING | \
 	 IRQ_PER_CPU | IRQ_NESTED_THREAD | IRQ_NOTHREAD | IRQ_PER_CPU_DEVID)
+/*! 20140726 여기 참조함 */
 
 #define IRQ_NO_BALANCING_MASK	(IRQ_PER_CPU | IRQ_NO_BALANCING)
 
@@ -368,9 +369,11 @@ enum {
 
 #ifndef ARCH_IRQ_INIT_FLAGS
 # define ARCH_IRQ_INIT_FLAGS	0
+/*! 20140726 여기 참조 */
 #endif
 
 #define IRQ_DEFAULT_INIT_FLAGS	ARCH_IRQ_INIT_FLAGS
+/*! 20140726 IRQ_DEFAULT_INIT_FLAGS: 0 */
 
 struct irqaction;
 extern int setup_irq(unsigned int irq, struct irqaction *new);

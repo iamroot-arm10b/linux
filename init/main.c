@@ -623,8 +623,11 @@ asmlinkage void __init start_kernel(void)
 	idr_init_cache();
 	/*! 20140719 idr_layer_cache로 사용할 slab 생성 */
 	rcu_init();
+	/*! 20140726 rcu 관련 자료구조 초기화 */
 	tick_nohz_init();
+	/*! 20140726 아무일도 안함 */
 	radix_tree_init();
+	/*! 20140726 radix_tree_node 크기의 slab 생성하여 초기화, hotplug 등록 */
 	/* init some links before init_ISA_irqs() */
 	early_irq_init();
 	init_IRQ();

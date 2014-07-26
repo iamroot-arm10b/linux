@@ -2,11 +2,13 @@
 #define __ASM_ARM_IRQ_H
 
 #define NR_IRQS_LEGACY	16
+/*! 20140726 여기 참조 */
 
 #ifndef CONFIG_SPARSE_IRQ
 #include <mach/irqs.h>
 #else
 #define NR_IRQS NR_IRQS_LEGACY
+/*! 20140726 NR_IRQS: 16 */
 #endif
 
 #ifndef irq_canonicalize

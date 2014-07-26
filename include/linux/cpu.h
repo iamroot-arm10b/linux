@@ -114,7 +114,7 @@ enum {
 /* Need to know about CPUs going up/down? */
 #if defined(CONFIG_HOTPLUG_CPU) || !defined(MODULE)
 /*! 20140628 여기 실행됨 */
-/*! 20140719 cpu hotplug가 일어날때마다 여기 실행되는 것 */
+/*! 20140719 cpu hotplug가 일어날때마다 여기 등록된 함수가 실행되는 것 */
 #define cpu_notifier(fn, pri) {					\
 	static struct notifier_block fn##_nb =			\
 		{ .notifier_call = fn, .priority = pri };	\
@@ -178,6 +178,7 @@ extern void get_online_cpus(void);
 extern void put_online_cpus(void);
 extern void cpu_hotplug_disable(void);
 extern void cpu_hotplug_enable(void);
+/*! 20140726 여기 실행됨 */
 #define hotcpu_notifier(fn, pri)	cpu_notifier(fn, pri)
 #define register_hotcpu_notifier(nb)	register_cpu_notifier(nb)
 #define unregister_hotcpu_notifier(nb)	unregister_cpu_notifier(nb)

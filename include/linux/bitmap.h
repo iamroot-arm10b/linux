@@ -152,6 +152,7 @@ extern int bitmap_ord_to_pos(const unsigned long *bitmap, int n, int bits);
 	((nbits) % BITS_PER_LONG) ?					\
 		(1UL<<((nbits) % BITS_PER_LONG))-1 : ~0UL		\
 )
+/*! 20140726 nbits:4 일때, (4 % 32) ? 1UL<<(4 % 32)-1 : 0xFFFFFFFF 이므로 0xF */
 
 #define small_const_nbits(nbits) \
 	(__builtin_constant_p(nbits) && (nbits) <= BITS_PER_LONG)
@@ -171,11 +172,13 @@ static inline void bitmap_zero(unsigned long *dst, int nbits)
 static inline void bitmap_fill(unsigned long *dst, int nbits)
 {
 	size_t nlongs = BITS_TO_LONGS(nbits);
+	/*! 20140726 nlongs: nbits가 32 이하이면 1 */
 	if (!small_const_nbits(nbits)) {
 		int len = (nlongs - 1) * sizeof(unsigned long);
 		memset(dst, 0xff,  len);
 	}
 	dst[nlongs - 1] = BITMAP_LAST_WORD_MASK(nbits);
+	/*! 20140726 nbits가 dst[0] = 0xF */
 }
 
 static inline void bitmap_copy(unsigned long *dst, const unsigned long *src,

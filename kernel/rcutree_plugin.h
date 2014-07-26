@@ -114,6 +114,20 @@ static void __init rcu_bootup_announce_oddness(void)
 
 struct rcu_state rcu_preempt_state =
 	RCU_STATE_INITIALIZER(rcu_preempt, 'p', call_rcu);
+	/*! 20140726
+	 * .level = { &rcu_preempt_state.node[0] }, \
+	 * .call = call_rcu, \
+	 * .fqs_state = RCU_GP_IDLE, \
+	 * .gpnum = 0UL - 300UL, \
+	 * .completed = 0UL - 300UL, \
+	 * .orphan_lock = __RAW_SPIN_LOCK_UNLOCKED(&rcu_preempt_state.orphan_lock), \
+	 * .orphan_nxttail = &rcu_preempt_state.orphan_nxtlist, \
+	 * .orphan_donetail = &rcu_preempt_state.orphan_donelist, \
+	 * .barrier_mutex = __MUTEX_INITIALIZER(rcu_preempt_state.barrier_mutex), \
+	 * .onoff_mutex = __MUTEX_INITIALIZER(rcu_preempt_state.onoff_mutex), \
+	 * .name = "rcu_preempt", \
+	 * .abbr = 'p', \
+	 */
 DEFINE_PER_CPU(struct rcu_data, rcu_preempt_data);
 static struct rcu_state *rcu_state = &rcu_preempt_state;
 
@@ -1556,6 +1570,7 @@ early_initcall(rcu_scheduler_really_started);
 
 static void rcu_prepare_kthreads(int cpu)
 {
+	/*! 20140726 여기 실행 */
 }
 
 #endif /* #else #ifdef CONFIG_RCU_BOOST */

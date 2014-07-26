@@ -12,6 +12,7 @@
  * ex) 1~32까지는 1, 33이면 2
  */
 #define BITS_TO_LONGS(nr)	DIV_ROUND_UP(nr, BITS_PER_BYTE * sizeof(long))
+/*! 20140726 nr:4 일때, DIV_ROUND_UP(4, 8 * 4) = (4 + 32 - 1) / 32 = 1 */
 #endif
 
 extern unsigned int __sw_hweight8(unsigned int w);

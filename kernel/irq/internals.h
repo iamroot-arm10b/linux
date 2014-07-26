@@ -172,6 +172,7 @@ static inline void irqd_clear(struct irq_data *d, unsigned int mask)
 
 static inline void irqd_set(struct irq_data *d, unsigned int mask)
 {
+	/*! 20140726 여기 실행 */
 	d->state_use_accessors |= mask;
 }
 

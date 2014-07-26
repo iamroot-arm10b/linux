@@ -19,7 +19,7 @@
 #define SHRT_MAX	((s16)(USHRT_MAX>>1))
 #define SHRT_MIN	((s16)(-SHRT_MAX - 1))
 #define INT_MAX		((int)(~0U>>1))
-/*! 20140628 ~0 = 0xFFFFFFFF, ~0>>1 = 0xFFFFFFFF >> 1 = 0x7FFFFFFF */
+/*! 20140628 ~0>>1 = 0xFFFFFFFF >> 1 = 0x7FFFFFFF */
 #define INT_MIN		(-INT_MAX - 1)
 /*! 20140628 0x7FFFFFFF보수 + 1 - 1 = 0x80000000 : int의 최소값: -2,147,483,648 */
 #define UINT_MAX	(~0U)
@@ -27,6 +27,7 @@
 #define LONG_MIN	(-LONG_MAX - 1)
 #define ULONG_MAX	(~0UL)
 #define LLONG_MAX	((long long)(~0ULL>>1))
+/*! 20140726 ~0ULL >> 1 = 0xFFFF FFFF FFFF FFFF >> 1 = 0x7FFF FFFF FFFF FFFF */
 #define LLONG_MIN	(-LLONG_MAX - 1)
 #define ULLONG_MAX	(~0ULL)
 #define SIZE_MAX	(~(size_t)0)
@@ -41,6 +42,7 @@
 #define IS_ALIGNED(x, a)		(((x) & ((typeof(x))(a) - 1)) == 0)
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]) + __must_be_array(arr))
+/*! 20140726 배열의 갯수 */
 
 /*
  * This looks more complex than it should be. But we need to
@@ -54,6 +56,7 @@
 
 #define FIELD_SIZEOF(t, f) (sizeof(((t*)0)->f))
 #define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+/*! 20140726 여기 참조 */
 #define DIV_ROUND_UP_ULL(ll,d) \
 	({ unsigned long long _tmp = (ll)+(d)-1; do_div(_tmp, d); _tmp; })
 

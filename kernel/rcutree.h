@@ -465,6 +465,7 @@ extern struct list_head rcu_struct_flavors;
 /* Sequence through rcu_state structures for each RCU flavor. */
 #define for_each_rcu_flavor(rsp) \
 	list_for_each_entry((rsp), &rcu_struct_flavors, flavors)
+/*! 20140726 rsp의 rcu_struct_flavors list에서 flavors를 처음부터 끝까지 탐색 */
 
 /* Return values for rcu_preempt_offline_tasks(). */
 
