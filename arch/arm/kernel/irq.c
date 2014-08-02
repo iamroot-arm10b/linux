@@ -116,6 +116,7 @@ EXPORT_SYMBOL_GPL(set_irq_flags);
 void __init init_IRQ(void)
 {
 	if (IS_ENABLED(CONFIG_OF) && !machine_desc->init_irq)
+		/*! 20140802 여기 들어감 */
 		irqchip_init();
 	else
 		machine_desc->init_irq();

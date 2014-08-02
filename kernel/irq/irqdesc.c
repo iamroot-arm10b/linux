@@ -56,6 +56,7 @@ static int alloc_masks(struct irq_desc *desc, gfp_t gfp, int node)
 static void desc_smp_init(struct irq_desc *desc, int node)
 {
 	desc->irq_data.node = node;
+	/*! 20140802 node는 memory가 하나이므로 0이다. */
 	cpumask_copy(desc->irq_data.affinity, irq_default_affinity);
 	/*! 20140726 desc->irq_data.affinity->bits = irq_default_affinity->bits */
 #ifdef CONFIG_GENERIC_PENDING_IRQ
@@ -101,7 +102,9 @@ static void desc_set_defaults(unsigned int irq, struct irq_desc *desc, int node,
 	/*! 20140726 cpu별 desc->kstat_irqs 초기화 */
 	/*! 20140726 여기까지 스터디함 */
 	desc_smp_init(desc, node);
-	/*! 20140726 desc->irq_data.node = node; desc->irq_data.affinity->bits = irq_default_affinity->bits */
+	/*! 20140802 SMP IRQ affinity mask 를 default값(0xffffffff)으로 설정
+	 * irq affinity: cpu별 interrupt 허용 mask (1이면 허용, 0이면 불가)
+	 */
 }
 
 int nr_irqs = NR_IRQS;
@@ -114,10 +117,12 @@ static DECLARE_BITMAP(allocated_irqs, IRQ_BITMAP_BITS);
 #ifdef CONFIG_SPARSE_IRQ
 
 static RADIX_TREE(irq_desc_tree, GFP_KERNEL);
+/*! 20140802 struct radix_tree_root irq_desc_tree = { .height = 0, .gfp_mask = (GFP_KERNEL), .rnode = NULL, } */
 
 static void irq_insert_desc(unsigned int irq, struct irq_desc *desc)
 {
 	radix_tree_insert(&irq_desc_tree, irq, desc);
+	/*! 20140802 radix_tree_root 인 irq_desc_tree의 irq index 위치에 desc item을 추가한다. */
 }
 
 struct irq_desc *irq_to_desc(unsigned int irq)
@@ -170,6 +175,7 @@ static struct irq_desc *alloc_desc(int irq, int node, struct module *owner)
 	/*! 20140726 아무일도 안함 */
 
 	desc_set_defaults(irq, desc, node, owner);
+	/*! 20140802 irq descript 초기화 */
 
 	return desc;
 
@@ -235,7 +241,6 @@ int __init early_irq_init(void)
 	/*! 20140726 node = 0 */
 	struct irq_desc *desc;
 
-	/*! 20140726 여기 들어감 */
 	init_irq_default_affinity();
 	/*! 20140726 irq_default_affinity->bits 초기화 */
 
@@ -256,12 +261,15 @@ int __init early_irq_init(void)
 	/*! 20140726 initcnt 와 전역변수 nr_irqs 값이 다르면 initcnt로 조정한다. */
 
 	for (i = 0; i < initcnt; i++) {
-		/*! 20140726 여기 진입 */
 		desc = alloc_desc(i, node, NULL);
+		/*! 20140802 irq별 descriptor memory 할당 및 초기화 */
 		set_bit(i, allocated_irqs);
+		/*! 20140802 allocated_irqs bit map에 i 설정 */
 		irq_insert_desc(i, desc);
+		/*! 20140802 irq_desc_tree에 desc를 추가한다. */
 	}
 	return arch_early_irq_init();
+	/*! 20140802 항상 0 리턴 */
 }
 
 #else /* !CONFIG_SPARSE_IRQ */

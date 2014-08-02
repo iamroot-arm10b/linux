@@ -23,8 +23,12 @@ static const struct of_device_id
 irqchip_of_match_end __used __section(__irqchip_of_end);
 
 extern struct of_device_id __irqchip_begin[];
+/*! 20140802 __irqchip_begin: __irqchip_of_table 이라는 section의 시작주소를 가리킨다.
+ * include/asm-generic/vmlinux.lds.h 참조
+ */
 
 void __init irqchip_init(void)
 {
+	/*! 20140802 여기 실행됨 */
 	of_irq_init(__irqchip_begin);
 }

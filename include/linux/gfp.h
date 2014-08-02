@@ -106,6 +106,7 @@ struct vm_area_struct;
 
 #define __GFP_BITS_SHIFT 25	/* Room for N __GFP_FOO bits */
 #define __GFP_BITS_MASK ((__force gfp_t)((1 << __GFP_BITS_SHIFT) - 1))
+/*! 20140802 __GFP_BITS_MASK: (1 << 25) - 1 = 0x01FFFFFF */
 
 /* This equals 0, but use constants in case they ever change */
 #define GFP_NOWAIT	(GFP_ATOMIC & ~__GFP_HIGH)

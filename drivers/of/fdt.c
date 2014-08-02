@@ -894,7 +894,7 @@ void __init unflatten_device_tree(void)
 	__unflatten_device_tree(initial_boot_params, &of_allnodes,
 				early_init_dt_alloc_memory_arch);
 
-	/*! 20131221 오늘은 여기까지  */
+	/*! 20131221 오늘은 여기까지 */
 	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */
 	/*! 20140104
 	 * chosen 에 대한 device node를 찾아 전역변수 of_chosen에 할당

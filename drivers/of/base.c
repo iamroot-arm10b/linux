@@ -215,6 +215,7 @@ static const void *__of_get_property(const struct device_node *np,
 				     const char *name, int *lenp)
 {
 	struct property *pp = __of_find_property(np, name, lenp);
+	/*! 20140802 np property에서 name에 해당하는 속성을 pp에 set */
 
 	return pp ? pp->value : NULL;
 }
@@ -227,6 +228,7 @@ const void *of_get_property(const struct device_node *np, const char *name,
 			    int *lenp)
 {
 	struct property *pp = of_find_property(np, name, lenp);
+	/*! 20140802 np의 속성에서 name property를 찾는다. */
 
 	return pp ? pp->value : NULL;
 }
@@ -242,10 +244,12 @@ static int __of_device_is_compatible(const struct device_node *device,
 	int cplen, l;
 
 	cp = __of_get_property(device, "compatible", &cplen);
+	/*! 20140802 device property에서 "compatible" 속성값을 가져온다. */
 	if (cp == NULL)
 		return 0;
 	while (cplen > 0) {
 		if (of_compat_cmp(cp, compat, strlen(compat)) == 0)
+		/*! 20140802 compatible 문자열과 compat 문자열 비교 */
 			return 1;
 		l = strlen(cp) + 1;
 		cp += l;
@@ -355,6 +359,7 @@ struct device_node *of_get_parent(const struct device_node *node)
 
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	np = of_node_get(node->parent);
+	/*! 20140802 np = node->parent */
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
 	return np;
 }
@@ -575,6 +580,7 @@ struct device_node *of_find_compatible_node(struct device_node *from,
 
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	np = from ? from->allnext : of_allnodes;
+	/*! 20140802 of_allnodes는 ~/linux/drivers/of/fdt.c 의 unflatten_device_tree 에서 설정함 */
 	for (; np; np = np->allnext) {
 		if (type
 		    && !(np->type && (of_node_cmp(np->type, type) == 0)))
@@ -643,10 +649,13 @@ const struct of_device_id *__of_match_node(const struct of_device_id *matches,
 		if (matches->compatible[0])
 			match &= __of_device_is_compatible(node,
 							   matches->compatible);
+		/*! 20140802 compatible 문자열과 matches->compatible 문자열이 같으면 1 */
 		if (match)
 			return matches;
+		/*! 20140802 일치하는 struct of_device_id 를 리턴 */
 		matches++;
 	}
+	/*! 20140802 matches에서 device node와 속성이 같은 entry(of_device_id)를 찾는다. */
 	return NULL;
 }
 
@@ -696,8 +705,11 @@ struct device_node *of_find_matching_node_and_match(struct device_node *from,
 
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	np = from ? from->allnext : of_allnodes;
+	/*! 20140802 from이 NULL 인 경우: np = of_allnodes */
 	for (; np; np = np->allnext) {
+		/*! 20140802 여기 들어감 */
 		m = __of_match_node(matches, np);
+		/*! 20140802 matches에서 np를 찾는다. */
 		if (m && of_node_get(np)) {
 			if (match)
 				*match = m;
@@ -705,8 +717,10 @@ struct device_node *of_find_matching_node_and_match(struct device_node *from,
 		}
 	}
 	of_node_put(from);
+	/*! 20140802 아무일도 안함 */
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
 	return np;
+	/*! 20140802 __of_match_node에서 찾은 np를 리턴 */
 }
 EXPORT_SYMBOL(of_find_matching_node_and_match);
 

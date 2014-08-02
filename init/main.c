@@ -630,6 +630,7 @@ asmlinkage void __init start_kernel(void)
 	/*! 20140726 radix_tree_node 크기의 slab 생성하여 초기화, hotplug 등록 */
 	/* init some links before init_ISA_irqs() */
 	early_irq_init();
+	/*! 20140802 irq를 사용하기 위해 irq 갯수만큼의 descriptor 및 radix_tree 초기화 */
 	init_IRQ();
 	tick_init();
 	init_timers();

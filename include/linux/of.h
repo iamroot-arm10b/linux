@@ -196,10 +196,12 @@ static inline struct device_node *of_find_matching_node(
 	const struct of_device_id *matches)
 {
 	return of_find_matching_node_and_match(from, matches, NULL);
+	/*! 20140802 from에서부터 matches와 일치하는 device node를 찾는다. */
 }
 #define for_each_matching_node(dn, matches) \
 	for (dn = of_find_matching_node(NULL, matches); dn; \
 	     dn = of_find_matching_node(dn, matches))
+/*! 20140802 여기 참조 */
 #define for_each_matching_node_and_match(dn, matches, match) \
 	for (dn = of_find_matching_node_and_match(NULL, matches, match); \
 	     dn; dn = of_find_matching_node_and_match(dn, matches, match))

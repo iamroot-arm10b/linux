@@ -65,13 +65,16 @@ struct device_node *of_irq_find_parent(struct device_node *child)
 		parp = of_get_property(child, "interrupt-parent", NULL);
 		if (parp == NULL)
 			p = of_get_parent(child);
+			/*! 20140802 child의 parent가 리턴됨 */
 		else {
+			/*! 20140802 여기까지 스터디. 다음주에 여기부터 시작. */
 			if (of_irq_workarounds & OF_IMAP_NO_PHANDLE)
 				p = of_node_get(of_irq_dflt_pic);
 			else
 				p = of_find_node_by_phandle(be32_to_cpup(parp));
 		}
 		of_node_put(child);
+		/*! 20140802 아무것도 안함 */
 		child = p;
 	} while (p && of_get_property(p, "#interrupt-cells", NULL) == NULL);
 
@@ -420,17 +423,25 @@ void __init of_irq_init(const struct of_device_id *matches)
 	INIT_LIST_HEAD(&intc_parent_list);
 
 	for_each_matching_node(np, matches) {
+	/*! 20140802
+	 * for (np = of_find_matching_node(NULL, matches); np;
+	 *	np = of_find_matching_node(np, matches))
+	 * of_find_matching_node함수에서 np에서부터 matches와 일치하는 device node를 찾아서 np에 설정
+	 */
 		if (!of_find_property(np, "interrupt-controller", NULL))
+			/*! 20140802 np의 property가 "interrupt-controller"와 같은지 체크 */
 			continue;
 		/*
 		 * Here, we allocate and populate an intc_desc with the node
 		 * pointer, interrupt-parent device_node etc.
 		 */
 		desc = kzalloc(sizeof(*desc), GFP_KERNEL);
+		/*! 20140802 struct intc_desc 크기 할당 */
 		if (WARN_ON(!desc))
 			goto err;
 
 		desc->dev = np;
+		/*! 20140802 여기 진입함 */
 		desc->interrupt_parent = of_irq_find_parent(np);
 		if (desc->interrupt_parent == np)
 			desc->interrupt_parent = NULL;

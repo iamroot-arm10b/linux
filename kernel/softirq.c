@@ -885,6 +885,7 @@ int __init __weak arch_probe_nr_irqs(void)
 
 int __init __weak arch_early_irq_init(void)
 {
+	/*! 20140802 여기 실행 */
 	return 0;
 }
 #endif

@@ -42,6 +42,7 @@
  * details.
  */
 #define RADIX_TREE_INDIRECT_PTR		1
+/*! 20140802 여기 참조 */
 /*
  * A common use of the radix tree is to store pointers to struct pages;
  * but shmem/tmpfs needs also to store swap entries in the same tree:
@@ -54,11 +55,13 @@
 static inline int radix_tree_is_indirect_ptr(void *ptr)
 {
 	return (int)((unsigned long)ptr & RADIX_TREE_INDIRECT_PTR);
+	/*! 20140802 RADIX_TREE_INDIRECT_PTR: 1 */
 }
 
 /*** radix-tree API starts here ***/
 
 #define RADIX_TREE_MAX_TAGS 3
+/*! 20140802 여기 참조 */
 
 /* root tags are stored in gfp_mask, shifted by __GFP_BITS_SHIFT */
 struct radix_tree_root {
@@ -72,6 +75,7 @@ struct radix_tree_root {
 	.gfp_mask = (mask),						\
 	.rnode = NULL,							\
 }
+/*! 20140802 여기 참조됨 */
 
 #define RADIX_TREE(name, mask) \
 	struct radix_tree_root name = RADIX_TREE_INIT(mask)
