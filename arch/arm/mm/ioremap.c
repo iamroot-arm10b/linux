@@ -61,6 +61,7 @@ static struct static_vm *find_static_vm_paddr(phys_addr_t paddr,
 
 		return svm;
 	}
+	/*! 20140809 static_vmlist 에서 mtype과 같고 paddr, paddr size 를 포함하는 entry를 찾는다. */
 
 	return NULL;
 }
@@ -278,10 +279,20 @@ void __iomem * __arm_ioremap_pfn_caller(unsigned long pfn,
 	 * High mappings must be supersection aligned
 	 */
 	if (pfn >= 0x100000 && (paddr & ~SUPERSECTION_MASK))
+	/*! 20140809 pfn 이 4G 범위를 넘어서고 paddr 범위가 SUPERSECTION에 해당하면 */
 		return NULL;
 #endif
 
 	type = get_mem_type(mtype);
+	/*! 20140809 mtype: MT_DEVICE 이므로
+	 * [MT_DEVICE] = {
+	 * 	.prot_pte	= PROT_PTE_DEVICE | L_PTE_MT_DEV_SHARED |
+	 * 			  L_PTE_SHARED,
+	 * 	.prot_l1	= PMD_TYPE_TABLE,
+	 * 	.prot_sect	= PROT_SECT_DEVICE | PMD_SECT_S,
+	 * 	.domain		= DOMAIN_IO,
+	 * },
+	 */
 	if (!type)
 		return NULL;
 
@@ -297,10 +308,13 @@ void __iomem * __arm_ioremap_pfn_caller(unsigned long pfn,
 		struct static_vm *svm;
 
 		svm = find_static_vm_paddr(paddr, size, mtype);
+		/*! 20140809 static_vmlist 에서 mtype과 같고 paddr, size 를 포함하는 entry를 찾는다. */
 		if (svm) {
 			addr = (unsigned long)svm->vm.addr;
 			addr += paddr - svm->vm.phys_addr;
+			/*! 20140809 물리주소의 차를 이용해 page의 시작주소를 구한다. */
 			return (void __iomem *) (offset + addr);
+			/*! 20140809 page 시작주소와 va와의 offset을 더하여 va 구한다.  */
 		}
 	}
 
@@ -356,6 +370,7 @@ void __iomem *__arm_ioremap_caller(phys_addr_t phys_addr, size_t size,
 
 	return __arm_ioremap_pfn_caller(pfn, offset, size, mtype,
 			caller);
+	/*! 20140809 pfn+offset 에 해당하는 va 값을 구한다. */
 }
 
 /*
@@ -379,12 +394,14 @@ EXPORT_SYMBOL(__arm_ioremap_pfn);
 void __iomem * (*arch_ioremap_caller)(phys_addr_t, size_t,
 				      unsigned int, void *) =
 	__arm_ioremap_caller;
+/*! 20140809 여기 실행됨 */
 
 void __iomem *
 __arm_ioremap(phys_addr_t phys_addr, size_t size, unsigned int mtype)
 {
 	return arch_ioremap_caller(phys_addr, size, mtype,
 		__builtin_return_address(0));
+	/*! 20140809 phys_addr를 va로 변환하여 리턴 */
 }
 EXPORT_SYMBOL(__arm_ioremap);
 

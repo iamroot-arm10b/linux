@@ -79,6 +79,7 @@ static inline __be32 __cpu_to_be32p(const __u32 *p)
 static inline __u32 __be32_to_cpup(const __be32 *p)
 {
 	return __swab32p((__u32 *)p);
+	/*! 20140809 big endian을 cpu type에 맞게 endian으로 바꿈 */
 }
 static inline __be16 __cpu_to_be16p(const __u16 *p)
 {

@@ -10,6 +10,7 @@
 /* Max address size we deal with */
 #define OF_MAX_ADDR_CELLS	4
 #define OF_CHECK_ADDR_COUNT(na)	((na) > 0 && (na) <= OF_MAX_ADDR_CELLS)
+/*! 20140809 여기 실행됨 */
 #define OF_CHECK_COUNTS(na, ns)	(OF_CHECK_ADDR_COUNT(na) && (ns) > 0)
 
 static struct of_bus *of_match_bus(struct device_node *np);
@@ -52,8 +53,10 @@ static void of_bus_default_count_cells(struct device_node *dev,
 {
 	if (addrc)
 		*addrc = of_n_addr_cells(dev);
+		/*! 20140809 "#address-cells" 의 값을 return한다. */
 	if (sizec)
 		*sizec = of_n_size_cells(dev);
+		/*! 20140809 "#size-cells" 의 값을 return한다. */
 }
 
 static u64 of_bus_default_map(__be32 *addr, const __be32 *range,
@@ -97,6 +100,7 @@ static int of_bus_default_translate(__be32 *addr, u64 offset, int na)
 static unsigned int of_bus_default_get_flags(const __be32 *addr)
 {
 	return IORESOURCE_MEM;
+	/*! 20140809 IORESOURCE_MEM: 0x00000200 */
 }
 
 #ifdef CONFIG_PCI
@@ -306,6 +310,7 @@ EXPORT_SYMBOL_GPL(of_pci_range_parser_one);
 
 static int of_bus_isa_match(struct device_node *np)
 {
+	/*! 20140809 여기 실행됨 */
 	return !strcmp(np->name, "isa");
 }
 
@@ -375,6 +380,7 @@ static struct of_bus of_busses[] = {
 		.get_flags = of_bus_pci_get_flags,
 	},
 #endif /* CONFIG_PCI */
+	/*! 20140809 여기 실행됨 */
 	/* ISA */
 	{
 		.name = "isa",
@@ -403,6 +409,10 @@ static struct of_bus *of_match_bus(struct device_node *np)
 
 	for (i = 0; i < ARRAY_SIZE(of_busses); i++)
 		if (!of_busses[i].match || of_busses[i].match(np))
+			/*! 20140809 of_busses[0].match: of_bus_isa_match
+			 * of_bus_isa_match에서 np->name이 isa가 아니므로
+			 * of_busses[1].match: NULL 이므로 return &of_busses[1] 
+			 */
 			return &of_busses[i];
 	BUG();
 	return NULL;
@@ -486,6 +496,7 @@ static u64 __of_translate_address(struct device_node *dev,
 	struct device_node *parent = NULL;
 	struct of_bus *bus, *pbus;
 	__be32 addr[OF_MAX_ADDR_CELLS];
+	/*! 20140809 OF_MAX_ADDR_CELLS: 4 */
 	int na, ns, pna, pns;
 	u64 result = OF_BAD_ADDR;
 
@@ -493,6 +504,7 @@ static u64 __of_translate_address(struct device_node *dev,
 
 	/* Increase refcount at current level */
 	of_node_get(dev);
+	/*! 20140809 아무것도 안한다. */
 
 	/* Get parent & match bus type */
 	parent = of_get_parent(dev);
@@ -502,6 +514,7 @@ static u64 __of_translate_address(struct device_node *dev,
 
 	/* Count address cells & copy address locally */
 	bus->count_cells(dev, &na, &ns);
+	/*! 20140809 na, ns는 1 */
 	if (!OF_CHECK_COUNTS(na, ns)) {
 		printk(KERN_ERR "prom_parse: Bad cell count for %s\n",
 		       dev->full_name);
@@ -517,13 +530,16 @@ static u64 __of_translate_address(struct device_node *dev,
 	for (;;) {
 		/* Switch to parent bus */
 		of_node_put(dev);
+		/*! 20140809 아무것도 안함 */
 		dev = parent;
 		parent = of_get_parent(dev);
+		/*! 20140809 현재 dev는 root이므로 parent는 NULL */
 
 		/* If root, we have finished */
 		if (parent == NULL) {
 			pr_debug("OF: reached root node\n");
 			result = of_read_number(addr, na);
+			/*! 20140809 addr 가 가리키는 곳의 값을 읽는다. */
 			break;
 		}
 
@@ -555,11 +571,13 @@ static u64 __of_translate_address(struct device_node *dev,
 	of_node_put(dev);
 
 	return result;
+	/*! 20140809 현재 in_addr 값을 현재 아키텍처에 맞는 little endian으로 변환하여 리턴 */
 }
 
 u64 of_translate_address(struct device_node *dev, const __be32 *in_addr)
 {
 	return __of_translate_address(dev, in_addr, "ranges");
+	/*! 20140809 in_addr 값을 현재 아키텍처에 맞는 little endian으로 변환하여 리턴 */
 }
 EXPORT_SYMBOL(of_translate_address);
 
@@ -599,27 +617,56 @@ const __be32 *of_get_address(struct device_node *dev, int index, u64 *size,
 
 	/* Get parent & match bus type */
 	parent = of_get_parent(dev);
+	/*! 20140809 dev의 parent node를 가져온다 */
 	if (parent == NULL)
 		return NULL;
 	bus = of_match_bus(parent);
+	/*! 20140809 현재 bus는 아래값을 가진다.
+	 * {
+	 * 	.name = "default",
+	 * 	.addresses = "reg",
+	 * 	.match = NULL,
+	 * 	.count_cells = of_bus_default_count_cells,
+	 * 	.map = of_bus_default_map,
+	 * 	.translate = of_bus_default_translate,
+	 * 	.get_flags = of_bus_default_get_flags,
+	 * }
+	 */
 	bus->count_cells(dev, &na, &ns);
+	/*! 20140809 of_bus_default_count_cells 함수가 호출됨
+	 * na에는 device tree에서 dev->parent node의 #address-cells 의 값(1)을 가져온다.
+	 * ns에는 device tree에서 dev->parent node의 #size-cells 의 값(1)을 가져온다.
+	 */
 	of_node_put(parent);
+	/*! 20140809 아무일도 안함 */
 	if (!OF_CHECK_ADDR_COUNT(na))
 		return NULL;
 
 	/* Get "reg" or "assigned-addresses" property */
 	prop = of_get_property(dev, bus->addresses, &psize);
+	/*! 20140809 dev node에 bus->addresses="reg"값을 가지는 property 찾음 
+	 * reg = <0x10481000 0x1000 0x10482000 0x1000 0x10484000 0x2000 0x10486000 0x2000>;
+	 */
 	if (prop == NULL)
 		return NULL;
 	psize /= 4;
 
 	onesize = na + ns;
+	/*! 20140809 onesize = 2 */
 	for (i = 0; psize >= onesize; psize -= onesize, prop += onesize, i++)
+		/*! 20140809 psize: 8 */
 		if (i == index) {
 			if (size)
 				*size = of_read_number(prop + na, ns);
+			/*! 20140809 index는 0, na와 ns는 1이고, prop가 아래와 같을때,
+			 * prop = <0x10481000 0x1000 0x10482000 0x1000 0x10484000 0x2000 0x10486000 0x2000>;
+			 * size = 첫번째 0x1000
+			 */
 			if (flags)
 				*flags = bus->get_flags(prop);
+			/*! 20140809 bus->get_flags = of_bus_default_get_flags 함수 호출
+			 * flags = IORESOURCE_MEM 
+			 */
 			return prop;
 		}
 	return NULL;
@@ -635,6 +682,7 @@ static int __of_address_to_resource(struct device_node *dev,
 	if ((flags & (IORESOURCE_IO | IORESOURCE_MEM)) == 0)
 		return -EINVAL;
 	taddr = of_translate_address(dev, addrp);
+	/*! 20140809 addrp 값을 little endian으로 변환 */
 	if (taddr == OF_BAD_ADDR)
 		return -EINVAL;
 	memset(r, 0, sizeof(struct resource));
@@ -646,6 +694,7 @@ static int __of_address_to_resource(struct device_node *dev,
 		r->start = port;
 		r->end = port + size - 1;
 	} else {
+		/*! 20140809 flags가 IORESOURCE_MEM 이므로 여기 실행 */
 		r->start = taddr;
 		r->end = taddr + size - 1;
 	}
@@ -672,13 +721,16 @@ int of_address_to_resource(struct device_node *dev, int index,
 	const char	*name = NULL;
 
 	addrp = of_get_address(dev, index, &size, &flags);
+	/*! 20140809 dev node의 reg property[index]의 두 값(addrp, size)과 flag를 return한다. */
 	if (addrp == NULL)
 		return -EINVAL;
 
 	/* Get optional "reg-names" property to add a name to a resource */
 	of_property_read_string_index(dev, "reg-names",	index, &name);
+	/*! 20140809 property reg-names[index] 문자열을 찾는다. */
 
 	return __of_address_to_resource(dev, addrp, size, flags, name, r);
+	/*! 20140809 dev node 에 해당하는 struct resource 값 초기화 */
 }
 EXPORT_SYMBOL_GPL(of_address_to_resource);
 
@@ -714,7 +766,9 @@ void __iomem *of_iomap(struct device_node *np, int index)
 
 	if (of_address_to_resource(np, index, &res))
 		return NULL;
+	/*! 20140809 np의 property reg[index] 의 값을 res 구조체에 설정한다. */
 
 	return ioremap(res.start, resource_size(&res));
+	/*! 20140809 res.start를 va로 변환하여 리턴 */
 }
 EXPORT_SYMBOL(of_iomap);

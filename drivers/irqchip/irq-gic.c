@@ -835,14 +835,32 @@ int __init gic_of_init(struct device_node *node, struct device_node *parent)
 		return -ENODEV;
 
 	dist_base = of_iomap(node, 0);
+	/*! 20140809 node 에서 property reg[0]의 주소값을 va로 변환 */
 	WARN(!dist_base, "unable to map gic dist registers\n");
 
 	cpu_base = of_iomap(node, 1);
+	/*! 20140809 node 에서 property reg[1]의 주소값을 va로 변환 */
 	WARN(!cpu_base, "unable to map gic cpu registers\n");
 
 	if (of_property_read_u32(node, "cpu-offset", &percpu_offset))
 		percpu_offset = 0;
+	/*! 20140809 cpu-offset 이 없으므로 0 */
 
+	/*! 20140809
+	 * 현재 node는 아래와 같다.
+	 * interrupt-controller@10481000 {
+	 * 	compatible = "arm,cortex-a15-gic", "arm,cortex-a9-gic";
+	 * 	#interrupt-cells = <0x3>;
+	 * 	interrupt-controller;
+	 * 	reg = <0x10481000 0x1000 0x10482000 0x1000 0x10484000 0x2000 0x10486000 0x2000>;
+	 * 	interrupts = <0x1 0x9 0xf04>;
+	 * 	linux,phandle = <0x1>;
+	 * 	phandle = <0x1>;
+	 * };
+	 * dist_base: 0x10481000 의 va
+	 * cpu_base: 0x10482000 의 va
+	 * 여기까지 스터디. 다음시간에 위 값 이용해서 계속
+	 */
 	gic_init_bases(gic_cnt, -1, dist_base, cpu_base, percpu_offset, node);
 
 	if (parent) {
@@ -852,6 +870,7 @@ int __init gic_of_init(struct device_node *node, struct device_node *parent)
 	gic_cnt++;
 	return 0;
 }
+/*! 20140809 아래 것들이 matches 이다. */
 IRQCHIP_DECLARE(cortex_a15_gic, "arm,cortex-a15-gic", gic_of_init);
 IRQCHIP_DECLARE(cortex_a9_gic, "arm,cortex-a9-gic", gic_of_init);
 IRQCHIP_DECLARE(msm_8660_qgic, "qcom,msm-8660-qgic", gic_of_init);

@@ -50,6 +50,7 @@ int of_n_addr_cells(struct device_node *np)
 		ip = of_get_property(np, "#address-cells", NULL);
 		if (ip)
 			return be32_to_cpup(ip);
+		/*! 20140809 "#address-cells" 의 값을 return한다. */
 	} while (np->parent);
 	/* No #address-cells property for the root node */
 	return OF_ROOT_NODE_ADDR_CELLS_DEFAULT;
@@ -66,6 +67,7 @@ int of_n_size_cells(struct device_node *np)
 		ip = of_get_property(np, "#size-cells", NULL);
 		if (ip)
 			return be32_to_cpup(ip);
+		/*! 20140809 "#size-cells" 의 값을 return한다. */
 	} while (np->parent);
 	/* No #size-cells property for the root node */
 	return OF_ROOT_NODE_SIZE_CELLS_DEFAULT;
@@ -147,7 +149,7 @@ void of_node_put(struct device_node *node)
 EXPORT_SYMBOL(of_node_put);
 #endif /* CONFIG_OF_DYNAMIC */
 
-/*! 20131221 np property에서 name에 해당하는 속성이 있는지 찾는다. lenp에 크기를 넘긴다.  */
+/*! 20131221 np property에서 name에 해당하는 속성이 있는지 찾는다. lenp의 크기를 넘긴다.  */
 static struct property *__of_find_property(const struct device_node *np,
 					   const char *name, int *lenp)
 {
@@ -674,6 +676,7 @@ const struct of_device_id *of_match_node(const struct of_device_id *matches,
 
 	raw_spin_lock_irqsave(&devtree_lock, flags);
 	match = __of_match_node(matches, node);
+	/*! 20140809 matches에서 device node와 속성이 같은 entry(of_device_id)를 찾는다. */
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
 	return match;
 }
@@ -767,6 +770,7 @@ struct device_node *of_find_node_by_phandle(phandle handle)
 	for (np = of_allnodes; np; np = np->allnext)
 		if (np->phandle == handle)
 			break;
+	/*! 20140809 모든 node를 돌면서 np->phandle 이 handle값인 node를 찾는다. */
 	of_node_get(np);
 	raw_spin_unlock_irqrestore(&devtree_lock, flags);
 	return np;
@@ -1039,6 +1043,7 @@ int of_property_read_string_index(struct device_node *np, const char *propname,
 		}
 	}
 	return -ENODATA;
+	/*! 20140809 property propname[index] 문자열을 찾아서 리턴한다. */
 }
 EXPORT_SYMBOL_GPL(of_property_read_string_index);
 

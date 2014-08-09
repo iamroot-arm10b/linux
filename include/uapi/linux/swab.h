@@ -180,6 +180,7 @@ static inline __u32 __swab32p(const __u32 *p)
 #ifdef __arch_swab32p
 	return __arch_swab32p(p);
 #else
+	/*! 20140809 여기 실행됨 */
 	return __swab32(*p);
 #endif
 }

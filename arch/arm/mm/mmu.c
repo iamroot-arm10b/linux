@@ -332,6 +332,7 @@ static struct mem_type mem_types[] = {
 const struct mem_type *get_mem_type(unsigned int type)
 {
 	return type < ARRAY_SIZE(mem_types) ? &mem_types[type] : NULL;
+	/*! 20140809 type에 따른 값 리턴 */
 }
 EXPORT_SYMBOL(get_mem_type);
 

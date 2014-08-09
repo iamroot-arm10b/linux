@@ -59,6 +59,7 @@ struct device_node *of_irq_find_parent(struct device_node *child)
 	const __be32 *parp;
 
 	if (!of_node_get(child))
+		/*! 20140809 child node 가 유효하지 않으면 return */
 		return NULL;
 
 	do {
@@ -67,16 +68,19 @@ struct device_node *of_irq_find_parent(struct device_node *child)
 			p = of_get_parent(child);
 			/*! 20140802 child의 parent가 리턴됨 */
 		else {
-			/*! 20140802 여기까지 스터디. 다음주에 여기부터 시작. */
+			/*! 20140802 여기까지 스터디 */
 			if (of_irq_workarounds & OF_IMAP_NO_PHANDLE)
 				p = of_node_get(of_irq_dflt_pic);
+				/*! 20140809 p = of_irq_dflt_pic */
 			else
 				p = of_find_node_by_phandle(be32_to_cpup(parp));
+				/*! 20140809 phandle이 parp가 가리키는 값과 일치하는 node를 찾는다 */
 		}
 		of_node_put(child);
 		/*! 20140802 아무것도 안함 */
 		child = p;
 	} while (p && of_get_property(p, "#interrupt-cells", NULL) == NULL);
+	/*! 20140809 p node의 #interrupt-cells poperty가 없으면 반복 */
 
 	return p;
 }
@@ -441,8 +445,8 @@ void __init of_irq_init(const struct of_device_id *matches)
 			goto err;
 
 		desc->dev = np;
-		/*! 20140802 여기 진입함 */
 		desc->interrupt_parent = of_irq_find_parent(np);
+		/*! 20140809 np의 parent 값을 찾는다. */
 		if (desc->interrupt_parent == np)
 			desc->interrupt_parent = NULL;
 		list_add_tail(&desc->list, &intc_desc_list);
@@ -480,7 +484,11 @@ void __init of_irq_init(const struct of_device_id *matches)
 				 match->compatible,
 				 desc->dev, desc->interrupt_parent);
 			irq_init_cb = (of_irq_init_cb_t)match->data;
+			/*! 20140809 IRQCHIP_DECLARE(cortex_a15_gic, "arm,cortex-a15-gic", gic_of_init);
+			 * match->data: gic_of_init
+			 */
 			ret = irq_init_cb(desc->dev, desc->interrupt_parent);
+			/*! 20140809 gic_of_init 함수 호출 */
 			if (ret) {
 				kfree(desc);
 				continue;
