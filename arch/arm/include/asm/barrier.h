@@ -67,6 +67,7 @@
 
 #define read_barrier_depends()		do { } while(0)
 #define smp_read_barrier_depends()	do { } while(0)
+/*! 20140816 비순차 실행을 못하도록 순서를 못바꾸게 하는 기능 */
 
 #define set_mb(var, value)	do { var = value; smp_mb(); } while (0)
 

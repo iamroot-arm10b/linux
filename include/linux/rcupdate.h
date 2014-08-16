@@ -429,6 +429,7 @@ static inline int rcu_read_lock_sched_held(void)
 
 static inline int rcu_read_lock_held(void)
 {
+	/*! 20140816 여기 실행 */
 	return 1;
 }
 
@@ -513,6 +514,7 @@ static inline void rcu_preempt_sleep_check(void)
 #define rcu_dereference_sparse(p, space) \
 	((void)(((typeof(*p) space *)p) == p))
 #else /* #ifdef __CHECKER__ */
+/*! 20140816 여기 실행됨 */
 #define rcu_dereference_sparse(p, space)
 #endif /* #else #ifdef __CHECKER__ */
 
@@ -531,6 +533,7 @@ static inline void rcu_preempt_sleep_check(void)
 		smp_read_barrier_depends(); \
 		((typeof(*p) __force __kernel *)(_________p1)); \
 	})
+/*! 20140816 커널공간에 속한 p를 강제로 참조하기 위해 __force __kernel 를 사용한다. */
 #define __rcu_dereference_protected(p, c, space) \
 	({ \
 		rcu_lockdep_assert(c, "suspicious rcu_dereference_protected()" \
@@ -628,6 +631,7 @@ static inline void rcu_preempt_sleep_check(void)
  */
 #define rcu_dereference_bh_check(p, c) \
 	__rcu_dereference_check((p), rcu_read_lock_bh_held() || (c), __rcu)
+/*! 20140816 여기 실행 */
 
 /**
  * rcu_dereference_sched_check() - rcu_dereference_sched with debug checking
@@ -641,6 +645,7 @@ static inline void rcu_preempt_sleep_check(void)
 				__rcu)
 
 #define rcu_dereference_raw(p) rcu_dereference_check(p, 1) /*@@@ needed? @@@*/
+/*! 20140816 커널공간에 속한 p를 강제로 참조하기 위해 __force __kernel 를 사용한다. */
 
 /*
  * The tracing infrastructure traces RCU (we want that), but unfortunately

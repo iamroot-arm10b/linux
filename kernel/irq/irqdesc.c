@@ -128,6 +128,7 @@ static void irq_insert_desc(unsigned int irq, struct irq_desc *desc)
 struct irq_desc *irq_to_desc(unsigned int irq)
 {
 	return radix_tree_lookup(&irq_desc_tree, irq);
+	/*! 20140816 irq_desc_tree의 irq에 해당하는 element 를 가져온다. */
 }
 EXPORT_SYMBOL(irq_to_desc);
 
@@ -209,10 +210,12 @@ static int alloc_descs(unsigned int start, unsigned int cnt, int node,
 
 	for (i = 0; i < cnt; i++) {
 		desc = alloc_desc(start + i, node, owner);
+		/*! 20140816 GICD_TYPER register에 설정된 IRQ갯수만큼의 descriptor 할당 */
 		if (!desc)
 			goto err;
 		mutex_lock(&sparse_irq_lock);
 		irq_insert_desc(start + i, desc);
+		/*! 20140816 생성한 descriptor를 radix tree에 추가 */
 		mutex_unlock(&sparse_irq_lock);
 	}
 	return start;
@@ -230,6 +233,7 @@ err:
 static int irq_expand_nr_irqs(unsigned int nr)
 {
 	if (nr > IRQ_BITMAP_BITS)
+		/*! 20140816 IRQ_BITMAP_BITS: 16 + 8196 */
 		return -ENOMEM;
 	nr_irqs = nr;
 	return 0;
@@ -402,19 +406,27 @@ __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 
 	start = bitmap_find_next_zero_area(allocated_irqs, IRQ_BITMAP_BITS,
 					   from, cnt, 0);
+	/*! 20140816 IRQ_BITMAP_BITS: 16 + 8196
+	 * allocated_irqs bitmap에서 0으로 연속된 마지막 공간의 시작 index
+	 * ex) 0000000001000...........001000010000  라면,
+	 *     ^end    ^-- 여기 지점              ^start
+	 */
 	ret = -EEXIST;
 	if (irq >=0 && start != irq)
 		goto err;
 
 	if (start + cnt > nr_irqs) {
 		ret = irq_expand_nr_irqs(start + cnt);
+		/*! 20140816 nr_irqs값을 start + cnt 로 재설정 */
 		if (ret)
 			goto err;
 	}
 
 	bitmap_set(allocated_irqs, start, cnt);
+	/*! 20140816 allocated_irqs에서 start에서 cnt만큼 1로 set */
 	mutex_unlock(&sparse_irq_lock);
 	return alloc_descs(start, cnt, node, owner);
+	/*! 20140816 GICD_TYPER register에 설정된 IRQ갯수만큼의 descriptor를 생성하여 radix tree에 추가 */
 
 err:
 	mutex_unlock(&sparse_irq_lock);

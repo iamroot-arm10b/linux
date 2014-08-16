@@ -86,6 +86,7 @@ do {									\
 	(root)->gfp_mask = (mask);					\
 	(root)->rnode = NULL;						\
 } while (0)
+/*! 20140816 RADIX_TREE 의 root 초기화 */
 
 /**
  * Radix-tree synchronization

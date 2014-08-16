@@ -41,6 +41,7 @@ struct irq_domain *__irq_domain_add(struct device_node *of_node, int size,
 				    void *host_data)
 {
 	struct irq_domain *domain;
+	/*! 20140816 irq_domain: interrupt를 처리하기 위한 device를 구분하려고 등록하는 것 */
 
 	domain = kzalloc_node(sizeof(*domain) + (sizeof(unsigned int) * size),
 			      GFP_KERNEL, of_node_to_nid(of_node));
@@ -49,7 +50,9 @@ struct irq_domain *__irq_domain_add(struct device_node *of_node, int size,
 
 	/* Fill structure */
 	INIT_RADIX_TREE(&domain->revmap_tree, GFP_KERNEL);
+	/*! 20140816 radix_tree_root 구조체 초기화 */
 	domain->ops = ops;
+	/*! 20140816 drivers/irqchip/irq-gic.c 에서 gic_irq_domain_ops callback함수를 set함 */
 	domain->host_data = host_data;
 	domain->of_node = of_node_get(of_node);
 	domain->hwirq_max = hwirq_max;
@@ -173,9 +176,11 @@ struct irq_domain *irq_domain_add_legacy(struct device_node *of_node,
 
 	domain = __irq_domain_add(of_node, first_hwirq + size,
 				  first_hwirq + size, 0, ops, host_data);
+	/*! 20140816 irq domain을 추가하고 초기화한다. */
 	if (!domain)
 		return NULL;
 
+	/*! 20140816 아래 진입함 */
 	irq_domain_associate_many(domain, first_irq, first_hwirq, size);
 
 	return domain;
@@ -270,6 +275,7 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 			 irq_hw_number_t hwirq)
 {
 	struct irq_data *irq_data = irq_get_irq_data(virq);
+	/*! 20140816 virq에 해당하는 descriptor의 주소를 가져온다. */
 	int ret;
 
 	if (WARN(hwirq >= domain->hwirq_max,
@@ -283,8 +289,13 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 	mutex_lock(&irq_domain_mutex);
 	irq_data->hwirq = hwirq;
 	irq_data->domain = domain;
+	/*! 20140816 넘겨온 값으로 irq_data를 채운다. */
 	if (domain->ops->map) {
 		ret = domain->ops->map(domain, virq, hwirq);
+		/*! 20140816 gic_irq_domain_map(domain, virq, hwirq); 호출
+		 * virq: 16, hwirq: 16
+		 * 2014-08-16 여기까지 스터디함. 다음주에 위 함수부터 분석하기로 함.
+		 */
 		if (ret != 0) {
 			/*
 			 * If map() returns -EPERM, this interrupt is protected
@@ -305,6 +316,7 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 		if (!domain->name && irq_data->chip)
 			domain->name = irq_data->chip->name;
 	}
+	/*! 20140816 domain->ops->map 가 아직 설정되지 않았으므로 위 if문은 실행안함 */
 
 	if (hwirq < domain->revmap_size) {
 		domain->linear_revmap[hwirq] = virq;
@@ -330,6 +342,7 @@ void irq_domain_associate_many(struct irq_domain *domain, unsigned int irq_base,
 		of_node_full_name(domain->of_node), irq_base, (int)hwirq_base, count);
 
 	for (i = 0; i < count; i++) {
+		/*! 20140816 아래 진입함 */
 		irq_domain_associate(domain, irq_base + i, hwirq_base + i);
 	}
 }

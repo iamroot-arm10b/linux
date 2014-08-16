@@ -475,6 +475,7 @@ static void *radix_tree_lookup_element(struct radix_tree_root *root,
 	struct radix_tree_node *node, **slot;
 
 	node = rcu_dereference_raw(root->rnode);
+	/*! 20140816 node = root->rnode */
 	if (node == NULL)
 		return NULL;
 
@@ -483,13 +484,19 @@ static void *radix_tree_lookup_element(struct radix_tree_root *root,
 			return NULL;
 		return is_slot ? (void *)&root->rnode : node;
 	}
+	/*! 20140816 lib/radix-tree.c 의 *ptr_to_indirect(void *ptr) 에서.
+	 * radix-tree 생성시 node를 indirect로 만들기 때문에 주소의 0번 bit는 1이 됨
+	 * 0번 bit가 1이므로 위의 if문은 실행안된다고 봄
+	 */
 	node = indirect_to_ptr(node);
+	/*! 20140816 indirect시킨 node pointer를 접근하기 위해서 0번 bit를 0으로 clear */
 
 	height = node->height;
 	if (index > radix_tree_maxindex(height))
 		return NULL;
 
 	shift = (height-1) * RADIX_TREE_MAP_SHIFT;
+	/*! 20140816 node 내의 slot을 찾기 위해 height에 따른 shift 계산 */
 
 	do {
 		slot = (struct radix_tree_node **)
@@ -501,8 +508,12 @@ static void *radix_tree_lookup_element(struct radix_tree_root *root,
 		shift -= RADIX_TREE_MAP_SHIFT;
 		height--;
 	} while (height > 0);
+	/*! 20140816 height가 0이 될때까지 반복해서 index의 slot을 구한다. */
 
 	return is_slot ? (void *)slot : indirect_to_ptr(node);
+	/*! 20140816 is_slot 이 있으면 위에서 구한 slot을 리턴
+	 * is_slot이 없으면 node의 주소(element)를 리턴
+	 */
 }
 
 /**
@@ -539,6 +550,7 @@ EXPORT_SYMBOL(radix_tree_lookup_slot);
 void *radix_tree_lookup(struct radix_tree_root *root, unsigned long index)
 {
 	return radix_tree_lookup_element(root, index, 0);
+	/*! 20140816 radix_tree의 index에 해당하는 element 를 가져온다. */
 }
 EXPORT_SYMBOL(radix_tree_lookup);
 

@@ -277,9 +277,12 @@ EXPORT_SYMBOL(__bitmap_weight);
 void bitmap_set(unsigned long *map, int start, int nr)
 {
 	unsigned long *p = map + BIT_WORD(start);
+	/*! 20140816 start가 속한 word의 시작주소 */
 	const int size = start + nr;
 	int bits_to_set = BITS_PER_LONG - (start % BITS_PER_LONG);
+	/*! 20140816 setting을 시작할 bit 위치 */
 	unsigned long mask_to_set = BITMAP_FIRST_WORD_MASK(start);
+	/*! 20140816 bitmap에서 대상 word의 mask를 start만큼 left shift */
 
 	while (nr - bits_to_set >= 0) {
 		*p |= mask_to_set;
@@ -288,10 +291,12 @@ void bitmap_set(unsigned long *map, int start, int nr)
 		mask_to_set = ~0UL;
 		p++;
 	}
+	/*! 20140816 nr이 4byte 보다 큰 경우 while문에서 처리하고 나머지는 아래 if문에서 처리한다. */
 	if (nr) {
 		mask_to_set &= BITMAP_LAST_WORD_MASK(size);
 		*p |= mask_to_set;
 	}
+	/*! 20140816 정해진 bit 수만큼 map에서 start에서 nr만큼 1로 set */
 }
 EXPORT_SYMBOL(bitmap_set);
 
@@ -337,19 +342,23 @@ unsigned long bitmap_find_next_zero_area(unsigned long *map,
 	unsigned long index, end, i;
 again:
 	index = find_next_zero_bit(map, size, start);
+	/*! 20140816 map start번째 bit부터 size 사이에서 첫번째 0의 위치 찾음 */
 
 	/* Align allocation */
 	index = __ALIGN_MASK(index, align_mask);
+	/*! 20140816 align_mask가 0이면 align 안함 */
 
 	end = index + nr;
 	if (end > size)
 		return end;
 	i = find_next_bit(map, end, index);
+	/*! 20140816 map 에서 index 이후에 end 사이에 1이 있는 offset 값. 1이 없으면 end값 set */
 	if (i < end) {
 		start = i + 1;
 		goto again;
 	}
 	return index;
+	/*! 20140816 끝날때까지 0인 영역의 index 리턴 */
 }
 EXPORT_SYMBOL(bitmap_find_next_zero_area);
 

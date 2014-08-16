@@ -107,11 +107,13 @@ static void __iomem *gic_get_percpu_base(union gic_base *base)
 
 static void __iomem *gic_get_common_base(union gic_base *base)
 {
+	/*! 20140816 여기 실행 */
 	return base->common_base;
 }
 
 static inline void __iomem *gic_data_dist_base(struct gic_chip_data *data)
 {
+	/*! 20140816 여기 실행됨 */
 	return data->get_base(&data->dist_base);
 }
 
@@ -123,6 +125,7 @@ static inline void __iomem *gic_data_cpu_base(struct gic_chip_data *data)
 static inline void gic_set_base_accessor(struct gic_chip_data *data,
 					 void __iomem *(*f)(union gic_base *))
 {
+	/*! 20140816 여기 실행됨 */
 	data->get_base = f;
 }
 #else
@@ -724,6 +727,7 @@ const struct irq_domain_ops gic_irq_domain_ops = {
 	.map = gic_irq_domain_map,
 	.xlate = gic_irq_domain_xlate,
 };
+/*! 20140816 여기 참조 */
 
 void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 			   void __iomem *dist_base, void __iomem *cpu_base,
@@ -758,6 +762,7 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 		gic_set_base_accessor(gic, gic_get_percpu_base);
 	} else
 #endif
+	/*! 20140816 percpu_offset 이 0 이므로 여기 실행 */
 	{			/* Normal, sane GIC... */
 		WARN(percpu_offset,
 		     "GIC_NON_BANKED not enabled, ignoring %08x offset!",
@@ -765,6 +770,7 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 		gic->dist_base.common_base = dist_base;
 		gic->cpu_base.common_base = cpu_base;
 		gic_set_base_accessor(gic, gic_get_common_base);
+		/*! 20140816 gic->get_base = gic_get_common_base */
 	}
 
 	/*
@@ -772,6 +778,7 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 	 * It will be refined as each CPU probes its ID.
 	 */
 	for (i = 0; i < NR_GIC_CPU_IF; i++)
+		/*! 20140816 NR_GIC_CPU_IF: 8 */
 		gic_cpu_map[i] = 0xff;
 
 	/*
@@ -779,30 +786,46 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 	 * For secondary GICs, skip over PPIs, too.
 	 */
 	if (gic_nr == 0 && (irq_start & 31) > 0) {
+		/*! 20140816 gic_nr: 0 이고 irq_start의 하위 5bit 중 하나라도 1인 경우, hwirq_base: 16 */
 		hwirq_base = 16;
 		if (irq_start != -1)
 			irq_start = (irq_start & ~31) + 16;
+			/*! 20140816 irq_start가 -1이 아닌 경우, 하위 5bit를 16으로 set */
 	} else {
 		hwirq_base = 32;
 	}
+	/*! 20140816 ARM의 GIC(Generic Interrupt Controller)에서
+	 * SGI(Software Generated Interrupt)와 PPI(Private Peripheral Interrupt)를 쓰지 않겠다는 의미
+	 */
 
 	/*
 	 * Find out how many interrupts are supported.
 	 * The GIC only supports up to 1020 interrupt sources.
 	 */
 	gic_irqs = readl_relaxed(gic_data_dist_base(gic) + GIC_DIST_CTR) & 0x1f;
+	/*! 20140816 gic_data_dist_base(gic): gic_get_common_base(&gic)
+	 * GIC_DIST_CTR(define값은 4): ARM에서의 명칭은 GICD_TYPER. 하위 5bit가 GIC에서 지원하는 Interrupt 갯수
+	 * readl_relaxed를 통해서 GICD_TYPER 값을 가져오고 하위 5bit(Interrupt 갯수)를 할당
+	 */
 	gic_irqs = (gic_irqs + 1) * 32;
+	/*! 20140816 읽어온 값을 실제 Interrupt 갯수로 만든다. */
 	if (gic_irqs > 1020)
 		gic_irqs = 1020;
+	/*! 20140816 gic_irqs의 최대값 체크. 제공하는 최대값이 1020) */
 	gic->gic_irqs = gic_irqs;
 
 	gic_irqs -= hwirq_base; /* calculate # of irqs to allocate */
+	/*! 20140816 인터럽트 갯수에서 skip할 인터럽트 갯수만큼 빼준다. */
 	irq_base = irq_alloc_descs(irq_start, 16, gic_irqs, numa_node_id());
+	/*! 20140816 numa_node_id: 0
+	 * allocated_irqs bitmap에서 빈공간을 찾아 descriptor 생성 및 radix tree 추가
+	 */
 	if (IS_ERR_VALUE(irq_base)) {
 		WARN(1, "Cannot allocate irq_descs @ IRQ%d, assuming pre-allocated\n",
 		     irq_start);
 		irq_base = irq_start;
 	}
+	/*! 20140816 아래 진입함 */
 	gic->domain = irq_domain_add_legacy(node, gic_irqs, irq_base,
 				    hwirq_base, &gic_irq_domain_ops, gic);
 	if (WARN_ON(!gic->domain))

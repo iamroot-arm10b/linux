@@ -599,6 +599,7 @@ int __irq_alloc_descs(int irq, unsigned int from, unsigned int cnt, int node,
 /* use macros to avoid needing export.h for THIS_MODULE */
 #define irq_alloc_descs(irq, from, cnt, node)	\
 	__irq_alloc_descs(irq, from, cnt, node, THIS_MODULE)
+/*! 20140816 allocated_irqs bitmap에서 빈공간을 찾아 descriptor 생성 및 radix tree 추가 */
 
 #define irq_alloc_desc(node)			\
 	irq_alloc_descs(-1, 0, 1, node)

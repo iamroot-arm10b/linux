@@ -147,6 +147,7 @@ EXPORT_SYMBOL(irq_set_chip_data);
 struct irq_data *irq_get_irq_data(unsigned int irq)
 {
 	struct irq_desc *desc = irq_to_desc(irq);
+	/*! 20140816 irq번호에 해당하는 irq_desc의 주소를 가져온다. */
 
 	return desc ? &desc->irq_data : NULL;
 }
