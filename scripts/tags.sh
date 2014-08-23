@@ -21,10 +21,9 @@ ignore="( -name SCCS -o -name BitKeeper -o -name .svn -o \
 # Use make O=. {tags|cscope}
 # to force full paths for a non-O= build
 if [ "${KBUILD_SRC}" = "" ]; then
-	tree=~/linux/
+	tree=
 else
-#	tree=${srctree}/
-	tree=~/linux/
+	tree=${srctree}/
 fi
 
 # Find all available archs

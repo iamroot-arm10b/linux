@@ -25,5 +25,6 @@
 	static const struct of_device_id irqchip_of_match_##name	\
 	__used __section(__irqchip_of_table)				\
 	= { .compatible = compstr, .data = fn }
+/*! 20140809  여기 참조함 */
 
 #endif

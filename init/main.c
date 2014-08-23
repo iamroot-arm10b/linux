@@ -232,7 +232,7 @@ static int __init loglevel(char *str)
 early_param("loglevel", loglevel);
 /*! 20130907
  * 자료구조를 생성하여 준다  early_param("string" ,"function",1)
- early_param 을 사용하여 섹션에 밀어넣어서 실행
+ * early_param 을 사용하여 섹션에 밀어넣어서 실행
  */
 
 /* Change NUL term back to "=", to make "param" the whole string. */

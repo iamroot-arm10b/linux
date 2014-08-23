@@ -488,7 +488,7 @@ void __init of_irq_init(const struct of_device_id *matches)
 			 * match->data: gic_of_init
 			 */
 			ret = irq_init_cb(desc->dev, desc->interrupt_parent);
-			/*! 20140809 gic_of_init 함수 호출 */
+			/*! 20140809 gic_of_init(desc->dev, desc->interrupt_parent) 함수 호출 */
 			if (ret) {
 				kfree(desc);
 				continue;
