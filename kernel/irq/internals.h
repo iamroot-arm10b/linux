@@ -109,14 +109,21 @@ static inline void chip_bus_lock(struct irq_desc *desc)
 {
 	if (unlikely(desc->irq_data.chip->irq_bus_lock))
 		desc->irq_data.chip->irq_bus_lock(&desc->irq_data);
+	/*! 20140823 irq_data.chip = gic_chip
+	 * gic_chip에서는 irq_bus_lock을 초기화하지 않았으므로 아무일도 안함
+	 */
 }
 
 static inline void chip_bus_sync_unlock(struct irq_desc *desc)
 {
 	if (unlikely(desc->irq_data.chip->irq_bus_sync_unlock))
 		desc->irq_data.chip->irq_bus_sync_unlock(&desc->irq_data);
+	/*! 20140823 irq_data.chip = gic_chip
+	 * gic_chip에서는 irq_bus_unlock을 초기화하지 않았으므로 아무일도 안함
+	 */
 }
 
+/*! 20140823 여기 참조 */
 #define _IRQ_DESC_CHECK		(1 << 0)
 #define _IRQ_DESC_PERCPU	(1 << 1)
 
@@ -132,24 +139,28 @@ static inline struct irq_desc *
 irq_get_desc_buslock(unsigned int irq, unsigned long *flags, unsigned int check)
 {
 	return __irq_get_desc_lock(irq, flags, true, check);
+	/*! 20140823 irq번호에 대한 spin lock과 bus lock을 획득하고 irq_desc를 리턴 */
 }
 
 static inline void
 irq_put_desc_busunlock(struct irq_desc *desc, unsigned long flags)
 {
 	__irq_put_desc_unlock(desc, flags, true);
+	/*! 20140823 spin lock과 bus lock을 해제 */
 }
 
 static inline struct irq_desc *
 irq_get_desc_lock(unsigned int irq, unsigned long *flags, unsigned int check)
 {
 	return __irq_get_desc_lock(irq, flags, false, check);
+	/*! 20140823 irq번호에 대한 lock을 획득하고 irq_desc를 리턴 */
 }
 
 static inline void
 irq_put_desc_unlock(struct irq_desc *desc, unsigned long flags)
 {
 	__irq_put_desc_unlock(desc, flags, false);
+	/*! 20140823 desc의 lock 해제 */
 }
 
 /*
@@ -168,6 +179,7 @@ static inline void irqd_clr_move_pending(struct irq_data *d)
 static inline void irqd_clear(struct irq_data *d, unsigned int mask)
 {
 	d->state_use_accessors &= ~mask;
+	/*! 20140823 d->state_use_accessors에서 mask clear */
 }
 
 static inline void irqd_set(struct irq_data *d, unsigned int mask)

@@ -42,6 +42,7 @@ irq_settings_clr_and_set(struct irq_desc *desc, u32 clr, u32 set)
 static inline bool irq_settings_is_per_cpu(struct irq_desc *desc)
 {
 	return desc->status_use_accessors & _IRQ_PER_CPU;
+	/*! 20140823 _IRQ_PER_CPU enable 여부 리턴 */
 }
 
 static inline bool irq_settings_is_per_cpu_devid(struct irq_desc *desc)
@@ -62,11 +63,13 @@ static inline void irq_settings_set_no_balancing(struct irq_desc *desc)
 static inline bool irq_settings_has_no_balance_set(struct irq_desc *desc)
 {
 	return desc->status_use_accessors & _IRQ_NO_BALANCING;
+	/*! 20140823 _IRQ_NO_BALANCING enable 여부 리턴 */
 }
 
 static inline u32 irq_settings_get_trigger_mask(struct irq_desc *desc)
 {
 	return desc->status_use_accessors & IRQ_TYPE_SENSE_MASK;
+	/*! 20140823 IRQ_TYPE_SENSE_MASK enable 여부 리턴 */
 }
 
 static inline void
@@ -79,6 +82,7 @@ irq_settings_set_trigger_mask(struct irq_desc *desc, u32 mask)
 static inline bool irq_settings_is_level(struct irq_desc *desc)
 {
 	return desc->status_use_accessors & _IRQ_LEVEL;
+	/*! 20140823 _IRQ_LEVEL enable 여부 리턴 */
 }
 
 static inline void irq_settings_clr_level(struct irq_desc *desc)
@@ -139,6 +143,7 @@ static inline void irq_settings_set_noprobe(struct irq_desc *desc)
 static inline bool irq_settings_can_move_pcntxt(struct irq_desc *desc)
 {
 	return desc->status_use_accessors & _IRQ_MOVE_PCNTXT;
+	/*! 20140823 _IRQ_MOVE_PCNTXT가 enable 여부 리턴 */
 }
 
 static inline bool irq_settings_can_autoenable(struct irq_desc *desc)

@@ -451,10 +451,12 @@ int irq_reserve_irqs(unsigned int from, unsigned int cnt)
 
 	mutex_lock(&sparse_irq_lock);
 	start = bitmap_find_next_zero_area(allocated_irqs, nr_irqs, from, cnt, 0);
+	/*! 20140823 allocated_irqs에서 from ~ from + cnt bit 중에서 nr_irqs만큼 검색하면서 index가 0인 bit 리턴 */
 	if (start == from)
 		bitmap_set(allocated_irqs, start, cnt);
 	else
 		ret = -EEXIST;
+	/*! 20140823 찾아진 start bit가 from 과 같으면 해당 영역 Set, 같지 않으면 -EEXIST 리턴 */
 	mutex_unlock(&sparse_irq_lock);
 	return ret;
 }
@@ -475,6 +477,7 @@ __irq_get_desc_lock(unsigned int irq, unsigned long *flags, bool bus,
 		    unsigned int check)
 {
 	struct irq_desc *desc = irq_to_desc(irq);
+	/*! 20140823 irq 번호에 맞는 descriptor pointer 획득 */
 
 	if (desc) {
 		if (check & _IRQ_DESC_CHECK) {
@@ -489,7 +492,9 @@ __irq_get_desc_lock(unsigned int irq, unsigned long *flags, bool bus,
 
 		if (bus)
 			chip_bus_lock(desc);
+			/*! 20140823 아무일도 안함 */
 		raw_spin_lock_irqsave(&desc->lock, *flags);
+		/*! 20140823 lock 획득 */
 	}
 	return desc;
 }
@@ -497,13 +502,16 @@ __irq_get_desc_lock(unsigned int irq, unsigned long *flags, bool bus,
 void __irq_put_desc_unlock(struct irq_desc *desc, unsigned long flags, bool bus)
 {
 	raw_spin_unlock_irqrestore(&desc->lock, flags);
+	/*! 20140823 획득했던 lock 해제 */
 	if (bus)
 		chip_bus_sync_unlock(desc);
+		/*! 20140823 아무일도 안함 */
 }
 
 int irq_set_percpu_devid(unsigned int irq)
 {
 	struct irq_desc *desc = irq_to_desc(irq);
+	/*! 20140823 irq_desc_tree의 irq에 해당하는 element 를 가져온다. */
 
 	if (!desc)
 		return -EINVAL;
@@ -512,11 +520,13 @@ int irq_set_percpu_devid(unsigned int irq)
 		return -EINVAL;
 
 	desc->percpu_enabled = kzalloc(sizeof(*desc->percpu_enabled), GFP_KERNEL);
+	/*! 20140823 percpu_enabled를 위한 공간 할당 */
 
 	if (!desc->percpu_enabled)
 		return -ENOMEM;
 
 	irq_set_percpu_devid_flags(irq);
+	/*! 20140823 irq 번호의 desc->irq_data 에 flag 설정 */
 	return 0;
 }
 

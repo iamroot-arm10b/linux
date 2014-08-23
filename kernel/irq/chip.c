@@ -29,21 +29,25 @@ int irq_set_chip(unsigned int irq, struct irq_chip *chip)
 {
 	unsigned long flags;
 	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
+	/*! 20140823 irq번호에 대한 lock을 획득하고 irq_desc를 리턴 */
 
 	if (!desc)
 		return -EINVAL;
 
 	if (!chip)
 		chip = &no_irq_chip;
+		/*! 20140823 chip이 없으면 default 값 설정 */
 
 	desc->irq_data.chip = chip;
 	irq_put_desc_unlock(desc, flags);
+	/*! 20140823 desc의 lock 해제 */
 	/*
 	 * For !CONFIG_SPARSE_IRQ make the irq show up in
 	 * allocated_irqs. For the CONFIG_SPARSE_IRQ case, it is
 	 * already marked, and this call is harmless.
 	 */
 	irq_reserve_irq(irq);
+	/*! 20140823 allocated_irqs bitmap에서 irq bit 설정 */
 	return 0;
 }
 EXPORT_SYMBOL(irq_set_chip);
@@ -139,6 +143,9 @@ int irq_set_chip_data(unsigned int irq, void *data)
 	if (!desc)
 		return -EINVAL;
 	desc->irq_data.chip_data = data;
+	/*! 20140823 domain의 host_data를 descriptor와 연결시켜 줌
+	 * chip_data = gic_data[0]
+	 */
 	irq_put_desc_unlock(desc, flags);
 	return 0;
 }
@@ -661,6 +668,7 @@ __irq_set_handler(unsigned int irq, irq_flow_handler_t handle, int is_chained,
 {
 	unsigned long flags;
 	struct irq_desc *desc = irq_get_desc_buslock(irq, &flags, 0);
+	/*! 20140823 irq에 대한 irq_desc를 리턴, flasgs는 0 */
 
 	if (!desc)
 		return;
@@ -681,6 +689,7 @@ __irq_set_handler(unsigned int irq, irq_flow_handler_t handle, int is_chained,
 	}
 	desc->handle_irq = handle;
 	desc->name = name;
+	/*! 20140823 handle 과 name을 desc 에 등록한다. */
 
 	if (handle != handle_bad_irq && is_chained) {
 		irq_settings_set_noprobe(desc);
@@ -690,6 +699,7 @@ __irq_set_handler(unsigned int irq, irq_flow_handler_t handle, int is_chained,
 	}
 out:
 	irq_put_desc_busunlock(desc, flags);
+	/*! 20140823 spin lock과 bus lock을 해제 */
 }
 EXPORT_SYMBOL_GPL(__irq_set_handler);
 
@@ -698,7 +708,9 @@ irq_set_chip_and_handler_name(unsigned int irq, struct irq_chip *chip,
 			      irq_flow_handler_t handle, const char *name)
 {
 	irq_set_chip(irq, chip);
+	/*! 20140823 irq에 해당하는 chip 설정 및 allocated_irqs bitmap 설정 */
 	__irq_set_handler(irq, handle, 0, name);
+	/*! 20140823 handle 과 name 을 desc 에 등록한다. */
 }
 EXPORT_SYMBOL_GPL(irq_set_chip_and_handler_name);
 
@@ -706,13 +718,16 @@ void irq_modify_status(unsigned int irq, unsigned long clr, unsigned long set)
 {
 	unsigned long flags;
 	struct irq_desc *desc = irq_get_desc_lock(irq, &flags, 0);
+	/*! 20140823 irq번호에 대한 lock을 획득하고 desc를 set */
 
 	if (!desc)
 		return;
 	irq_settings_clr_and_set(desc, clr, set);
+	/*! 20140823 desc에서 clr bit를 지우고 set bit를 enable 한다. */
 
 	irqd_clear(&desc->irq_data, IRQD_NO_BALANCING | IRQD_PER_CPU |
 		   IRQD_TRIGGER_MASK | IRQD_LEVEL | IRQD_MOVE_PCNTXT);
+	/*! 20140823 desc->irq_data->state_use_accessors에서 해당 flag clear */
 	if (irq_settings_has_no_balance_set(desc))
 		irqd_set(&desc->irq_data, IRQD_NO_BALANCING);
 	if (irq_settings_is_per_cpu(desc))
@@ -721,10 +736,13 @@ void irq_modify_status(unsigned int irq, unsigned long clr, unsigned long set)
 		irqd_set(&desc->irq_data, IRQD_MOVE_PCNTXT);
 	if (irq_settings_is_level(desc))
 		irqd_set(&desc->irq_data, IRQD_LEVEL);
+	/*! 20140823 각 flag의 bit가 설정되어 있으면 IRQD~ flag들 set */
 
 	irqd_set(&desc->irq_data, irq_settings_get_trigger_mask(desc));
+	/*! 20140823 IRQ_TYPE_SENSE_MASK가 enable 되어 있으면 desc->irq_data->state_use_accessors set */
 
 	irq_put_desc_unlock(desc, flags);
+	/*! 20140823 desc의 lock 해제 */
 }
 EXPORT_SYMBOL_GPL(irq_modify_status);
 

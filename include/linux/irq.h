@@ -443,6 +443,7 @@ static inline void irq_set_chip_and_handler(unsigned int irq, struct irq_chip *c
 					    irq_flow_handler_t handle)
 {
 	irq_set_chip_and_handler_name(irq, chip, handle, NULL);
+	/*! 20140823 irq chip과 handle 을 desc 에 등록한다. */
 }
 
 extern int irq_set_percpu_devid(unsigned int irq);
@@ -473,6 +474,7 @@ void irq_modify_status(unsigned int irq, unsigned long clr, unsigned long set);
 static inline void irq_set_status_flags(unsigned int irq, unsigned long set)
 {
 	irq_modify_status(irq, 0, set);
+	/*! 20140823 irq 번호에 맞는 desc->irq_data의 set변수(flag) 설정 */
 }
 
 static inline void irq_clear_status_flags(unsigned int irq, unsigned long clr)
@@ -513,6 +515,7 @@ static inline void irq_set_percpu_devid_flags(unsigned int irq)
 	irq_set_status_flags(irq,
 			     IRQ_NOAUTOEN | IRQ_PER_CPU | IRQ_NOTHREAD |
 			     IRQ_NOPROBE | IRQ_PER_CPU_DEVID);
+	/*! 20140823 irq 번호의 desc->irq_data 에 flag 설정 */
 }
 
 /* Handle dynamic irq creation and destruction */
@@ -624,6 +627,7 @@ static inline void irq_free_desc(unsigned int irq)
 static inline int irq_reserve_irq(unsigned int irq)
 {
 	return irq_reserve_irqs(irq, 1);
+	/*! 20140823 allocated_irqs bitmap에서 irq bit 설정 */
 }
 
 #ifndef irq_reg_writel

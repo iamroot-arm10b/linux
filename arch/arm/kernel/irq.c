@@ -110,6 +110,7 @@ void set_irq_flags(unsigned int irq, unsigned int iflags)
 		clr |= IRQ_NOAUTOEN;
 	/* Order is clear bits in "clr" then set bits in "set" */
 	irq_modify_status(irq, clr, set & ~clr);
+	/*! 20140823 set 변수의 세 flags 중에서 iflags의 조건에 따라 적절한 flag를 irq_desc에 설정 */
 }
 EXPORT_SYMBOL_GPL(set_irq_flags);
 

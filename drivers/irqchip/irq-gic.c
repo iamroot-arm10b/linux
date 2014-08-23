@@ -348,6 +348,9 @@ static struct irq_chip gic_chip = {
 #endif
 	.irq_set_wake		= gic_set_wake,
 };
+/*! 20140823 GIC를 사용하는 ARM core에서 사용하는 irq_chip 구조체 초기화
+ * 각 함수의 내용은 안봤음. 아키텍처 종속저이라 나중에 보기로 함.
+ */
 
 void __init gic_cascade_irq(unsigned int gic_nr, unsigned int irq)
 {
@@ -670,16 +673,23 @@ static int gic_irq_domain_map(struct irq_domain *d, unsigned int irq,
 				irq_hw_number_t hw)
 {
 	if (hw < 32) {
+		/*! 20140823 hw가 32보다 작은 경우에는 PPI(Private Peripheral Interrupt) */
 		irq_set_percpu_devid(irq);
+		/*! 20140823 irq 번호의 desc->irq_data 에 flag 설정 */
 		irq_set_chip_and_handler(irq, &gic_chip,
 					 handle_percpu_devid_irq);
+		/*! 20140823 irq chip과 handle 을 desc 에 등록한다. */
 		set_irq_flags(irq, IRQF_VALID | IRQF_NOAUTOEN);
+		/*! 20140823 irq의 IRQF_VALID | IRQF_NOAUTOEN flag에 따라 irq_desc flag 설정 */
 	} else {
+		/*! 20140823 hw가 32이상인 경우는 일반 Interrupt Source */
 		irq_set_chip_and_handler(irq, &gic_chip,
 					 handle_fasteoi_irq);
 		set_irq_flags(irq, IRQF_VALID | IRQF_PROBE);
+		/*! 20140823 PPI인 경우에는 hanlder와 flags가 다르다. */
 	}
 	irq_set_chip_data(irq, d->host_data);
+	/*! 20140823 d->host_data: gic_data[0] */
 	return 0;
 }
 

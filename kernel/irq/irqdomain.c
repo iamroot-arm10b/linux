@@ -291,11 +291,12 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 	irq_data->domain = domain;
 	/*! 20140816 넘겨온 값으로 irq_data를 채운다. */
 	if (domain->ops->map) {
+		/*! 20140816 여기까지 스터디함. 다음주에 아래 함수부터 분석하기로 함. */
 		ret = domain->ops->map(domain, virq, hwirq);
 		/*! 20140816 gic_irq_domain_map(domain, virq, hwirq); 호출
 		 * virq: 16, hwirq: 16
-		 * 2014-08-16 여기까지 스터디함. 다음주에 위 함수부터 분석하기로 함.
 		 */
+		/*! 20140823 gic_irq_domain_map: 해당 irq의 domain을 설정한다. */
 		if (ret != 0) {
 			/*
 			 * If map() returns -EPERM, this interrupt is protected
@@ -315,8 +316,14 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 		/* If not already assigned, give the domain the chip's name */
 		if (!domain->name && irq_data->chip)
 			domain->name = irq_data->chip->name;
+		/*! 20140823 domain->name이 NULL이므로,
+		 * domain->name을 chip->name: "GIC" 로 바꾸어준다.
+		 */
 	}
 	/*! 20140816 domain->ops->map 가 아직 설정되지 않았으므로 위 if문은 실행안함 */
+	/*! 20140823 __irq_domain_add 함수에서 domain->ops 를 설정하여 if문 실행함.
+	 * 2014-08-23 스터디 여기까지
+	 */
 
 	if (hwirq < domain->revmap_size) {
 		domain->linear_revmap[hwirq] = virq;
