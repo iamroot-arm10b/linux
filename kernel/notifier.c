@@ -347,7 +347,7 @@ int raw_notifier_chain_register(struct raw_notifier_head *nh,
 		struct notifier_block *n)
 {
 	return notifier_chain_register(&nh->head, n);
-	/*! 20140222 nh에 내림차순으로 n을 등록한다. */
+	/*! 20140222 nh에 priority가 높은 것부터 내림차순으로 n을 등록한다. */
 }
 EXPORT_SYMBOL_GPL(raw_notifier_chain_register);
 

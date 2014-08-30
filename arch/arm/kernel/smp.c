@@ -465,6 +465,8 @@ void __init set_smp_cross_call(void (*fn)(const struct cpumask *, unsigned int))
 {
 	if (!smp_cross_call)
 		smp_cross_call = fn;
+	/*! 20140830 fn 함수 등록(fn: gic_raise_softirq) */
+	/*! 20140830 gic_raise_softirq: 특정 irq 소스에 대한 software irq 발생 */
 }
 
 void arch_send_call_function_ipi_mask(const struct cpumask *mask)

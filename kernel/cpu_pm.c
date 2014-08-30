@@ -52,6 +52,7 @@ int cpu_pm_register_notifier(struct notifier_block *nb)
 
 	write_lock_irqsave(&cpu_pm_notifier_lock, flags);
 	ret = raw_notifier_chain_register(&cpu_pm_notifier_chain, nb);
+	/*! 20140830 cpu_pm_notifier_chain에 priority가 높은 것부터 내림차순으로 nb를 등록한다. */
 	write_unlock_irqrestore(&cpu_pm_notifier_lock, flags);
 
 	return ret;

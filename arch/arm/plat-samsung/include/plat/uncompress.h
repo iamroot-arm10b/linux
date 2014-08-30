@@ -106,6 +106,7 @@ static inline void flush(void)
 	do {							\
 		*((volatile unsigned int __force *)(ad)) = (d); \
 	} while (0)
+/*! 20140830 여기 실행됨 */
 
 #ifdef CONFIG_S3C_BOOT_ERROR_RESET
 

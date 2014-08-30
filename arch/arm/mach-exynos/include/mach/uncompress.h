@@ -20,6 +20,7 @@
 static unsigned int __raw_readl(unsigned int ptr)
 {
 	return *((volatile unsigned int *)ptr);
+	/*! 20140830 ptr의 값 리턴 */
 }
 
 static void arch_detect_cpu(void)

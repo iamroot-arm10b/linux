@@ -129,6 +129,9 @@ void __init set_handle_irq(void (*handle_irq)(struct pt_regs *))
 	if (handle_arch_irq)
 		return;
 
+	/*! 20140830 handle_arch_irq가 NULL일 가능성이 크므로 handle_irq를 등록한다.
+	 * arch/arm/kernel/setup.c 의 setup_arch 함수 참조
+	 */
 	handle_arch_irq = handle_irq;
 }
 #endif

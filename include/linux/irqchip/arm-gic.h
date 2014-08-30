@@ -18,6 +18,7 @@
 #define GIC_CPU_RUNNINGPRI		0x14
 #define GIC_CPU_HIGHPRI			0x18
 
+/*! 20140830 이 값들 참조 */
 #define GIC_DIST_CTRL			0x000
 #define GIC_DIST_CTR			0x004
 #define GIC_DIST_IGROUP			0x080

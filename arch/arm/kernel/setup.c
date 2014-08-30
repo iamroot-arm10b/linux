@@ -1114,7 +1114,7 @@ void __init setup_arch(char **cmdline_p)
 	setup_processor();
 	/*! 20130810 마침 */
 	mdesc = setup_machine_fdt(__atags_pointer);
-	/*! 20130831 호환되는 descript 찾아옴. */
+	/*! 20130831 호환되는 descriptor 찾아옴. */
 	if (!mdesc)
 		mdesc = setup_machine_tags(__atags_pointer, __machine_arch_type);
 		/*! 20130831 device tree가 아니면 atag에서 찾는다. */
@@ -1212,7 +1212,7 @@ void __init setup_arch(char **cmdline_p)
 
 #ifdef CONFIG_MULTI_IRQ_HANDLER
 	handle_arch_irq = mdesc->handle_irq;
-	/*! 20140111 머신 descript의 irq를 handle_arch_irq의 포인터에 지정. handle_irq를 못찾으니 NULL 로 예상 */
+	/*! 20140111 머신 descriptor의 irq를 handle_arch_irq의 포인터에 지정. handle_irq를 못찾으니 NULL 로 예상 */
 #endif
 
 #ifdef CONFIG_VT

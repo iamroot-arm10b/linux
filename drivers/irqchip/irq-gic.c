@@ -29,7 +29,7 @@
 #include <linux/list.h>
 #include <linux/smp.h>
 #include <linux/cpu.h>
-#include <linux/cpu_pm.h>
+#include <linux/cpu_m.h>
 #include <linux/cpumask.h>
 #include <linux/io.h>
 #include <linux/of.h>
@@ -67,6 +67,7 @@ struct gic_chip_data {
 	unsigned int gic_irqs;
 #ifdef CONFIG_GIC_NON_BANKED
 	void __iomem *(*get_base)(union gic_base *);
+	/*! 20140830 여기 참조 */
 #endif
 };
 
@@ -78,6 +79,7 @@ static DEFINE_RAW_SPINLOCK(irq_controller_lock);
  * by the GIC itself.
  */
 #define NR_GIC_CPU_IF 8
+/*! 20140830 이 값 참조 */
 static u8 gic_cpu_map[NR_GIC_CPU_IF] __read_mostly;
 
 /*
@@ -107,19 +109,20 @@ static void __iomem *gic_get_percpu_base(union gic_base *base)
 
 static void __iomem *gic_get_common_base(union gic_base *base)
 {
-	/*! 20140816 여기 실행 */
 	return base->common_base;
+	/*! 20140830 GIC common base 주소 리턴 */
 }
 
 static inline void __iomem *gic_data_dist_base(struct gic_chip_data *data)
 {
-	/*! 20140816 여기 실행됨 */
 	return data->get_base(&data->dist_base);
+	/*! 20140830 GIC distributor base 주소 리턴 */
 }
 
 static inline void __iomem *gic_data_cpu_base(struct gic_chip_data *data)
 {
 	return data->get_base(&data->cpu_base);
+	/*! 20140830 GIC cpu interface base 주소 리턴 */
 }
 
 static inline void gic_set_base_accessor(struct gic_chip_data *data,
@@ -364,18 +367,24 @@ void __init gic_cascade_irq(unsigned int gic_nr, unsigned int irq)
 static u8 gic_get_cpumask(struct gic_chip_data *gic)
 {
 	void __iomem *base = gic_data_dist_base(gic);
+	/*! 20140830 GIC distributor base 주소 설정 */
 	u32 mask, i;
 
 	for (i = mask = 0; i < 32; i += 4) {
 		mask = readl_relaxed(base + GIC_DIST_TARGET + i);
+		/*! 20140830 Distributor register의 offset 0x800 ~ 0x81C
+		 * (Interrupt Processor Targets Registers)의 값을 읽어서 mask에 set
+		 */
 		mask |= mask >> 16;
 		mask |= mask >> 8;
 		if (mask)
 			break;
+		/*! 20140830 4byte의 mask를 합쳐서 1bit라도 1인 경우 break */
 	}
 
 	if (!mask)
 		pr_crit("GIC CPU mask not found - kernel will fail to boot.\n");
+		/*! 20140830 mask가 하나도 없으면 오류 */
 
 	return mask;
 }
@@ -386,29 +395,43 @@ static void __init gic_dist_init(struct gic_chip_data *gic)
 	u32 cpumask;
 	unsigned int gic_irqs = gic->gic_irqs;
 	void __iomem *base = gic_data_dist_base(gic);
+	/*! 20140830 GIC distributor base 주소를 받아온다. */
 
 	writel_relaxed(0, base + GIC_DIST_CTRL);
+	/*! 20140830 GIC_DIST_CTRL register에 0을 기록한다.(Distributor forwarding Disable) */
 
 	/*
 	 * Set all global interrupts to be level triggered, active low.
 	 */
 	for (i = 32; i < gic_irqs; i += 16)
 		writel_relaxed(0, base + GIC_DIST_CONFIG + i * 4 / 16);
+	/*! 20140830 GIC_DIST_CONFIG(0xc00) + 8 부터 4씩 증가하면서 해당 주소의 초기값을 LOW로 셋팅함.
+	 * 0xc00: SGIs(Software Generated Interrupts)의 configration register
+	 * 0xc04: PPIs(Private Peripheral Interrupts: core별로 갈수 있는 인터럽트)의 configration register
+	 * 0xc08 ~ 0xc7c: SPI(Shared Peripheral Interrupts: 모든 core가 공유하는 인터럽트)의 configration register
+	 * 문서 DDI0471B_gic400_r0p1_trm.pdf 의 3.4.2 ~ 3.4.4 참조
+	 */
 
 	/*
 	 * Set all global interrupts to this CPU only.
 	 */
 	cpumask = gic_get_cpumask(gic);
+	/*! 20140830 GICD_ITARGETSR0 ~ GICD_ITARGETSR7 에서 cpu mask를 얻어온다. */
 	cpumask |= cpumask << 8;
 	cpumask |= cpumask << 16;
 	for (i = 32; i < gic_irqs; i += 4)
 		writel_relaxed(cpumask, base + GIC_DIST_TARGET + i * 4 / 4);
+		/*! 20140830 얻어온 cpu mask를 GICD_ITARGETSR8 ~ GICD_ITARGETSRn 에 설정한다.
+		 * GICD_ITARGETSR0 ~ GICD_ITARGETSR7: 0x800 ~ 0x81C (RO)
+		 * GICD_ITARGETSR8 ~ GICD_ITARGETSRn: 0x820 ~ 0x9FC (RW)
+		 */
 
 	/*
 	 * Set priority on all global interrupts.
 	 */
 	for (i = 32; i < gic_irqs; i += 4)
 		writel_relaxed(0xa0a0a0a0, base + GIC_DIST_PRI + i * 4 / 4);
+	/*! 20140830 모든 SPI Priority를 0xa0로 설정한다.(GICD_IPRIORITYR8 ~ GICD_IPRIORITYRn 까지) */
 
 	/*
 	 * Disable all interrupts.  Leave the PPI and SGIs alone
@@ -416,8 +439,12 @@ static void __init gic_dist_init(struct gic_chip_data *gic)
 	 */
 	for (i = 32; i < gic_irqs; i += 32)
 		writel_relaxed(0xffffffff, base + GIC_DIST_ENABLE_CLEAR + i * 4 / 32);
+	/*! 20140830 0x180 + 4 부터 4씩 증가하면서 해당 주소의 초기값을 0xffffffff로 셋팅함.
+	 * PPI와 SGI를 제외한 모든 Interrupt Disable (모든 interrupt의 forwarding을 막는다.)
+	 */
 
 	writel_relaxed(1, base + GIC_DIST_CTRL);
+	/*! 20140830 GIC_DIST_CTRL register에 1을 기록한다.(Distributor forwarding Enable) */
 }
 
 static void gic_cpu_init(struct gic_chip_data *gic)
@@ -431,7 +458,9 @@ static void gic_cpu_init(struct gic_chip_data *gic)
 	 * Get what the GIC says our CPU mask is.
 	 */
 	BUG_ON(cpu >= NR_GIC_CPU_IF);
+	/*! 20140830 NR_GIC_CPU_IF: 8 */
 	cpu_mask = gic_get_cpumask(gic);
+	/*! 20140830 PPI용 Interrupt Processor Target register 에서 cpu mask를 얻어온다. */
 	gic_cpu_map[cpu] = cpu_mask;
 
 	/*
@@ -441,22 +470,31 @@ static void gic_cpu_init(struct gic_chip_data *gic)
 	for (i = 0; i < NR_GIC_CPU_IF; i++)
 		if (i != cpu)
 			gic_cpu_map[i] &= ~cpu_mask;
+	/*! 20140830 현재 cpu를 제외한 나머지 cpu id에 해당하는 gic_cpu_map의 mask를 clear */
 
 	/*
 	 * Deal with the banked PPI and SGI interrupts - disable all
 	 * PPI interrupts, ensure all SGI interrupts are enabled.
 	 */
 	writel_relaxed(0xffff0000, dist_base + GIC_DIST_ENABLE_CLEAR);
+	/*! 20140830 PPI 의 forwarding Disable */
 	writel_relaxed(0x0000ffff, dist_base + GIC_DIST_ENABLE_SET);
+	/*! 20140830 SGI 의 forwarding Enable */
+	/*! 20140830 IHI0048B_b_gic_architecture_specification.pdf 의 2.2.1 참조 */
 
 	/*
 	 * Set priority on PPI and SGI interrupts
 	 */
 	for (i = 0; i < 32; i += 4)
 		writel_relaxed(0xa0a0a0a0, dist_base + GIC_DIST_PRI + i * 4 / 4);
+	/*! 20140830 모든 PPI와 SGI 의 Interrupt Priority를 0xa0로 설정 */
 
 	writel_relaxed(0xf0, base + GIC_CPU_PRIMASK);
+	/*! 20140830 Priority level을 16단계로 설정. 
+	 * IHI0048B_b_gic_architecture_specification.pdf 의 4.4.2 참조
+	 */
 	writel_relaxed(1, base + GIC_CPU_CTRL);
+	/*! 20140830  CPU interrupt signaling 을 Enable 한다. */
 }
 
 #ifdef CONFIG_CPU_PM
@@ -633,14 +671,18 @@ static void __init gic_pm_init(struct gic_chip_data *gic)
 {
 	gic->saved_ppi_enable = __alloc_percpu(DIV_ROUND_UP(32, 32) * 4,
 		sizeof(u32));
+	/*! 20140830 gic->saved_ppi_enable 공간을 percpu에서 할당받아 온다. */
 	BUG_ON(!gic->saved_ppi_enable);
 
 	gic->saved_ppi_conf = __alloc_percpu(DIV_ROUND_UP(32, 16) * 4,
 		sizeof(u32));
+	/*! 20140830 gic->saved_ppi_conf 공간을 percpu에서 할당받아 온다. */
 	BUG_ON(!gic->saved_ppi_conf);
 
 	if (gic == &gic_data[0])
+	/*! 20140830 gic_data: 1 이므로 여기 실행 */
 		cpu_pm_register_notifier(&gic_notifier_block);
+		/*! 20140830 cpu_pm_notifier_chain에 gic_notifier_block을 등록한다. */
 }
 #else
 static void __init gic_pm_init(struct gic_chip_data *gic)
@@ -666,6 +708,7 @@ void gic_raise_softirq(const struct cpumask *mask, unsigned int irq)
 
 	/* this always happens on GIC0 */
 	writel_relaxed(map << 16 | irq, gic_data_dist_base(&gic_data[0]) + GIC_DIST_SOFTINT);
+	/*! 20140830 넘어온 irq에 대한 software irq 발생 */
 }
 #endif
 
@@ -835,23 +878,37 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 		     irq_start);
 		irq_base = irq_start;
 	}
-	/*! 20140816 아래 진입함 */
 	gic->domain = irq_domain_add_legacy(node, gic_irqs, irq_base,
 				    hwirq_base, &gic_irq_domain_ops, gic);
+	/*! 20140830 현재 interrupt 소스들을 위한 revmap irq_domain 을 생성한다. */
 	if (WARN_ON(!gic->domain))
 		return;
 
 #ifdef CONFIG_SMP
 	set_smp_cross_call(gic_raise_softirq);
+	/*! 20140830 gic_raise_softirq 함수를 smp_cross_call에 등록한다. */
 	register_cpu_notifier(&gic_cpu_notifier);
+	/*! 20140830 gic_cpu_notifier를 cpu_notifier함수로 등록 */
 #endif
 
 	set_handle_irq(gic_handle_irq);
+	/*! 20140830 gic_handle_irq 함수를 handle_arch_irq 에 넣어준다. */
 
 	gic_chip.flags |= gic_arch_extn.flags;
+	/*! 20140830 irq_chip 구조체 gic_chip의 flags 설정.
+	 * 특정 architecture 종속적인 flag가 있는 경우 gic_chip에 추가한다.
+	 */
+	/*! 20140830 GIC 안의 register가 아래의 세가지로 나뉜다.
+	 * GIC distributor register
+	 * GIC cpu interface register
+	 * GIC virtual interface control register 
+	 */
 	gic_dist_init(gic);
+	/*! 20140830 GIC distributor register 초기화 */
 	gic_cpu_init(gic);
+	/*! 20140830 GIC cpu interface register 초기화 */
 	gic_pm_init(gic);
+	/*! 20140830 Power Management 관련 GIC 변수 할당 및 cpu_pm_notifier_chain 초기화 */
 }
 
 #ifdef CONFIG_OF
@@ -895,6 +952,7 @@ int __init gic_of_init(struct device_node *node, struct device_node *parent)
 	 * 여기까지 스터디. 다음시간에 위 값 이용해서 계속
 	 */
 	gic_init_bases(gic_cnt, -1, dist_base, cpu_base, percpu_offset, node);
+	/*! 20140830 여기까지 스터디. 다음시간에 주석 남기기로 함 */
 
 	if (parent) {
 		irq = irq_of_parse_and_map(node, 0);

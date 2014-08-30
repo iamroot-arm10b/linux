@@ -180,8 +180,8 @@ struct irq_domain *irq_domain_add_legacy(struct device_node *of_node,
 	if (!domain)
 		return NULL;
 
-	/*! 20140816 아래 진입함 */
 	irq_domain_associate_many(domain, first_irq, first_hwirq, size);
+	/*! 20140830 추가한 domain에 irq를 연계 및 초기화한다. */
 
 	return domain;
 }
@@ -327,14 +327,17 @@ int irq_domain_associate(struct irq_domain *domain, unsigned int virq,
 
 	if (hwirq < domain->revmap_size) {
 		domain->linear_revmap[hwirq] = virq;
+		/*! 20140830 hwirq의 범위 안에 드는 경우 hwirq의 map에 virq를 매칭시켜준다. */
 	} else {
 		mutex_lock(&revmap_trees_mutex);
 		radix_tree_insert(&domain->revmap_tree, hwirq, irq_data);
+		/*! 20140830 hwirq의 범위가 first_hwirq + size를 넘어가는 경우 hwirq를 revmap_tree에 추가시킨다. */
 		mutex_unlock(&revmap_trees_mutex);
 	}
 	mutex_unlock(&irq_domain_mutex);
 
 	irq_clear_status_flags(virq, IRQ_NOREQUEST);
+	/*! 20140830 virq의 descriptor의 bitmap에서 11번째 bit를 clear하여 virq 상태를 IRQ_NOREQUEST 상태로 설정 */
 
 	return 0;
 }
@@ -349,8 +352,8 @@ void irq_domain_associate_many(struct irq_domain *domain, unsigned int irq_base,
 		of_node_full_name(domain->of_node), irq_base, (int)hwirq_base, count);
 
 	for (i = 0; i < count; i++) {
-		/*! 20140816 아래 진입함 */
 		irq_domain_associate(domain, irq_base + i, hwirq_base + i);
+		/*! 20140830 irq를 domain에 연계 및 초기화 */
 	}
 }
 EXPORT_SYMBOL_GPL(irq_domain_associate_many);

@@ -88,6 +88,7 @@ enum {
 	IRQ_PER_CPU		= (1 <<  9),
 	IRQ_NOPROBE		= (1 << 10),
 	IRQ_NOREQUEST		= (1 << 11),
+	/*! 20140830 여기 참조 */
 	IRQ_NOAUTOEN		= (1 << 12),
 	IRQ_NO_BALANCING	= (1 << 13),
 	IRQ_MOVE_PCNTXT		= (1 << 14),
@@ -480,6 +481,7 @@ static inline void irq_set_status_flags(unsigned int irq, unsigned long set)
 static inline void irq_clear_status_flags(unsigned int irq, unsigned long clr)
 {
 	irq_modify_status(irq, clr, 0);
+	/*! 20140830 irq에서 clr bit를 clear한다. */
 }
 
 static inline void irq_set_noprobe(unsigned int irq)
