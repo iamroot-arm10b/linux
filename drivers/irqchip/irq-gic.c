@@ -352,7 +352,7 @@ static struct irq_chip gic_chip = {
 	.irq_set_wake		= gic_set_wake,
 };
 /*! 20140823 GIC를 사용하는 ARM core에서 사용하는 irq_chip 구조체 초기화
- * 각 함수의 내용은 안봤음. 아키텍처 종속저이라 나중에 보기로 함.
+ * 각 함수의 내용은 안봤음. 아키텍처 종속적이라 나중에 보기로 함.
  */
 
 void __init gic_cascade_irq(unsigned int gic_nr, unsigned int irq)
@@ -898,7 +898,7 @@ void __init gic_init_bases(unsigned int gic_nr, int irq_start,
 	/*! 20140830 irq_chip 구조체 gic_chip의 flags 설정.
 	 * 특정 architecture 종속적인 flag가 있는 경우 gic_chip에 추가한다.
 	 */
-	/*! 20140830 GIC 안의 register가 아래의 세가지로 나뉜다.
+	/*! 20140830 GIC(Generic Interrupt Controller) 안의 register가 아래의 세가지로 나뉜다.
 	 * GIC distributor register
 	 * GIC cpu interface register
 	 * GIC virtual interface control register 
@@ -952,7 +952,8 @@ int __init gic_of_init(struct device_node *node, struct device_node *parent)
 	 * 여기까지 스터디. 다음시간에 위 값 이용해서 계속
 	 */
 	gic_init_bases(gic_cnt, -1, dist_base, cpu_base, percpu_offset, node);
-	/*! 20140830 여기까지 스터디. 다음시간에 주석 남기기로 함 */
+	/*! 20140830 여기까지 스터디 */
+	/*! 20140913 GIC 관련 값 설정 및 register 초기화 */
 
 	if (parent) {
 		irq = irq_of_parse_and_map(node, 0);
