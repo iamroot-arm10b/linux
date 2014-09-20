@@ -357,6 +357,7 @@ EXPORT_SYMBOL(mktime);
  */
 void set_normalized_timespec(struct timespec *ts, time_t sec, s64 nsec)
 {
+	/*! 20140920 여기 실행 */
 	while (nsec >= NSEC_PER_SEC) {
 		/*
 		 * The following asm() prevents the compiler from

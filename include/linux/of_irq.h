@@ -49,6 +49,7 @@ extern int of_irq_map_oldworld(struct device_node *device, int index,
 			       struct of_irq *out_irq);
 #else /* CONFIG_PPC32 && CONFIG_PPC_PMAC */
 #define of_irq_workarounds (0)
+/*! 20140920 여기 참조함 */
 #define of_irq_dflt_pic (NULL)
 static inline int of_irq_map_oldworld(struct device_node *device, int index,
 				      struct of_irq *out_irq)

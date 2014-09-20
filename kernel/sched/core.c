@@ -2504,6 +2504,7 @@ asmlinkage void __sched schedule(void)
 	struct task_struct *tsk = current;
 
 	sched_submit_work(tsk);
+	/*! 20140920 다음주는 여기부터 시작 */
 	__schedule();
 }
 EXPORT_SYMBOL(schedule);

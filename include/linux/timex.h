@@ -133,6 +133,7 @@ extern unsigned long tick_nsec;		/* SHIFTED_HZ period (nsec) */
 })
 
 #define NTP_SCALE_SHIFT		32
+/*! 20140920 여기 참조 */
 
 #define NTP_INTERVAL_FREQ  (HZ)
 #define NTP_INTERVAL_LENGTH (NSEC_PER_SEC/NTP_INTERVAL_FREQ)

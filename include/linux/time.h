@@ -89,6 +89,7 @@ static inline struct timespec timespec_sub(struct timespec lhs,
 # define KTIME_SEC_MAX			(KTIME_MAX / NSEC_PER_SEC)
 #else
 # define KTIME_SEC_MAX			LONG_MAX
+/*! 20140920 KTIME_SEC_MAX: 0x7FFFFFFF */
 #endif
 
 /*
@@ -101,6 +102,7 @@ static inline bool timespec_valid(const struct timespec *ts)
 		return false;
 	/* Can't have more nanoseconds then a second */
 	if ((unsigned long)ts->tv_nsec >= NSEC_PER_SEC)
+		/*! 20140920 NSEC_PER_SEC: 1000000000L */
 		return false;
 	return true;
 }
@@ -113,6 +115,7 @@ static inline bool timespec_valid_strict(const struct timespec *ts)
 	if ((unsigned long long)ts->tv_sec >= KTIME_SEC_MAX)
 		return false;
 	return true;
+	/*! 20140920 여기 실행됨 */
 }
 
 extern bool persistent_clock_exist;

@@ -651,6 +651,7 @@ static int hrtimer_reprogram(struct hrtimer *timer,
  */
 static inline void hrtimer_init_hres(struct hrtimer_cpu_base *base)
 {
+	/*! 20140920 여기 실행됨 */
 	base->expires_next.tv64 = KTIME_MAX;
 	base->hres_active = 0;
 }
@@ -1690,6 +1691,7 @@ static void init_hrtimers_cpu(int cpu)
 	int i;
 
 	for (i = 0; i < HRTIMER_MAX_CLOCK_BASES; i++) {
+		/*! 20140920 HRTIMER_MAX_CLOCK_BASES: 4 */
 		cpu_base->clock_base[i].cpu_base = cpu_base;
 		timerqueue_init_head(&cpu_base->clock_base[i].active);
 	}
@@ -1775,6 +1777,7 @@ static int hrtimer_cpu_notify(struct notifier_block *self,
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
 		init_hrtimers_cpu(scpu);
+		/*! 20140920 hrtimer vector 관련 자료구조 초기화 */
 		break;
 
 #ifdef CONFIG_HOTPLUG_CPU
@@ -1806,9 +1809,12 @@ void __init hrtimers_init(void)
 {
 	hrtimer_cpu_notify(&hrtimers_nb, (unsigned long)CPU_UP_PREPARE,
 			  (void *)(long)smp_processor_id());
+	/*! 20140920 CPU_UP_PREPARE action으로 현재 프로세서의 타이머관련 초기화 */
 	register_cpu_notifier(&hrtimers_nb);
+	/*! 20140920 cpu_notifier 등록 */
 #ifdef CONFIG_HIGH_RES_TIMERS
 	open_softirq(HRTIMER_SOFTIRQ, run_hrtimer_softirq);
+	/*! 20140920 run_hrtimer_softirq 함수를 HRTIMER_SOFTIRQ의 핸들러로 등록 */
 #endif
 }
 

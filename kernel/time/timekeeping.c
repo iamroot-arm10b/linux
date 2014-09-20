@@ -52,6 +52,7 @@ static inline void tk_normalize_xtime(struct timekeeper *tk)
 
 static void tk_set_xtime(struct timekeeper *tk, const struct timespec *ts)
 {
+	/*! 20140920 여기 실행됨 */
 	tk->xtime_sec = ts->tv_sec;
 	tk->xtime_nsec = (u64)ts->tv_nsec << tk->shift;
 }
@@ -65,6 +66,7 @@ static void tk_xtime_add(struct timekeeper *tk, const struct timespec *ts)
 
 static void tk_set_wall_to_mono(struct timekeeper *tk, struct timespec wtm)
 {
+	/*! 20140920 여기 실행됨 */
 	struct timespec tmp;
 
 	/*
@@ -87,6 +89,7 @@ static void tk_set_sleep_time(struct timekeeper *tk, struct timespec t)
 
 	tk->total_sleep_time	= t;
 	tk->offs_boot		= timespec_to_ktime(t);
+	/*! 20140920 초기화 */
 }
 
 /**
@@ -101,6 +104,7 @@ static void tk_set_sleep_time(struct timekeeper *tk, struct timespec t)
  */
 static void tk_setup_internals(struct timekeeper *tk, struct clocksource *clock)
 {
+	/*! 20140920 여기 실행됨 */
 	cycle_t interval;
 	u64 tmp, ntpinterval;
 	struct clocksource *old_clock;
@@ -139,6 +143,7 @@ static void tk_setup_internals(struct timekeeper *tk, struct clocksource *clock)
 
 	tk->ntp_error = 0;
 	tk->ntp_error_shift = NTP_SCALE_SHIFT - clock->shift;
+	/*! 20140920 계산한 시간 보정 */
 
 	/*
 	 * The timekeeper keeps its own mult values for the currently
@@ -790,6 +795,7 @@ void __init timekeeping_init(void)
 	struct timespec now, boot, tmp;
 
 	read_persistent_clock(&now);
+	/*! 20140920 now 구조체 초기화 */
 
 	if (!timespec_valid_strict(&now)) {
 		pr_warn("WARNING: Persistent clock returned invalid value!\n"
@@ -800,6 +806,7 @@ void __init timekeeping_init(void)
 		persistent_clock_exist = true;
 
 	read_boot_clock(&boot);
+	/*! 20140920 boot 구조체 초기화 */
 	if (!timespec_valid_strict(&boot)) {
 		pr_warn("WARNING: Boot clock returned invalid value!\n"
 			"         Check your CMOS/BIOS settings.\n");
@@ -814,7 +821,9 @@ void __init timekeeping_init(void)
 	clock = clocksource_default_clock();
 	if (clock->enable)
 		clock->enable(clock);
+	/*! 20140920 enable이 없으므로 pass */
 	tk_setup_internals(tk, clock);
+	/*! 20140920 내부시간 관련 변수 초기화 */
 
 	tk_set_xtime(tk, &now);
 	tk->raw_time.tv_sec = 0;

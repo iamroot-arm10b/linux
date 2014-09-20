@@ -385,6 +385,7 @@ static inline void list_splice_tail_init(struct list_head *list,
  */
 #define list_first_entry_or_null(ptr, type, member) \
 	(!list_empty(ptr) ? list_first_entry(ptr, type, member) : NULL)
+/*! 20140920 Note that if the list is empty, it returns NULL. */
 
 /**
  * list_for_each	-	iterate over a list

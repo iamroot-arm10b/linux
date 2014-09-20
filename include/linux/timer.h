@@ -226,6 +226,7 @@ static inline void timer_stats_timer_clear_start_info(struct timer_list *timer)
 #else
 static inline void init_timer_stats(void)
 {
+	/*! 20140920 여기 실행됨 */
 }
 
 static inline void timer_stats_timer_set_start_info(struct timer_list *timer)

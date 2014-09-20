@@ -206,6 +206,7 @@ static inline s64 ntp_offset_chunk(s64 offset)
 
 static inline void pps_reset_freq_interval(void) {}
 static inline void pps_clear(void) {}
+/*! 20140920 여기 실행됨 */
 static inline void pps_dec_valid(void) {}
 static inline void pps_set_freq(s64 freq) {}
 
@@ -250,6 +251,7 @@ static inline int ntp_synced(void)
  */
 static void ntp_update_frequency(void)
 {
+	/*! 20140920 여기 실행됨 */
 	u64 second_length;
 	u64 new_base;
 
@@ -352,6 +354,7 @@ void ntp_clear(void)
 
 	/* Clear PPS state variables */
 	pps_clear();
+	/*! 20140920 시간 관련 초기화 */
 }
 
 
@@ -934,4 +937,5 @@ __setup("ntp_tick_adj=", ntp_tick_adj_setup);
 void __init ntp_init(void)
 {
 	ntp_clear();
+	/*! 20140920 time server 관련 초기화 */
 }

@@ -956,6 +956,7 @@ int __init gic_of_init(struct device_node *node, struct device_node *parent)
 	/*! 20140913 GIC 관련 값 설정 및 register 초기화 */
 
 	if (parent) {
+		/*! 20140920 compatible cortex-a15-gic의 parent는 없다. */
 		irq = irq_of_parse_and_map(node, 0);
 		gic_cascade_irq(gic_cnt, irq);
 	}

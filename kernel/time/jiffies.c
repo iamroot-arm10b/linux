@@ -58,6 +58,7 @@ static cycle_t jiffies_read(struct clocksource *cs)
 	return (cycle_t) jiffies;
 }
 
+/*! 20140920 여기 참조 */
 static struct clocksource clocksource_jiffies = {
 	.name		= "jiffies",
 	.rating		= 1, /* lowest valid rating*/
@@ -95,6 +96,7 @@ core_initcall(init_jiffies_clocksource);
 
 struct clocksource * __init __weak clocksource_default_clock(void)
 {
+	/*! 20140920 여기 실행됨 */
 	return &clocksource_jiffies;
 }
 

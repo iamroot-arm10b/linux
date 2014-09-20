@@ -298,6 +298,7 @@ int of_irq_map_one(struct device_node *device, int index, struct of_irq *out_irq
 
 	/* OldWorld mac stuff is "special", handle out of line */
 	if (of_irq_workarounds & OF_IMAP_OLDWORLD_MAC)
+		/*! 20140920 of_irq_workarounds: 0 이므로 실행안함 */
 		return of_irq_map_oldworld(device, index, out_irq);
 
 	/* Get the interrupts property */
@@ -448,6 +449,7 @@ void __init of_irq_init(const struct of_device_id *matches)
 		desc->interrupt_parent = of_irq_find_parent(np);
 		/*! 20140809 np의 parent 값을 찾는다. */
 		if (desc->interrupt_parent == np)
+			/*! 20140920 parent가 자신으로 set될 경우에 parent는 NULL */
 			desc->interrupt_parent = NULL;
 		list_add_tail(&desc->list, &intc_desc_list);
 	}
@@ -476,8 +478,7 @@ void __init of_irq_init(const struct of_device_id *matches)
 			if (WARN(!match->data,
 			    "of_irq_init: no init function for %s\n",
 			    match->compatible)) {
-				kfree(desc);
-				continue;
+				kfree(desc); continue;
 			}
 
 			pr_debug("of_irq_init: init %s @ %p, parent %p\n",
@@ -489,6 +490,7 @@ void __init of_irq_init(const struct of_device_id *matches)
 			 */
 			ret = irq_init_cb(desc->dev, desc->interrupt_parent);
 			/*! 20140809 gic_of_init(desc->dev, desc->interrupt_parent) 함수 호출 */
+			/*! 20140920 "arm,cortex-a15-gic", "arm,cortex-a9-gic" 초기화 */
 			if (ret) {
 				kfree(desc);
 				continue;
@@ -499,24 +501,29 @@ void __init of_irq_init(const struct of_device_id *matches)
 			 * its children can get processed in a subsequent pass.
 			 */
 			list_add_tail(&desc->list, &intc_parent_list);
+			/*! 20140920 intc_parent_list에 현재 node를 추가한다. */
 		}
 
 		/* Get the next pending parent that might have children */
 		desc = list_first_entry_or_null(&intc_parent_list,
 						typeof(*desc), list);
+		/*! 20140920 intc_parent_list 가 비었으면 첫번째 list, 아니면 NULL Set */
 		if (!desc) {
 			pr_err("of_irq_init: children remain, but no parents\n");
 			break;
 		}
 		list_del(&desc->list);
 		parent = desc->dev;
+		/*! 20140920 child가 하나라도 있는 대상을 parent로 Set */
 		kfree(desc);
 	}
+	/*! 20140920 intc_desc_list에서 parent-child 순으로 INTC 초기화 */
 
 	list_for_each_entry_safe(desc, temp_desc, &intc_parent_list, list) {
 		list_del(&desc->list);
 		kfree(desc);
 	}
+	/*! 20140920 아직 intc_parent_list 에 node가 남아있을 경우에 삭제 */
 err:
 	list_for_each_entry_safe(desc, temp_desc, &intc_desc_list, list) {
 		list_del(&desc->list);

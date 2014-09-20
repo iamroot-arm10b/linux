@@ -150,12 +150,14 @@ static inline void write_seqcount_begin(seqcount_t *s)
 {
 	s->sequence++;
 	smp_wmb();
+	/*! 20140920 sequence 증가 */
 }
 
 static inline void write_seqcount_end(seqcount_t *s)
 {
 	smp_wmb();
 	s->sequence++;
+	/*! 20140920 sequence 증가 */
 }
 
 /**

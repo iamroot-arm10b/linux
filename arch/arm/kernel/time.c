@@ -80,6 +80,7 @@ void timer_tick(void)
 
 static void dummy_clock_access(struct timespec *ts)
 {
+	/*! 20140920 여기 실행됨 */
 	ts->tv_sec = 0;
 	ts->tv_nsec = 0;
 }
@@ -90,11 +91,13 @@ static clock_access_fn __read_boot_clock = dummy_clock_access;;
 void read_persistent_clock(struct timespec *ts)
 {
 	__read_persistent_clock(ts);
+	/*! 20140920 dummy_clock_access 가 실행되어 timespec 구조체 초기화 */
 }
 
 void read_boot_clock(struct timespec *ts)
 {
 	__read_boot_clock(ts);
+	/*! 20140920 여기 실행됨 */
 }
 
 int __init register_persistent_clock(clock_access_fn read_boot,

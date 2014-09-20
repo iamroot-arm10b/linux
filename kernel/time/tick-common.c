@@ -384,4 +384,5 @@ void tick_resume(void)
 void __init tick_init(void)
 {
 	tick_broadcast_init();
+	/*! 20140920 tick 관련 변수 초기화 */
 }

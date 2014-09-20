@@ -632,11 +632,18 @@ asmlinkage void __init start_kernel(void)
 	early_irq_init();
 	/*! 20140802 irq를 사용하기 위해 irq 갯수만큼의 descriptor 및 radix_tree 초기화 */
 	init_IRQ();
+	/*! 20140920 interrupt controller 관련 자료구조 및 ARM GIC 초기화 */
 	tick_init();
+	/*! 20140920 tick 관련 변수 초기화 */
 	init_timers();
+	/*! 20140920 timer 관련 자료구조 초기화 */
 	hrtimers_init();
+	/*! 20140920 hrtimer 관련 자료구조 초기화 */
 	softirq_init();
+	/*! 20140920 softirq 관련 자료구조 초기화 */
 	timekeeping_init();
+	/*! 20140920 timekeeping 관련 변수 초기화 */
+	/*! 20140920 여기까지 스터디함 */
 	time_init();
 	sched_clock_postinit();
 	perf_event_init();

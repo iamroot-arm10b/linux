@@ -745,6 +745,7 @@ void __init softirq_init(void)
 		per_cpu(tasklet_hi_vec, cpu).tail =
 			&per_cpu(tasklet_hi_vec, cpu).head;
 		for (i = 0; i < NR_SOFTIRQS; i++)
+			/*! 20140920 NR_SOFTIRQS: 10 */
 			INIT_LIST_HEAD(&per_cpu(softirq_work_list[i], cpu));
 	}
 

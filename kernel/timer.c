@@ -63,7 +63,9 @@ EXPORT_SYMBOL(jiffies_64);
 #define TVN_BITS (CONFIG_BASE_SMALL ? 4 : 6)
 #define TVR_BITS (CONFIG_BASE_SMALL ? 6 : 8)
 #define TVN_SIZE (1 << TVN_BITS)
+/*! 20140920 TVN_BITS: 6 이므로, TVN_SIZE: 64 */
 #define TVR_SIZE (1 << TVR_BITS)
+/*! 20140920 TVR_BITS: 8 이므로, TVR_SIZE: 256 */
 #define TVN_MASK (TVN_SIZE - 1)
 #define TVR_MASK (TVR_SIZE - 1)
 #define MAX_TVAL ((unsigned long)((1ULL << (TVR_BITS + 4*TVN_BITS)) - 1))
@@ -1550,17 +1552,20 @@ static int init_timers_cpu(int cpu)
 
 
 	for (j = 0; j < TVN_SIZE; j++) {
+		/*! 20140920 TVN_SIZE: 64 */
 		INIT_LIST_HEAD(base->tv5.vec + j);
 		INIT_LIST_HEAD(base->tv4.vec + j);
 		INIT_LIST_HEAD(base->tv3.vec + j);
 		INIT_LIST_HEAD(base->tv2.vec + j);
 	}
 	for (j = 0; j < TVR_SIZE; j++)
+		/*! 20140920 TVR_SIZE: 256 */
 		INIT_LIST_HEAD(base->tv1.vec + j);
 
 	base->timer_jiffies = jiffies;
 	base->next_timer = base->timer_jiffies;
 	base->active_timers = 0;
+	/*! 20140920 timer vector 관련 자료구조 초기화 */
 	return 0;
 }
 
@@ -1621,6 +1626,7 @@ static int timer_cpu_notify(struct notifier_block *self,
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
 		err = init_timers_cpu(cpu);
+		/*! 20140920 timer vector 관련 자료구조 초기화 */
 		if (err < 0)
 			return notifier_from_errno(err);
 		break;
@@ -1650,11 +1656,15 @@ void __init init_timers(void)
 
 	err = timer_cpu_notify(&timers_nb, (unsigned long)CPU_UP_PREPARE,
 			       (void *)(long)smp_processor_id());
+	/*! 20140920 CPU_UP_PREPARE action으로 현재 프로세서의 타이머관련 초기화 */
 	init_timer_stats();
+	/*! 20140920 아무일도 안함 */
 
 	BUG_ON(err != NOTIFY_OK);
 	register_cpu_notifier(&timers_nb);
+	/*! 20140920 timers_nb 를 cpu_notify 함수로 등록 */
 	open_softirq(TIMER_SOFTIRQ, run_timer_softirq);
+	/*! 20140920 run_timer_softirq 함수를 TIMER_SOFTIRQ의 핸들러로 등록 */
 }
 
 /**

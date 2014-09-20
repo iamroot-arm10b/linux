@@ -29,6 +29,10 @@ extern struct of_device_id __irqchip_begin[];
 
 void __init irqchip_init(void)
 {
-	/*! 20140802 여기 실행됨 */
 	of_irq_init(__irqchip_begin);
+	/*! 20140920
+	 * matches(__irqchip_begin)와 일치하는 device tree에서
+	 * 일치하는 node에 대해서 인터럽터 초기화 한다.
+	 * interrupt 구조가 tree 구조이기 때문에 부모부터 초기화한다.
+	 */
 }

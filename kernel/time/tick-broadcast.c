@@ -883,4 +883,5 @@ void __init tick_broadcast_init(void)
 	zalloc_cpumask_var(&tick_broadcast_pending_mask, GFP_NOWAIT);
 	zalloc_cpumask_var(&tick_broadcast_force_mask, GFP_NOWAIT);
 #endif
+	/*! 20140920 tick 관련 변수 초기화 */
 }
