@@ -746,6 +746,12 @@ extern const_debug unsigned int sysctl_sched_features;
 
 enum {
 #include "features.h"
+	/*! 20141011 define에 따라서 만들면 아래와 같이 된다.
+	 * __SCHED_FEAT_GENTLE_FAIR_SLEEPERS,
+	 * .....
+	 * __SCHED_FEAT_HRTICK,
+	 * ....
+	 */
 	__SCHED_FEAT_NR,
 };
 
@@ -776,6 +782,7 @@ extern struct static_key sched_feat_keys[__SCHED_FEAT_NR];
 #define sched_feat(x) (static_branch_##x(&sched_feat_keys[__SCHED_FEAT_##x]))
 #else /* !(SCHED_DEBUG && HAVE_JUMP_LABEL) */
 #define sched_feat(x) (sysctl_sched_features & (1UL << __SCHED_FEAT_##x))
+/*! 20141011 __SCHED_FEAT_##x 에 해당하는 bit가 0인지 1인지 확인한다. */
 #endif /* SCHED_DEBUG && HAVE_JUMP_LABEL */
 
 #ifdef CONFIG_NUMA_BALANCING
@@ -818,6 +825,7 @@ static inline int task_running(struct rq *rq, struct task_struct *p)
 {
 #ifdef CONFIG_SMP
 	return p->on_cpu;
+	/*! 20141011 on_cpu 리턴 */
 #else
 	return task_current(rq, p);
 #endif
@@ -1091,6 +1099,7 @@ static inline void inc_nr_running(struct rq *rq)
 static inline void dec_nr_running(struct rq *rq)
 {
 	rq->nr_running--;
+	/*! 20141011 run queue의 running 상태인 task의 갯수를 감소시킨다. */
 }
 
 static inline void rq_last_tick_reset(struct rq *rq)
@@ -1177,6 +1186,7 @@ static inline int _double_lock_balance(struct rq *this_rq, struct rq *busiest)
 {
 	raw_spin_unlock(&this_rq->lock);
 	double_rq_lock(this_rq, busiest);
+	/*! 20141011 두 rq를 중첩 spin_lock */
 
 	return 1;
 }
@@ -1224,6 +1234,7 @@ static inline int double_lock_balance(struct rq *this_rq, struct rq *busiest)
 	}
 
 	return _double_lock_balance(this_rq, busiest);
+	/*! 20141011 두개 모두 lock 설정 */
 }
 
 static inline void double_unlock_balance(struct rq *this_rq, struct rq *busiest)
@@ -1251,11 +1262,13 @@ static inline void double_rq_lock(struct rq *rq1, struct rq *rq2)
 		if (rq1 < rq2) {
 			raw_spin_lock(&rq1->lock);
 			raw_spin_lock_nested(&rq2->lock, SINGLE_DEPTH_NESTING);
+			/*! 20141011 spin_lock 설정 */
 		} else {
 			raw_spin_lock(&rq2->lock);
 			raw_spin_lock_nested(&rq1->lock, SINGLE_DEPTH_NESTING);
 		}
 	}
+	/*! 20141011 낮은주소의 rq에 대해 spin_lock을 우선 잡고 나머지를 nested로 spin_lock 잡는다. */
 }
 
 /*

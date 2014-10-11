@@ -152,6 +152,7 @@ sched_info_switch(struct task_struct *prev, struct task_struct *next)
 #define sched_info_queued(t)			do { } while (0)
 #define sched_info_reset_dequeued(t)	do { } while (0)
 #define sched_info_dequeued(t)			do { } while (0)
+/*! 20141011 여기 실행 */
 #define sched_info_switch(t, next)		do { } while (0)
 #endif /* CONFIG_SCHEDSTATS || CONFIG_TASK_DELAY_ACCT */
 

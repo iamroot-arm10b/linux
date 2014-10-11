@@ -123,7 +123,9 @@ void update_rq_clock(struct rq *rq)
 
 	delta = sched_clock_cpu(cpu_of(rq)) - rq->clock;
 	rq->clock += delta;
+	/*! 20141011 rq->clock을 sched_clock의 값으로 보정한다. */
 	update_rq_clock_task(rq, delta);
+	/*! 20141011 rq->clock_task의 값도 sched_clock의 값으로 보정한다. */
 }
 
 /*
@@ -135,6 +137,12 @@ void update_rq_clock(struct rq *rq)
 
 const_debug unsigned int sysctl_sched_features =
 #include "features.h"
+	/*! 20141011 define에 따라서 만들면 아래와 같이 된다.
+	 * (1UL << __SCHED_FEAT_GENTLE_FAIR_SLEEPERS) * 1 |
+	 * .....
+	 * (1UL << __SCHED_FEAT_HRTICK) * 0 |
+	 * ....
+	 */
 	0;
 
 #undef SCHED_FEAT
@@ -785,24 +793,37 @@ static void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 static void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	update_rq_clock(rq);
+	/*! 20141011 rq_clock의 값을 sched_clock의 값으로 보정 */
 	sched_info_dequeued(p);
 	p->sched_class->dequeue_task(rq, p, flags);
+	/*! 20141011 우선, 현재 task의 sched_class를 stop_sched_class로 가정하여 
+	 * dequeue_task_stop(rq, p, flags) 함수를 호출한다.
+	 */
 }
 
 void activate_task(struct rq *rq, struct task_struct *p, int flags)
 {
+	/*! 20141011 여기부터 보자 */
 	if (task_contributes_to_load(p))
 		rq->nr_uninterruptible--;
 
+	/*! 20141011 sched_class 구조체 내의 .enqueue_task 함수가 호출됨.
+	 * rt_sched_class 인 경우  : .enqueue_task = enqueue_task_rt
+	 * fair_sched_class 인 경우: .enqueue_task = enqueue_task_fair
+	 * enqueue_task_rt 를 먼저 분석한다.
+	 */
 	enqueue_task(rq, p, flags);
 }
 
 void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
 {
 	if (task_contributes_to_load(p))
+	/*! 20141011 TASK_UNINTERRUPTIBLE 이고 PF_FROZEN 이 아니면 실행 */
 		rq->nr_uninterruptible++;
+		/*! 20141011 task를 queue에서 빼기 전에 uninterruptible 값을 증가시킨다. */
 
 	dequeue_task(rq, p, flags);
+	/*! 20141011 p task를 run queue에서 제거한다. */
 }
 
 static void update_rq_clock_task(struct rq *rq, s64 delta)
@@ -858,6 +879,7 @@ static void update_rq_clock_task(struct rq *rq, s64 delta)
 #endif
 
 	rq->clock_task += delta;
+	/*! 20141011 rq->clock_task의 값도 sched_clock의 값으로 보정한다. */
 
 #if defined(CONFIG_IRQ_TIME_ACCOUNTING) || defined(CONFIG_PARAVIRT_TIME_ACCOUNTING)
 	if ((irq_delta + steal) && sched_feat(NONTASK_POWER))
@@ -1937,8 +1959,10 @@ static void finish_task_switch(struct rq *rq, struct task_struct *prev)
 /* assumes rq->lock is held */
 static inline void pre_schedule(struct rq *rq, struct task_struct *prev)
 {
+	/*! 20141011 rt_sched_class 구조체 참조 */
 	if (prev->sched_class->pre_schedule)
 		prev->sched_class->pre_schedule(rq, prev);
+		/*! 20141011 pre_schedule_rt(rq, prev)를 우선 보자 */
 }
 
 /* rq->lock is NOT held, but preemption is disabled */
@@ -2419,6 +2443,7 @@ need_resched:
 	schedule_debug(prev);
 
 	if (sched_feat(HRTICK))
+	/*! 20141011 __SCHED_FEAT_HRTICK이 0이므로 실행안됨 */
 		hrtick_clear(rq);
 
 	/*
@@ -2430,11 +2455,15 @@ need_resched:
 	raw_spin_lock_irq(&rq->lock);
 
 	switch_count = &prev->nivcsw;
+	/*! 20141011 context switch counts */
 	if (prev->state && !(preempt_count() & PREEMPT_ACTIVE)) {
+	/*! 20141011 state가 stopped 이고 preempt_count가 0x40000000 이상이면 여기 실행 */
 		if (unlikely(signal_pending_state(prev->state, prev))) {
+			/*! 20141011 state가 잘못된 것으로 판단하여 TASK_RUNNING으로 바꾸어 줌 */
 			prev->state = TASK_RUNNING;
 		} else {
 			deactivate_task(rq, prev, DEQUEUE_SLEEP);
+			/*! 20141011 prev를 run queue에서 제거 */
 			prev->on_rq = 0;
 
 			/*

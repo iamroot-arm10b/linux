@@ -352,10 +352,12 @@ u64 local_clock(void)
 void sched_clock_init(void)
 {
 	sched_clock_running = 1;
+	/*! 20141011 sched_clock_running이 1이어야 sched_clock()이 실행된다. */
 }
 
 u64 sched_clock_cpu(int cpu)
 {
+	/*! 20141011 여기 실행된다. */
 	if (unlikely(!sched_clock_running))
 		return 0;
 

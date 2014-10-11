@@ -690,6 +690,7 @@ asmlinkage void __init start_kernel(void)
 	if (late_time_init)
 		late_time_init();
 	sched_clock_init();
+	/*! 20141011 sched_clock_running을 1로 set한다. */
 	calibrate_delay();
 	pidmap_init();
 	anon_vma_init();

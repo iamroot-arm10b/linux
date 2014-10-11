@@ -135,6 +135,7 @@ EXPORT_SYMBOL(_raw_spin_trylock_bh);
 void __lockfunc _raw_spin_lock(raw_spinlock_t *lock)
 {
 	__raw_spin_lock(lock);
+	/*! spin lock 설정 */
 }
 EXPORT_SYMBOL(_raw_spin_lock);
 #endif

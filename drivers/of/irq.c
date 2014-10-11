@@ -478,7 +478,8 @@ void __init of_irq_init(const struct of_device_id *matches)
 			if (WARN(!match->data,
 			    "of_irq_init: no init function for %s\n",
 			    match->compatible)) {
-				kfree(desc); continue;
+				kfree(desc);
+				continue;
 			}
 
 			pr_debug("of_irq_init: init %s @ %p, parent %p\n",

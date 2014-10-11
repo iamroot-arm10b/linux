@@ -146,7 +146,9 @@ static inline void __raw_spin_lock(raw_spinlock_t *lock)
 {
 	preempt_disable();
 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+	/*! 20141011 아무일도 안함 */
 	LOCK_CONTENDED(lock, do_raw_spin_trylock, do_raw_spin_lock);
+	/*! 20141011 do_raw_spin_lock(lock) 함수 실행. spin lock 설정 */
 }
 
 #endif /* !CONFIG_GENERIC_LOCKBREAK || CONFIG_DEBUG_LOCK_ALLOC */

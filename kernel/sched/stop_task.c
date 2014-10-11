@@ -45,6 +45,7 @@ static void
 dequeue_task_stop(struct rq *rq, struct task_struct *p, int flags)
 {
 	dec_nr_running(rq);
+	/*! 20141011 rq->nr_running의 갯수 감소 */
 }
 
 static void yield_task_stop(struct rq *rq)
@@ -102,6 +103,7 @@ get_rr_interval_stop(struct rq *rq, struct task_struct *task)
 /*
  * Simple, special scheduling class for the per-CPU stop tasks:
  */
+/*! 20141011 stop_sched_class인 경우 아래 구조체 사용 */
 const struct sched_class stop_sched_class = {
 	.next			= &rt_sched_class,
 

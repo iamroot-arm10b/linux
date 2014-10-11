@@ -140,6 +140,7 @@ extern int vfp_restore_user_hwstate(struct user_vfp __user *,
  * preemption is occurring.  See <asm/hardirq.h>.
  */
 #define PREEMPT_ACTIVE	0x40000000
+/*! 20141011 여기 참조 */
 
 /*
  * thread information flags:

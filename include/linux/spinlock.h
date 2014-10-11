@@ -147,6 +147,7 @@ static inline void do_raw_spin_lock(raw_spinlock_t *lock) __acquires(lock)
 {
 	__acquire(lock);
 	arch_spin_lock(&lock->raw_lock);
+	/*! 20141011 spin lock 설정 */
 }
 
 static inline void
@@ -197,6 +198,7 @@ static inline void do_raw_spin_unlock(raw_spinlock_t *lock) __releases(lock)
 	 } while (0)
 #else
 # define raw_spin_lock_nested(lock, subclass)		_raw_spin_lock(lock)
+/*! 20141011 spin_lock 설정 */
 # define raw_spin_lock_nest_lock(lock, nest_lock)	_raw_spin_lock(lock)
 #endif
 

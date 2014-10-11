@@ -220,6 +220,7 @@ err:
 static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 {
 	return container_of(rt_se, struct task_struct, rt);
+	/*! 20141011 rt_se가 속한 task_struct의 시작주소 리턴 */
 }
 
 static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
@@ -230,6 +231,7 @@ static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
 static inline struct rt_rq *rt_rq_of_se(struct sched_rt_entity *rt_se)
 {
 	struct task_struct *p = rt_task_of(rt_se);
+	/*! 20141011 p = rt_se가 속한 task_struct의 시작주소 */
 	struct rq *rq = task_rq(p);
 
 	return &rq->rt;
@@ -248,6 +250,7 @@ int alloc_rt_sched_group(struct task_group *tg, struct task_group *parent)
 static inline int rt_overloaded(struct rq *rq)
 {
 	return atomic_read(&rq->rd->rto_count);
+	/*! 20141011 여기 실행 */
 }
 
 static inline void rt_set_overload(struct rq *rq)
@@ -378,6 +381,7 @@ void dec_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
 static inline int on_rt_rq(struct sched_rt_entity *rt_se)
 {
 	return !list_empty(&rt_se->run_list);
+	/*! 20141011 list가 empty면 0 리턴 */
 }
 
 #ifdef CONFIG_RT_GROUP_SCHED
@@ -513,6 +517,7 @@ typedef struct rt_rq *rt_rq_iter_t;
 
 #define for_each_sched_rt_entity(rt_se) \
 	for (; rt_se; rt_se = NULL)
+/*! 20141011 여기 실행됨 */
 
 static inline struct rt_rq *group_rt_rq(struct sched_rt_entity *rt_se)
 {
@@ -1087,10 +1092,13 @@ static void dequeue_rt_stack(struct sched_rt_entity *rt_se)
 	struct sched_rt_entity *back = NULL;
 
 	for_each_sched_rt_entity(rt_se) {
+	/*! 20141011 for (; rt_se; rt_se = NULL) */
 		rt_se->back = back;
 		back = rt_se;
 	}
+	/*! 20141011 rt_se->back: NULL, back = rt_se, rt_se = NULL */
 
+	/*! 20141011 여기까지 스터디 */
 	for (rt_se = back; rt_se; rt_se = rt_se->back) {
 		if (on_rt_rq(rt_se))
 			__dequeue_rt_entity(rt_se);
@@ -1099,6 +1107,7 @@ static void dequeue_rt_stack(struct sched_rt_entity *rt_se)
 
 static void enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
 {
+	/*! 20141011 여기 진입 */
 	dequeue_rt_stack(rt_se);
 	for_each_sched_rt_entity(rt_se)
 		__enqueue_rt_entity(rt_se, head);
@@ -1122,11 +1131,13 @@ static void dequeue_rt_entity(struct sched_rt_entity *rt_se)
 static void
 enqueue_task_rt(struct rq *rq, struct task_struct *p, int flags)
 {
+	/*! 20141011 rt_sched_class 인 경우 여기 실행 */
 	struct sched_rt_entity *rt_se = &p->rt;
 
 	if (flags & ENQUEUE_WAKEUP)
 		rt_se->timeout = 0;
 
+	/*! 20141011 여기 진입 */
 	enqueue_rt_entity(rt_se, flags & ENQUEUE_HEAD);
 
 	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
@@ -1377,6 +1388,7 @@ static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
 	if (!task_running(rq, p) &&
 	    cpumask_test_cpu(cpu, tsk_cpus_allowed(p)))
 		return 1;
+		/*! 20141011 p->on_cpu가 0 이고, p->cpus_allowed->bits의 cpu번째 bit 값이 1 이면 1 리턴 */
 	return 0;
 }
 
@@ -1394,6 +1406,7 @@ static struct task_struct *pick_highest_pushable_task(struct rq *rq, int cpu)
 
 	plist_for_each_entry(p, head, pushable_tasks) {
 		if (pick_rt_task(rq, p, cpu))
+		/*! 20141011 rq에 cpu에서 실행가능한 task가 있는 경우 해당 task_struct pointer 리턴 */
 			return p;
 	}
 
@@ -1644,9 +1657,14 @@ static int pull_rt_task(struct rq *this_rq)
 	struct rq *src_rq;
 
 	if (likely(!rt_overloaded(this_rq)))
+		/*! 20141011 rto_count가 0이면 실행됨 */
 		return 0;
 
 	for_each_cpu(cpu, this_rq->rd->rto_mask) {
+	/*! 20141011 cpu별로 처리
+	 * for ((cpu) = -1;
+	 * (cpu) = cpumask_next(cpu, this_rq->rd->rto_mask), (cpu) < nr_cpu_ids;)
+	 */
 		if (this_cpu == cpu)
 			continue;
 
@@ -1662,6 +1680,7 @@ static int pull_rt_task(struct rq *this_rq)
 		if (src_rq->rt.highest_prio.next >=
 		    this_rq->rt.highest_prio.curr)
 			continue;
+			/*! 20141011 현재 cpu의 rt task 우선순위가 더 높은 경우 continue */
 
 		/*
 		 * We can potentially drop this_rq's lock in
@@ -1669,18 +1688,21 @@ static int pull_rt_task(struct rq *this_rq)
 		 * alter this_rq
 		 */
 		double_lock_balance(this_rq, src_rq);
+		/*! 20141011 둘 다 lock 설정 */
 
 		/*
 		 * We can pull only a task, which is pushable
 		 * on its rq, and no others.
 		 */
 		p = pick_highest_pushable_task(src_rq, this_cpu);
+		/*! 20141011 src_rq로부터 this_cpu에서 실행 가능한 가장 높은 우선순위의 task를 찾는다. */
 
 		/*
 		 * Do we have an RT task that preempts
 		 * the to-be-scheduled task?
 		 */
 		if (p && (p->prio < this_rq->rt.highest_prio.curr)) {
+			/*! 20141011 src_rq에서 선택된 task의 우선순위가 this_rq의 최우선순위 task보다 높은 경우 */
 			WARN_ON(p == src_rq->curr);
 			WARN_ON(!p->on_rq);
 
@@ -1693,13 +1715,17 @@ static int pull_rt_task(struct rq *this_rq)
 			 * current task on the run queue
 			 */
 			if (p->prio < src_rq->curr->prio)
+				/*! 20141011 src_rq에서 선택된 task의 우선순위가 src_rq의 현재 task보다 높으면 skip */
 				goto skip;
 
 			ret = 1;
 
 			deactivate_task(src_rq, p, 0);
+			/*! 20141011 src_rq에서 p를 비활성화시킴 */
 			set_task_cpu(p, this_cpu);
+			/*! 20141011 p의 실행cpu를 this_cpu로 설정 */
 			activate_task(this_rq, p, 0);
+			/*! 20141011 this_rq에서 p를 활성화시킴 */
 			/*
 			 * We continue with the search, just in
 			 * case there's an even higher prio task
@@ -1980,6 +2006,7 @@ static unsigned int get_rr_interval_rt(struct rq *rq, struct task_struct *task)
 		return 0;
 }
 
+/*! 20141011 pre_schedule은 rt_sched_class 구조체 참조 */
 const struct sched_class rt_sched_class = {
 	.next			= &fair_sched_class,
 	.enqueue_task		= enqueue_task_rt,

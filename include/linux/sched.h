@@ -182,6 +182,7 @@ extern char ___assert_task_state[1 - 2*!!(
 #define task_contributes_to_load(task)	\
 				((task->state & TASK_UNINTERRUPTIBLE) != 0 && \
 				 (task->flags & PF_FROZEN) == 0)
+/*! 20141011 TASK_UNINTERRUPTIBLE 이고 PF_FROZEN 이 아니면 1 리턴 */
 
 #define __set_task_state(tsk, state_value)		\
 	do { (tsk)->state = (state_value); } while (0)
@@ -1171,6 +1172,7 @@ struct task_struct {
 	} vtime_snap_whence;
 #endif
 	unsigned long nvcsw, nivcsw; /* context switch counts */
+	/*! 20141011 여기 참조 */
 	struct timespec start_time; 		/* monotonic time */
 	struct timespec real_start_time;	/* boot based time */
 /* mm fault and swap info: this can arguably be seen as either mm-specific or thread-specific */
@@ -2552,6 +2554,7 @@ static inline void ptrace_signal_wake_up(struct task_struct *t, bool resume)
 static inline unsigned int task_cpu(const struct task_struct *p)
 {
 	return task_thread_info(p)->cpu;
+	/*! 20141011 task의 thread 주소의 cpu */
 }
 
 extern void set_task_cpu(struct task_struct *p, unsigned int cpu);
