@@ -1070,6 +1070,7 @@ struct task_struct {
 	unsigned int policy;
 	int nr_cpus_allowed;
 	cpumask_t cpus_allowed;
+	/*! 20141018 사용가능한 cpu갯수: 4, core.c에서 setting됨 */
 
 #ifdef CONFIG_PREEMPT_RCU
 	int rcu_read_lock_nesting;

@@ -121,6 +121,7 @@ static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
 {
 	return rt_rq->rq;
+	/*! 20141018 run_queue 안의 rq를 리턴 */
 }
 
 static inline struct rt_rq *rt_rq_of_se(struct sched_rt_entity *rt_se)
@@ -216,6 +217,7 @@ err:
 #else /* CONFIG_RT_GROUP_SCHED */
 
 #define rt_entity_is_task(rt_se) (1)
+/*! 20141018 여기 실행됨 */
 
 static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 {
@@ -319,6 +321,7 @@ static void dec_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
 
 	p = rt_task_of(rt_se);
 	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
+	/*! 20141018 rt_rq = rt_rq->rq->rt */
 
 	rt_rq->rt_nr_total--;
 	if (p->nr_cpus_allowed > 1)
@@ -928,9 +931,14 @@ static void
 dec_rt_prio_smp(struct rt_rq *rt_rq, int prio, int prev_prio)
 {
 	struct rq *rq = rq_of_rt_rq(rt_rq);
+	/*! 20141018 runqueue의 rt_rq */
 
 	if (rq->online && rt_rq->highest_prio.curr != prev_prio)
 		cpupri_set(&rq->rd->cpupri, rq->cpu, rt_rq->highest_prio.curr);
+		/*! 20141018
+		 * rq->rd->cpupri를 rt_rq->highest_prio.curr로 갱신하고
+		 * rq->cpu의 vec->count를 감소시킨 후 cpumask를 clear한다.
+		 */
 }
 
 #else /* CONFIG_SMP */
@@ -972,12 +980,17 @@ dec_rt_prio(struct rt_rq *rt_rq, int prio)
 
 			rt_rq->highest_prio.curr =
 				sched_find_first_bit(array->bitmap);
+			/*! 20141018 우선순위가 같으면 rt_rq->highest_prio.curr 의 우선순위를 1 증가시킨다. */
 		}
 
 	} else
 		rt_rq->highest_prio.curr = MAX_RT_PRIO;
 
 	dec_rt_prio_smp(rt_rq, prio, prev_prio);
+	/*! 20141018
+	 * rq->rd->cpupri를 rt_rq->highest_prio.curr로 갱신하고
+	 * rq->cpu의 vec->count를 감소시킨 후 cpumask를 clear한다.
+	 */
 }
 
 #else
@@ -1040,10 +1053,14 @@ void dec_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
 	WARN_ON(!rt_prio(rt_se_prio(rt_se)));
 	WARN_ON(!rt_rq->rt_nr_running);
 	rt_rq->rt_nr_running--;
+	/*! 20141018 이 run_queue를 사용하는 task의 갯수를 하나 감소시킴 */
 
 	dec_rt_prio(rt_rq, rt_se_prio(rt_se));
+	/*! 20141018 rt_rq의 우선순위를 감소시킴 */
 	dec_rt_migration(rt_se, rt_rq);
+	/*! 20141018 나중에 보기로 함 */
 	dec_rt_group(rt_se, rt_rq);
+	/*! 20141018 아무것도 안함 */
 }
 
 static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
@@ -1074,13 +1091,18 @@ static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
 static void __dequeue_rt_entity(struct sched_rt_entity *rt_se)
 {
 	struct rt_rq *rt_rq = rt_rq_of_se(rt_se);
+	/*! 20141018 rt_se가 속한 process의 task_struct->rq->rt를 가져온다. */
 	struct rt_prio_array *array = &rt_rq->active;
+	/*! 20141018 현재 task의 rt_rq의 active를 가져온다. */
 
 	list_del_init(&rt_se->run_list);
+	/*! 20141018 run_list를 queue에서 제거하고 list를 초기화 한다. */
 	if (list_empty(array->queue + rt_se_prio(rt_se)))
 		__clear_bit(rt_se_prio(rt_se), array->bitmap);
+	/*! 20141018 해당우선순위의 queue가 비었으면 bitmap을 0으로 clear한다. */
 
 	dec_rt_tasks(rt_se, rt_rq);
+	/*! 20141018 run_queue의 task 갯수 감소 및 SMP관련 처리 */
 }
 
 /*
@@ -1102,14 +1124,17 @@ static void dequeue_rt_stack(struct sched_rt_entity *rt_se)
 	for (rt_se = back; rt_se; rt_se = rt_se->back) {
 		if (on_rt_rq(rt_se))
 			__dequeue_rt_entity(rt_se);
+		/*! 20141018 rt_se를 queue에서 꺼냄 */
 	}
 }
 
 static void enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
 {
-	/*! 20141011 여기 진입 */
 	dequeue_rt_stack(rt_se);
+	/*! 20141018 rt queue에서 rt_se를 꺼냄 */
 	for_each_sched_rt_entity(rt_se)
+	/*! 20141018 for (; rt_se; rt_se = NULL) */
+		/*! 20141018 head: 0 , 여기까지 스터디 함 */
 		__enqueue_rt_entity(rt_se, head);
 }
 

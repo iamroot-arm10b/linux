@@ -2482,6 +2482,7 @@ need_resched:
 		switch_count = &prev->nvcsw;
 	}
 
+	/*! 20141011 여기 진입 */
 	pre_schedule(rq, prev);
 
 	if (unlikely(!rq->nr_running))

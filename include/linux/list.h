@@ -155,6 +155,7 @@ static inline void list_del_init(struct list_head *entry)
 {
 	__list_del_entry(entry);
 	INIT_LIST_HEAD(entry);
+	/*! 20141018 list에서 entry를 빼고 entry는 초기화 한다. */
 }
 
 /**

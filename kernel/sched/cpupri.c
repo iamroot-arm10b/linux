@@ -47,6 +47,7 @@ static int convert_prio(int prio)
 		cpupri = MAX_RT_PRIO - prio + 1;
 
 	return cpupri;
+	/*! 20141018 task의 prio를 cpuprio로 변환한다. */
 }
 
 /**
@@ -144,6 +145,7 @@ void cpupri_set(struct cpupri *cp, int cpu, int newpri)
 	int do_mb = 0;
 
 	newpri = convert_prio(newpri);
+	/*! 20141018 task의 prio를 cpu의 prio로 변환한다. */
 
 	BUG_ON(newpri >= CPUPRI_NR_PRIORITIES);
 
@@ -160,6 +162,7 @@ void cpupri_set(struct cpupri *cp, int cpu, int newpri)
 		struct cpupri_vec *vec = &cp->pri_to_cpu[newpri];
 
 		cpumask_set_cpu(cpu, vec->mask);
+		/*! 20141018 mask에 현재 cpu bit를 set */
 		/*
 		 * When adding a new vector, we update the mask first,
 		 * do a write memory barrier, and then update the count, to
@@ -169,6 +172,7 @@ void cpupri_set(struct cpupri *cp, int cpu, int newpri)
 		atomic_inc(&(vec)->count);
 		do_mb = 1;
 	}
+	/*! 20141018 newpri가 -1이 아니면 vec의 count증가 및 cpu mask set */
 	if (likely(oldpri != CPUPRI_INVALID)) {
 		struct cpupri_vec *vec  = &cp->pri_to_cpu[oldpri];
 
@@ -195,6 +199,7 @@ void cpupri_set(struct cpupri *cp, int cpu, int newpri)
 		smp_mb__after_atomic_inc();
 		cpumask_clear_cpu(cpu, vec->mask);
 	}
+	/*! 20141018 oldpri가 -1이 아니면 vec의 count감소 및 cpu mask clear */
 
 	*currpri = newpri;
 }
