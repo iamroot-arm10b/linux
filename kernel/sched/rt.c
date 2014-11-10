@@ -121,7 +121,6 @@ static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
 {
 	return rt_rq->rq;
-	/*! 20141018 run_queue 안의 rq를 리턴 */
 }
 
 static inline struct rt_rq *rt_rq_of_se(struct sched_rt_entity *rt_se)
@@ -228,6 +227,7 @@ static inline struct task_struct *rt_task_of(struct sched_rt_entity *rt_se)
 static inline struct rq *rq_of_rt_rq(struct rt_rq *rt_rq)
 {
 	return container_of(rt_rq, struct rq, rt);
+	/*! 20141018 run_queue 안의 rq를 리턴 */
 }
 
 static inline struct rt_rq *rt_rq_of_se(struct sched_rt_entity *rt_se)
@@ -524,6 +524,7 @@ typedef struct rt_rq *rt_rq_iter_t;
 
 static inline struct rt_rq *group_rt_rq(struct sched_rt_entity *rt_se)
 {
+	/*! 20141108 여기 실행됨 */
 	return NULL;
 }
 
@@ -955,9 +956,11 @@ static void
 inc_rt_prio(struct rt_rq *rt_rq, int prio)
 {
 	int prev_prio = rt_rq->highest_prio.curr;
+	/*! 20141108 기존 rt_rq의 최우선순위 set */
 
 	if (prio < prev_prio)
 		rt_rq->highest_prio.curr = prio;
+	/*! 20141108 새롭게 추가한 task의 우선순위가 더 높다면 교체 */
 
 	inc_rt_prio_smp(rt_rq, prio, prev_prio);
 }
@@ -1066,9 +1069,13 @@ void dec_rt_tasks(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
 static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
 {
 	struct rt_rq *rt_rq = rt_rq_of_se(rt_se);
+	/*! 20141108 rt_se가 속한 process의 task_struct->rq->rt를 가져온다. */
 	struct rt_prio_array *array = &rt_rq->active;
+	/*! 20141108 현재 task의 rt_rq의 active를 가져온다. */
 	struct rt_rq *group_rq = group_rt_rq(rt_se);
+	/*! 20141108 *group_rq = NULL */
 	struct list_head *queue = array->queue + rt_se_prio(rt_se);
+	/*! 20141108 프로세스의 우선순위에 해당하는 queue의 시작주소 */
 
 	/*
 	 * Don't enqueue the group if its throttled, or when empty.
@@ -1083,7 +1090,9 @@ static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
 		list_add(&rt_se->run_list, queue);
 	else
 		list_add_tail(&rt_se->run_list, queue);
+	/*! 20141108 run_list에 queue를 추가한다. */
 	__set_bit(rt_se_prio(rt_se), array->bitmap);
+	/*! 20141108 rt_se가 속한 task의 우선순위를 array->bitmap 에 set한다. */
 
 	inc_rt_tasks(rt_se, rt_rq);
 }
